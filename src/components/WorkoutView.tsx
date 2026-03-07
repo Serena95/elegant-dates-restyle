@@ -1,0 +1,203 @@
+import { useState } from "react";
+import { Exercise, CONFIG_LIVELLI, calcolaReps, ATTREZZO_ICONS } from "@/data/exercises";
+import { useTimer } from "@/hooks/useTimer";
+import { TimerOverlay } from "./TimerOverlay";
+import { ChevronLeft, Timer, Check, RefreshCw } from "lucide-react";
+
+interface WorkoutViewProps {
+  giorno: string;
+  attrezzo: string;
+  esercizi: Exercise[];
+  livello: string;
+  roundCorrenti: number;
+  onSegnaRound: () => void;
+  onBack: () => void;
+}
+
+const RISCALDAMENTO_MODES = [
+  { tipo: "TAPIS ROULANT", emoji: "🏃‍♂️", desc: "20 min • Pendenza 3% • Vel. 5.5 - 6.0 km/h", durata: 1200, label: "20 MIN" },
+  { tipo: "CARDIO SOFT", emoji: "🏠", desc: "Esegui: 30\" Jumping Jacks, 30\" Corsa sul posto, 30\" Kick back (Ripeti 4 volte)", durata: 360, label: "6 MIN" },
+  { tipo: "CAMMINATA ESTERNA", emoji: "🌳", desc: "25 min • Passo svelto • Braccia attive e rullata del piede completa.", durata: 1500, label: "25 MIN" },
+];
+
+export function WorkoutView({ giorno, attrezzo, esercizi, livello, roundCorrenti, onSegnaRound, onBack }: WorkoutViewProps) {
+  const config = CONFIG_LIVELLI[livello];
+  const maxRound = config.round;
+  const timer = useTimer();
+  const [completati, setCompletati] = useState<Set<number>>(new Set());
+  const [tipoRiscaldamento, setTipoRiscaldamento] = useState(0);
+  const isCompleted = roundCorrenti >= maxRound;
+
+  const toggleEsercizio = (idx: number) => {
+    setCompletati(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx); else next.add(idx);
+      return next;
+    });
+  };
+
+  const handleSegnaRound = () => {
+    onSegnaRound();
+    setCompletati(new Set());
+    if (roundCorrenti + 1 < maxRound) {
+      timer.start(config.pausa, `PAUSA ROUND ${roundCorrenti + 1}`);
+    }
+  };
+
+  const cambiaRiscaldamento = () => {
+    setTipoRiscaldamento(prev => (prev + 1) % 3);
+  };
+
+  const icon = ATTREZZO_ICONS[attrezzo] || "🏋️";
+  const risc = RISCALDAMENTO_MODES[tipoRiscaldamento];
+
+  const formatReps = (repsStr: string, original: string) => {
+    const perLato = original.includes("per lato");
+    return (
+      <span>
+        {repsStr}
+        {perLato && <span className="text-[10px] ml-1 opacity-80">per lato</span>}
+      </span>
+    );
+  };
+
+  return (
+    <div className="space-y-4">
+      <TimerOverlay timer={timer} />
+
+      <button onClick={onBack} className="flex items-center gap-1 text-primary font-bold text-sm hover:opacity-80 transition">
+        <ChevronLeft size={18} /> Indietro
+      </button>
+
+      <h2 className="text-xl font-bold text-foreground">
+        {icon} {giorno} <span className="text-primary">({attrezzo})</span>
+      </h2>
+
+      {/* Riscaldamento */}
+      <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-2xl border-l-[5px] border-amber-400 dark:border-amber-600 space-y-2">
+        <strong className="text-amber-700 dark:text-amber-300 text-sm">
+          {risc.emoji} RISCALDAMENTO: {risc.tipo}
+        </strong>
+        <p className="text-xs text-muted-foreground">{risc.desc}</p>
+        <button
+          onClick={() => timer.start(risc.durata, risc.tipo)}
+          className="w-full py-2 bg-amber-400 dark:bg-amber-600 text-amber-900 dark:text-white rounded-lg font-bold text-sm hover:opacity-90 transition flex items-center justify-center gap-2"
+        >
+          <Timer size={14} /> ⏱️ AVVIA {risc.label}
+        </button>
+        <button
+          onClick={cambiaRiscaldamento}
+          className="w-full py-2 bg-transparent border border-dashed border-amber-400 dark:border-amber-600 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition flex items-center justify-center gap-1"
+        >
+          <RefreshCw size={12} /> CAMBIA MODALITÀ (Tapis / Cardio / Camminata)
+        </button>
+      </div>
+
+      {/* Progress bar */}
+      <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+        <div
+          className={`h-full transition-all duration-500 ${isCompleted ? "bg-pilates-green" : "bg-primary"}`}
+          style={{ width: `${(completati.size / esercizi.length) * 100}%` }}
+        />
+      </div>
+
+      {/* Exercises list */}
+      <div className="space-y-3">
+        {esercizi.map((es, idx) => {
+          const reps = calcolaReps(es.reps, livello);
+          const isSec = es.reps.includes("sec");
+          const done = completati.has(idx);
+
+          return (
+            <div
+              key={idx}
+              onClick={() => toggleEsercizio(idx)}
+              className={`rounded-xl border p-4 transition-all cursor-pointer ${
+                done
+                  ? "opacity-40 bg-muted border-border"
+                  : "bg-card border-border hover:border-primary/30 hover:shadow-md"
+              }`}
+            >
+              <div className="flex justify-between items-start">
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    {done && <Check size={16} className="text-pilates-green" />}
+                    <strong className="text-base text-foreground">{idx + 1}. {es.nome}</strong>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-1">
+                  <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-lg text-xs font-bold">
+                    {formatReps(reps, es.reps)}
+                  </span>
+                  {isSec && (
+                    <button
+                      onClick={e => { e.stopPropagation(); timer.start(config.tempoEsercizio, es.nome); }}
+                      className="flex items-center gap-1 bg-pilates-green text-white px-2 py-1 rounded-lg text-xs font-bold hover:opacity-80"
+                    >
+                      <Timer size={12} /> AVVIA
+                    </button>
+                  )}
+                </div>
+              </div>
+
+              <div className="mt-2 bg-pilates-light dark:bg-accent p-3 rounded-lg border-l-4 border-primary">
+                <span className="text-xs font-bold text-primary uppercase">🎬 Azione:</span>
+                <p className="text-sm text-foreground mt-1">{es.spiegazione}</p>
+              </div>
+
+              <div className="text-xs text-muted-foreground mt-2 font-bold">
+                🎯 FOCUS: {es.focus.toUpperCase()}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Stretching note */}
+      <div className="bg-pilates-amber/10 border border-pilates-amber/30 p-3 rounded-xl text-center text-sm font-bold text-pilates-amber">
+        ✨ Al termine dei round inizierà lo stretching finale
+      </div>
+
+      {/* Round control */}
+      <div className="border-t border-border pt-4 text-center space-y-3">
+        <p className="text-lg font-bold text-foreground">
+          Round Completati: <span className={isCompleted ? "text-pilates-green" : "text-primary"}>{roundCorrenti}</span>/{maxRound}
+        </p>
+        {!isCompleted && (
+          <button onClick={handleSegnaRound} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg">
+            SEGNA ROUND E PAUSA
+          </button>
+        )}
+        {isCompleted && (
+          <div className="space-y-4 bg-pilates-light dark:bg-accent p-6 rounded-2xl border-2 border-primary">
+            <h3 className="text-xl font-bold text-primary">🌊 Defaticamento Rigenerante</h3>
+            <p className="text-sm text-muted-foreground">Espira profondamente e rilassa i muscoli.</p>
+
+            {[
+              { nome: "Posizione del Bambino", emoji: "🧒", desc: "Fronte a terra, allunga le braccia avanti." },
+              { nome: "Farfalla", emoji: "🦋", desc: "Pianta dei piedi uniti, ginocchia in fuori." },
+              { nome: "Cobra", emoji: "🐍", desc: "Distendi le braccia e allunga l'addome." },
+            ].map(s => (
+              <div key={s.nome} className="flex justify-between items-center bg-card p-3 rounded-xl border border-border">
+                <div>
+                  <strong className="text-primary">{s.emoji} {s.nome}</strong>
+                  <p className="text-xs text-muted-foreground">{s.desc}</p>
+                </div>
+                <button
+                  onClick={() => timer.start(60, s.nome)}
+                  className="bg-primary text-primary-foreground px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1"
+                >
+                  <Timer size={12} /> 60s
+                </button>
+              </div>
+            ))}
+
+            <button onClick={onBack} className="w-full py-4 rounded-2xl bg-pilates-green text-white font-bold shadow-lg">
+              🏆 COMPLETA SESSIONE
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}

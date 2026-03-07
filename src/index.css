@@ -1,0 +1,112 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800;900&display=swap');
+
+@layer base {
+  :root {
+    --background: 200 33% 97%;
+    --foreground: 210 29% 13%;
+
+    --card: 0 0% 100%;
+    --card-foreground: 210 29% 13%;
+
+    --popover: 0 0% 100%;
+    --popover-foreground: 210 29% 13%;
+
+    --primary: 201 100% 36%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 195 100% 59%;
+    --secondary-foreground: 210 100% 12%;
+
+    --muted: 200 20% 94%;
+    --muted-foreground: 210 10% 40%;
+
+    --accent: 195 100% 85%;
+    --accent-foreground: 210 100% 20%;
+
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+
+    --border: 200 20% 88%;
+    --input: 200 20% 88%;
+    --ring: 201 100% 36%;
+
+    --radius: 1rem;
+
+    --pilates-deep: 213 100% 20%;
+    --pilates-glow: 195 100% 59%;
+    --pilates-light: 197 100% 93%;
+    --pilates-green: 122 39% 50%;
+    --pilates-amber: 36 100% 50%;
+    --pilates-red: 0 84% 60%;
+
+    --sidebar-background: 0 0% 98%;
+    --sidebar-foreground: 240 5.3% 26.1%;
+    --sidebar-primary: 240 5.9% 10%;
+    --sidebar-primary-foreground: 0 0% 98%;
+    --sidebar-accent: 240 4.8% 95.9%;
+    --sidebar-accent-foreground: 240 5.9% 10%;
+    --sidebar-border: 220 13% 91%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+
+  .dark {
+    --background: 222 47% 6%;
+    --foreground: 210 40% 96%;
+
+    --card: 217 33% 12%;
+    --card-foreground: 210 40% 96%;
+
+    --popover: 217 33% 12%;
+    --popover-foreground: 210 40% 96%;
+
+    --primary: 199 89% 48%;
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 195 80% 50%;
+    --secondary-foreground: 0 0% 100%;
+
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+
+    --accent: 217 33% 22%;
+    --accent-foreground: 210 40% 96%;
+
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 96%;
+
+    --border: 217 33% 20%;
+    --input: 217 33% 20%;
+    --ring: 199 89% 48%;
+
+    --pilates-deep: 199 89% 48%;
+    --pilates-glow: 195 100% 70%;
+    --pilates-light: 217 33% 17%;
+    --pilates-green: 142 71% 45%;
+    --pilates-amber: 38 92% 50%;
+    --pilates-red: 0 84% 60%;
+
+    --sidebar-background: 240 5.9% 10%;
+    --sidebar-foreground: 240 4.8% 95.9%;
+    --sidebar-primary: 224.3 76.3% 48%;
+    --sidebar-primary-foreground: 0 0% 100%;
+    --sidebar-accent: 240 3.7% 15.9%;
+    --sidebar-accent-foreground: 240 4.8% 95.9%;
+    --sidebar-border: 240 3.7% 15.9%;
+    --sidebar-ring: 217.2 91.2% 59.8%;
+  }
+}
+
+@layer base {
+  * {
+    @apply border-border;
+  }
+
+  body {
+    @apply bg-background text-foreground;
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  }
+}

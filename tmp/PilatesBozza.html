@@ -1,0 +1,4232 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pilates Personal App</title>
+    <style>
+            body { 
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif; 
+    background-color: #f0f7f9; 
+    color: #2d3436; 
+    margin: 0; 
+    padding: 0; 
+    display: flex; 
+    flex-direction: column; /* Forza gli elementi a stare uno SOTTO l'altro */
+    align-items: center;     /* Centra tutto orizzontalmente */
+    min-height: 100vh;       
+
+            padding: 20px 0; /* Spazio sopra e sotto su mobile */
+        }
+
+        .container { 
+            width: 92%;  
+            margin: 0 auto;    /* Quasi tutta la larghezza su schermi piccoli */
+            max-width: 450px; /* Non diventa mai troppo grande su PC */
+            background: white; 
+            padding: 25px; 
+            border-radius: 30px; 
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05); 
+            border: 1px solid #e1eef2;
+            box-sizing: border-box; /* Essenziale per il calcolo del padding */
+        }
+ 
+        /* Il resto del CSS (h1, .btn, .giorno-card) rimane uguale a prima */
+
+        h1 { 
+            text-align: center; 
+            color: #0077b6; /* Titolo Celeste */
+            font-weight: 800; 
+            letter-spacing: -0.5px;
+            margin-bottom: 30px;
+        }
+
+        .giorno-card { 
+            background: #ffffff;
+            border: 1px solid #d0e1e9; 
+            margin-bottom: 12px; 
+            padding: 18px; 
+            border-radius: 16px; 
+            cursor: pointer; 
+            transition: all 0.2s ease;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .giorno-card:hover { 
+            border-color: #;
+            background-color: #f0faff; 
+            transform: translateY(-2px);
+        }
+
+        .btn { 
+            display: block; 
+            width: 100%; 
+            padding: 18px; 
+            background: #0077b6; /* Pulsante Celeste */
+            color: white; 
+            border: none; 
+            border-radius: 16px; 
+            font-size: 16px; 
+            font-weight: bold; 
+            cursor: pointer; 
+            box-shadow: 0 4px 12px rgba(0, 119, 182, 0.2);
+            transition: opacity 0.2s;
+        }
+
+        .btn:active { transform: scale(0.98); }
+
+        .attrezzo-tag { 
+            font-size: 11px; 
+            background: #48cae4; /* Tag azzurro */
+            color: white;
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        .hidden { display: none !important; }
+
+               /* Nuovo Stile Timer: Barra Elegante in Alto */
+        #timer-overlay {
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            background: #0077b6; /* Celeste come il titolo */
+            color: white; 
+            z-index: 1000; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+            padding: 15px 25px;
+            box-sizing: border-box;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            border-bottom: 3px solid #48cae4;
+            animation: slideDown 0.4s ease-out;
+        }
+
+        @keyframes slideDown {
+            from { transform: translateY(-100%); }
+            to { transform: translateY(0); }
+        }
+
+        #timer-label { 
+            font-size: 14px; 
+            text-transform: uppercase; 
+            letter-spacing: 1px; 
+            font-weight: bold; 
+            color: #caf0f8;
+        }
+
+        #timer-display { 
+            font-size: 28px; 
+            font-weight: 800; 
+            font-family: 'Courier New', monospace; 
+        }
+
+        .btn-salta {
+            background: rgba(255,255,255,0.2);
+            color: white;
+            border: 1px solid white;
+            padding: 6px 12px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+   /* --- STILE SEZIONE PROGRESSI --- */
+#progressi-section {
+    max-width: 600px;
+    margin: 0 auto;
+    animation: fadeIn 0.5s ease;
+}
+/* --- UNIFORMITÀ SEZIONE PROGRESSI --- */
+
+#progressi-section .card {
+    background: white;
+    border-radius: 25px;
+    padding: 20px;
+    border: 1px solid #e1eef2;
+    margin-bottom: 20px;
+} 
+.grid-misure {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.grid-misure input {
+    width: 100%;
+    padding: 12px;
+    border-radius: 12px;
+    border: 1px solid #ddd;
+    box-sizing: border-box; /* Impedisce all'input di uscire dai bordi */
+    font-family: inherit;
+}
+.item-misura {
+    background: #f8f9fa;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid #0077b6;
+}
+/* Uniforma i pulsanti dei progressi */
+.btn-save-progress {
+    background: #0077b6;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 16px;
+    width: 100%;
+    font-weight: bold;
+    cursor: pointer;
+    transition: 0.2s;
+}
+
+.btn-save-progress:active { transform: scale(0.98); }
+
+/* Stile per gli item dello storico */
+.item-storico {
+    background: #f8f9fa;
+    margin-bottom: 10px;
+    padding: 15px;
+    border-radius: 15px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-left: 4px solid #0077b6;
+}
+
+body.dark-mode .item-storico {
+    background: #0f172a;
+    border-color: #38bdf8;
+}
+ 
+body.dark-mode .item-misura {
+    background: #0f172a !important;
+    border-color: #38bdf8 !important;
+}
+
+body.dark-mode .item-misura small {
+    color: #cbd5e1 !important;
+}
+
+body.dark-mode #lista-storico p {
+    color: #94a3b8 !important;
+}
+.btn-delete {
+    background: #ffebee;
+    color: #c62828;
+    border: none;
+    border-radius: 10px;
+    width: 35px;
+    height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-delete:hover {
+    background: #c62828;
+    color: white;
+}
+     
+
+/* Stile per l'esercizio selezionato/fatto */
+.esercizio-item {
+    transition: all 0.3s ease;
+    cursor: pointer;
+    border-left: 5px solid transparent;
+}
+
+.esercizio-item.fatto {
+    opacity: 0.4;
+    background-color: #f8f9fa !important;
+    border-left: 5px solid #bdc3c7 !important;
+}
+
+/* --- DARK MODE PERFEZIONATA (Deep Ocean Style) --- */
+/* FIX SPECIFICO PER CONSIGLI E SFIDE IN DARK MODE */
+
+body.dark-mode #suggerimento-testo, 
+body.dark-mode #box-sfida-custom h4, 
+body.dark-mode #nome-sfida-attiva, 
+body.dark-mode #giorni-sfida-text,
+body.dark-mode .tag-suggerimento,
+body.dark-mode .opzione-pasto b,      /* <--- AGGIUNTO */
+body.dark-mode .opzione-pasto small,  /* <--- AGGIUNTO */
+body.dark-mode .opzione-pasto span {  /* <--- AGGIUNTO */
+    color: #1e293b !important; 
+}
+ 
+body.dark-mode #box-sfida-custom p[onclick] {
+    color: #e65100 !important; /* Mantiene il tasto reset arancione leggibile */
+}
+
+/* Rende i box del diario alimentare più leggibili */
+body.dark-mode #alimentazione-section div[style*="background: #e0f2f1"], 
+body.dark-mode #alimentazione-section div[style*="background: #e1f5fe"],
+body.dark-mode #box-sfida-custom {
+    background: #f8fafc !important; /* Schiarisce leggermente i box per contrasto */
+    border-color: #cbd5e1 !important;
+}
+
+body.dark-mode {
+    background-color: #0f172a !important; /* Blu notte profondissimo */
+    color: #f1f5f9 !important;
+}
+
+body.dark-mode .container {
+    background: #1e293b !important; /* Blu ardesia per le card */
+    border-color: #334155 !important;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.5) !important;
+}
+
+/* Titoli in Celeste Neon */
+body.dark-mode h1, 
+body.dark-mode h2, 
+body.dark-mode h3 {
+    color: #38bdf8 !important; 
+}
+
+body.dark-mode strong {
+    color: #7dd3fc !important; 
+}
+
+/* Testi secondari */
+body.dark-mode p, 
+body.dark-mode span, 
+body.dark-mode li,
+body.dark-mode label,
+body.dark-mode small {
+    color: #cbd5e1 !important;
+}
+
+/* Card degli esercizi e del giorno */
+body.dark-mode .giorno-card, 
+body.dark-mode .esercizio-item {
+    background: #1e293b !important;
+    border-bottom: 1px solid #334155 !important;
+}
+
+body.dark-mode .giorno-card:hover {
+    background: #334155 !important;
+    border-color: #38bdf8 !important;
+}
+
+/* Box Spiegazione (Azione/Posizione) */
+body.dark-mode .esercizio-item div[style*="background:#f0faff"] {
+    background: #0f172a !important;
+    border-left: 5px solid #38bdf8 !important;
+    color: #f1f5f9 !important;
+}
+
+/* --- FIX RIPETIZIONI (Azzurro ghiaccio invece di bianco) --- */
+body.dark-mode .esercizio-item span[style*="background:#48cae4"] {
+    background: #075985 !important; /* Sfondo blu scuro */
+    color: #7dd3fc !important;      /* Testo azzurro chiaro */
+    border: 1px solid #0ea5e9;
+}
+
+/* --- FIX RISCALDAMENTO (Ambra invece di rosso/giallo) --- */
+body.dark-mode #tapis-roulant {
+    background: #1e1b4b !important; /* Blu scuro integrato */
+    border-left: 5px solid #f59e0b !important; /* Bordo Ambra */
+    color: #fcd34d !important;      /* Testo Oro/Ambra */
+}
+
+body.dark-mode #tapis-roulant strong {
+    color: #fbbf24 !important; /* Titolo risalto oro */
+}
+
+/* Input dei progressi */
+body.dark-mode input {
+    background: #0f172a !important;
+    border: 1px solid #334155 !important;
+    color: white !important;
+}
+
+/* Tag Attrezzo */
+body.dark-mode .attrezzo-tag {
+    background: #38bdf8 !important;
+    color: #0f172a !important;
+}
+
+/* Timer in alto */
+body.dark-mode #timer-overlay {
+    background: #0ea5e9 !important;
+    border-bottom: 3px solid #7dd3fc !important;
+}
+
+/* Esercizio completato */
+body.dark-mode .esercizio-item.fatto {
+    opacity: 0.25;
+    background: #0f172a !important;
+    border-left: 5px solid #475569 !important;
+}
+
+/* Round Count (Rimosso il rosso) */
+body.dark-mode #round-count {
+    color: #38bdf8 !important;
+}
+
+/* Note in grassetto (Rimosso il rosso) */
+body.dark-mode .esercizio-item div[style*="color:#d32f2f"] {
+    color: #94a3b8 !important; /* Grigio azzurrato per le note */
+}
+
+
+/* Aggiungi questo alla fine del CSS per leggere i pasti già salvati */
+body.dark-mode #lista-pasti-oggi div {
+    color: #1e293b !important;
+}
+
+
+/* Bottone switch per la Dark Mode */
+.dark-mode-toggle {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    background: #0077b6;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    cursor: pointer;
+    z-index: 2000;
+    font-size: 20px;
+}
+
+/* --- STILE LIBRERIA ESERCIZI --- */
+#libreria-lista-completa { margin-top: 20px; }
+.library-attrezzo-title {
+    background: #0077b6;
+    color: white;
+    padding: 12px;
+    border-radius: 12px;
+    margin-top: 30px;
+    font-weight: bold;
+    text-align: center;
+    text-transform: uppercase;
+}
+.library-focus-group { margin-top: 15px; padding: 0 10px; }
+.library-focus-title {
+    color: #48cae4;
+    font-weight: bold;
+    font-size: 12px;
+    border-bottom: 1px solid #e1eef2;
+    padding-bottom: 5px;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+}
+.library-item {
+    padding: 8px 0;
+    border-bottom: 1px solid #f0f7f9;
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+}
+.library-exercise-name { font-weight: 500; color: #023e8a; }
+body.dark-mode .library-exercise-name { color: #38bdf8 !important; }
+body.dark-mode .library-focus-title { border-color: #334155; }
+
+.library-description {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease-out;
+    background: #f8f9fa;
+    border-radius: 8px;
+    font-size: 13px;
+    color: #455a64;
+}
+
+.library-item {
+    cursor: pointer;
+    flex-direction: column; /* Cambiato per far stare la descrizione sotto */
+    align-items: flex-start;
+}
+
+.library-item.active .library-description {
+    max-height: 200px; /* Altezza massima per l'animazione */
+    margin-top: 8px;
+    padding: 10px;
+    border-left: 3px solid #48cae4;
+}
+
+body.dark-mode .library-description {
+    background: #0f172a;
+    color: #cbd5e1;
+}
+#libreria-section button:first-of-type:hover {
+    transform: translateX(-3px);
+    transition: transform 0.2s;
+}
+/* Tasto Flottante Torna Su */
+#btn-flottante-su {
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    background: #0077b6;
+    color: white;
+    border: none;
+    border-radius: 50%;
+    font-size: 24px;
+    cursor: pointer;
+    display: none; /* Nascosto di default */
+    z-index: 2000;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
+}
+
+#btn-flottante-su:hover {
+    background: #48cae4;
+    transform: translateY(-5px);
+}
+
+body.dark-mode #btn-flottante-su {
+    background: #0ea5e9;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.5);
+}
+.tag-suggerimento {
+    background: #ffe0b2;
+    color: #e65100;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 1px solid #ffb74d;
+    transition: 0.2s;
+}
+.tag-suggerimento:hover {
+    background: #ffcc80;
+    transform: scale(1.05);
+}
+
+/* --- STILE PER IL DIARIO ALIMENTARE --- */
+.opzione-pasto {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border: 2px solid #f0f0f0;
+    border-radius: 10px;
+    cursor: pointer;
+    transition: 0.2s;
+    background: white;
+    margin-bottom: 8px;
+}
+.opzione-pasto.selected {
+    border-color: #0077b6;
+    background: #e3f2fd;
+}
+.tag-suggerimento {
+    background: #ffe0b2;
+    color: #e65100;
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 11px;
+    font-weight: bold;
+    cursor: pointer;
+    border: 1px solid #ffb74d;
+    transition: 0.2s;
+}
+#water-icons {
+    display: flex;
+    justify-content: center; /* Centra le gocce orizzontalmente */
+    flex-wrap: wrap; 
+    gap: 8px;
+    font-size: 28px; 
+    margin: 15px 0;
+}
+.guida-card {
+    background: #fdfdfd;
+    border-radius: 15px;
+    padding: 15px;
+    margin-bottom: 15px;
+    border-left: 5px solid #0077b6;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.05);
+}
+.guida-card h3 {
+    margin-top: 0;
+    font-size: 16px;
+    color: #0077b6;
+}
+.guida-card p {
+    font-size: 14px;
+    margin-bottom: 0;
+    line-height: 1.4;
+}
+body.dark-mode .guida-card {
+    background: #1e293b;
+    border-color: #38bdf8;
+}
+/* === BOX DEFATICAMENTO – DARK MODE === */
+
+body.dark-mode .box-defaticamento {
+    background: #0077b6 !important; /* Blu profondo identico ai titoli */
+    border: 1px solid #0ea5e9 !important;
+    padding: 20px !important;
+    border-radius: 20px !important;
+    color: #000000 !important;      /* Testo "Respira profondamente" NERO */
+    box-shadow: 0 4px 15px rgba(0,0,0,0.3) !important;
+}
+
+body.dark-mode .box-defaticamento h2 {
+    color: #caf0f8 !important;      /* Titolo "Defaticamento" in azzurro chiarissimo */
+    margin-bottom: 10px !important;
+    text-transform: uppercase;
+    font-size: 1.2rem;
+} 
+/* === STRETCHING CARD – DARK MODE (ELEGANTE) === */
+/* Stile specifico per le card degli esercizi di stretching */
+body.dark-mode .stretch-card {
+    background: #0077b6 !important;   /* Quadrato interno blu */
+    border: 1px solid #0ea5e9 !important;
+    padding: 15px !important;
+    margin-top: 15px !important;
+    border-radius: 15px !important;
+} 
+
+/* Titolo dell'esercizio di stretching (es. "Hamstring Roll") */
+body.dark-mode .stretch-card h3 {
+    color: #000000 !important;      /* Nome esercizio NERO sul blu */
+    font-weight: 800 !important;
+    margin-bottom: 5px !important;
+} 
+/* Descrizione tecnica dell'esercizio di stretching */
+body.dark-mode .stretch-card p,
+body.dark-mode .stretch-card p span,
+body.dark-mode .stretch-card small {
+    color: #000000 !important;      /* Spiegazione NERA */
+    font-weight: 500 !important;
+    opacity: 1 !important;
+    line-height: 1.4 !important;
+} 
+/* --- OTTIMIZZAZIONE RESPONSIVE AGGIUNTIVA --- */
+
+/* 1. Per schermi molto piccoli (Smartphone vecchi o piccoli) */
+@media (max-width: 380px) {
+    .container {
+        padding: 15px; /* Riduce i margini interni per dare più spazio ai contenuti */
+        width: 98%;    /* Sfrutta quasi tutto lo schermo */
+    }
+    
+    h1 { font-size: 1.5rem; } /* Titolo più piccolo per non andare a capo male */
+    
+    .grid-misure {
+        grid-template-columns: 1fr; /* Mette le misure una sotto l'altra invece che affiancate */
+    }
+    
+    #timer-display { font-size: 22px; } /* Timer leggermente più piccolo */
+}
+
+/* 2. Per schermi grandi (Tablet in orizzontale o PC) */
+@media (min-width: 768px) {
+    body {
+        padding: 40px 0; /* Più respiro sopra e sotto */
+    }
+    
+    .container {
+        max-width: 600px; /* Permette all'app di allargarsi un po' per essere più leggibile */
+        border-radius: 40px; /* Angoli ancora più morbidi su schermi grandi */
+    }
+    
+    .btn:hover {
+        opacity: 0.8;
+        transform: translateY(-2px); /* Effetto elevazione per chi usa il mouse */
+    }
+}
+
+/* 3. Gestione Safe Area (Per iPhone con Notch) */
+body {
+    padding-top: env(safe-area-inset-top, 20px);
+    padding-bottom: env(safe-area-inset-bottom, 20px);
+}
+
+/* 4. Fix per gli Input (Evita lo zoom automatico su iPhone al click) */
+input, select, textarea {
+    font-size: 16px !important; /* Su iOS, se il font è <16px la pagina zooma da sola */
+}
+
+/* 5. Miglioramento della Libreria su schermi touch */
+.library-item {
+    -webkit-tap-highlight-color: transparent; /* Rimuove il flash blu al click su mobile */
+}
+
+
+#calendario-grid div.active-day {
+    background: #0077b6;
+    color: white;
+    font-weight: bold;
+}
+
+#calendario-grid div.has-workout {
+    border: 2px solid #1b9aaa;
+}
+
+#calendario-grid div {
+    aspect-ratio: 1 / 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    border-radius: 10px;
+    font-size: 0.85em;
+    font-weight: 500;
+}
+
+/* Hover */
+#calendario-grid div:hover {
+    background: #e3f2fd;
+}
+
+/* Giorno con workout */
+#calendario-grid div.has-workout {
+    border: 2px solid #4CA;
+}
+
+/* ===== DARK MODE CALENDARIO ===== */
+
+/* Base giorni */
+body.dark-mode #calendario-grid div {
+    background: #1e293b;
+    color: #e2e8f0;
+    border: 1px solid #334155;
+}
+
+/* Riposo */
+body.dark-mode #calendario-grid div.rest-day {
+    background: #0b1220;
+    color: #64748b;
+    border: 1px dashed #334155;
+}
+
+/* Workout previsto */
+body.dark-mode #calendario-grid div.has-workout {
+    background: #052e1f;
+    border: 2px solid #22c55e;
+    color: #bbf7d0;
+}
+
+/* Oggi */
+body.dark-mode #calendario-grid div.today {
+    background: #0c4a6e;
+    border: 2px solid #38bdf8;
+    color: #e0f2fe;
+    font-weight: bold;
+}
+
+/* Selezionato */
+body.dark-mode #calendario-grid div.active-day {
+    background: #0284c7;
+    color: white;
+}
+
+/* Hover */
+body.dark-mode #calendario-grid div:hover {
+    background: #334155;
+}
+/* ===== TESTO GIORNI CALENDARIO DARK ===== */
+
+/* Giorni normali */
+body.dark-mode #calendario-grid div {
+    color: #0b1220;
+}
+
+/* Riposo */
+body.dark-mode #calendario-grid div.rest-day {
+    color: #334155;
+}
+
+/* Workout */
+body.dark-mode #calendario-grid div.has-workout {
+    color: #022c22;
+}
+
+/* Oggi */
+body.dark-mode #calendario-grid div.today {
+    color: #000000;
+}
+
+/* Selezionato */
+body.dark-mode #calendario-grid div.active-day {
+    color: #ffffff;
+}
+
+/* ===== TESTO ATTREZZO NEL CALENDARIO DARK ===== */
+
+body.dark-mode #calendario-grid div small {
+    color: #1f2937 !important;
+    font-weight: 600;
+}
+
+/* Se giorno workout → testo chiaro */
+body.dark-mode #calendario-grid div.has-workout small {
+    color: #dcfce7 !important;
+}
+
+/* Se oggi → testo nero */
+body.dark-mode #calendario-grid div.today small {
+    color: #000000 !important;
+}
+
+/* Se selezionato → testo bianco */
+body.dark-mode #calendario-grid div.active-day small {
+    color: #ffffff !important;
+}
+
+/* Colore per i giorni di riposo */
+.rest-day {
+    background-color: #f8f9fa !important; /* Grigio molto chiaro */
+    color: #adb5bd !important;            /* Testo sbiadito */
+    border: 1px dashed #dee2e6 !important;
+}
+
+/* Colore per oggi */
+.today {
+    border: 2px solid #0077b6 !important;
+    background-color: #e3f2fd !important;
+    font-weight: bold;
+}
+
+/* Colore per quando l'allenamento è fatto */
+.has-workout {
+    background-color: #e8f5e9 !important;
+    border: 2px solid #4caf50 !important;
+}
+
+/* ===== CALENDARIO — TESTO ATTREZZO SUPER LEGGIBILE ===== */
+
+body.dark-mode #calendario-grid div small,
+body.dark-mode #calendario-grid div .attrezzo,
+body.dark-mode #calendario-grid div span:last-child {
+    color: #000000 !important;
+    font-weight: 700 !important;
+    font-size: 0.7em;
+    letter-spacing: 0.2px;
+}
+
+/* Workout → testo chiaro su verde */
+body.dark-mode #calendario-grid div.has-workout small,
+body.dark-mode #calendario-grid div.has-workout span:last-child {
+    color: #ecfdf5 !important;
+}
+
+/* Oggi → testo nero */
+body.dark-mode #calendario-grid div.today small {
+    color: #000000 !important;
+}
+
+/* Selezionato → testo bianco */
+body.dark-mode #calendario-grid div.active-day small {
+    color: #ffffff !important;
+}
+body.dark-mode #calendario-grid div small {
+    background: rgba(255,255,255,0.25);
+    padding: 2px 4px;
+    border-radius: 6px;
+}
+.badge-attrezzo {
+    display: inline-block;
+    margin-top: 3px;
+    padding: 2px 5px;
+    border-radius: 6px;
+    font-size: 0.65em;
+    font-weight: 800;
+    background: #e3f2fd;
+    color: #0b1220;
+}
+
+body.dark-mode .badge-attrezzo {
+    background: #e2e8f0;
+    color: #000000 !important;
+}
+/* ===== BADGE ATTREZZO ===== */
+
+.badge-attrezzo {
+    display: inline-block;
+    margin-top: 3px;
+    padding: 2px 6px;
+    border-radius: 8px;
+    font-size: 0.65em;
+    font-weight: 800;
+    letter-spacing: 0.3px;
+    background: #e3f2fd;
+    color: #0b1220;
+}
+
+/* dark mode */
+body.dark-mode .badge-attrezzo {
+    background: #e2e8f0;
+    color: #000 !important;
+}
+
+/* ===== TOOLTIP APP STYLE ===== */
+
+#tooltip-attrezzo {
+    position: fixed;
+    background: #0f172a;
+    color: white;
+    padding: 8px 10px;
+    border-radius: 10px;
+    font-size: 12px;
+    font-weight: 700;
+    pointer-events: none;
+    opacity: 0;
+    transform: translate(-50%, -120%);
+    transition: all 0.18s ease;
+    z-index: 9999;
+    box-shadow: 0 6px 20px rgba(0,0,0,0.35);
+}
+
+#tooltip-attrezzo::after {
+    content: "";
+    position: absolute;
+    bottom: -6px;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 6px solid transparent;
+    border-top-color: #0f172a;
+}
+
+/* dark mode tooltip */
+body.dark-mode #tooltip-attrezzo {
+    background: #f1f5f9;
+    color: #020617;
+}
+
+body.dark-mode #tooltip-attrezzo::after {
+    border-top-color: #f1f5f9;
+}
+
+/* ===== CHECK GIORNO COMPLETATO ===== */
+
+.checkmark {
+    position: absolute;
+    top: 2px;
+    right: 4px;
+    font-size: 11px;
+    font-weight: 900;
+    color: #22c55e;
+    z-index: 3;
+    pointer-events: none;
+    animation: popDone 0.35s ease;
+}
+
+/* dark mode contrasto */
+body.dark-mode .checkmark {
+    color: #4ade80;
+}
+
+
+@keyframes popDone {
+    0% { transform: scale(0.4); opacity: 0; }
+    60% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(1); }
+}
+.day-number {
+    font-weight: 600;
+    font-size: 1.1rem;
+}
+/* ===== CARD GRANDI VISTA SETTIMANA ===== */
+
+.cal-settimana #calendario-grid {
+    grid-template-columns: repeat(7, 1fr);
+    gap: 12px;
+}
+
+.cal-settimana #calendario-grid div {
+    min-height: 90px;
+    font-size: 18px;
+    border-radius: 14px;
+}
+.checkmark-big {
+    position: absolute;
+    bottom: 6px;
+    right: 6px;
+    width: 26px;
+    height: 26px;
+    border-radius: 50%;
+    background: #22c55e;
+    color: white;
+    font-weight: 900;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    animation: popDone 0.35s ease;
+    box-shadow: 0 3px 10px rgba(0,0,0,0.25);
+}
+
+body.dark-mode .checkmark-big {
+    background: #4ade80;
+    color: #052e16;
+}
+
+@keyframes levelFlash {
+    0%   { transform: scale(1); background-color: #e3f2fd; }
+    50%  { transform: scale(1.05); background-color: #bbdefb; }
+    100% { transform: scale(1); background-color: #e3f2fd; }
+}
+
+.level-anim {
+    animation: levelFlash 0.4s ease;
+}
+
+.badge-livello {
+    display: inline-block;
+    margin-left: 8px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: bold;
+    background: #0077b6;
+    color: white;
+    transition: all 0.3s ease;
+}
+
+.workout-mark {
+    font-size: 16px;
+    margin-top: 4px;
+    animation: popIn 0.3s ease;
+}
+
+@keyframes popIn {
+    0% { transform: scale(0.5); opacity: 0; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+.day-wrapper {
+    position: relative;
+    width: 44px;
+    height: 44px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.progress-ring {
+    --size: 44px;
+    --thickness: 4px;
+    --progress: 0;
+    --ring-color: #4CAF50;
+
+    width: var(--size);
+    height: var(--size);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    position: relative;
+    transition: background 0.4s ease, transform 0.2s ease;
+}
+
+body:not(.dark-mode) .progress-ring {
+    background:
+        conic-gradient(
+            var(--ring-color) calc(var(--progress) * 1%),
+            #e0e0e0 0%
+        );
+}
+
+
+body.dark-mode .progress-ring {
+    background:
+        conic-gradient(
+            var(--ring-color) calc(var(--progress) * 1%),
+            #3a3f45 0%
+        );
+}
+.progress-ring::before {
+    content: "";
+    position: absolute;
+    width: calc(var(--size) - var(--thickness)*2);
+    height: calc(var(--size) - var(--thickness)*2);
+    border-radius: 50%;
+}
+
+body:not(.dark-mode) .progress-ring::before {
+    background: white;
+}
+
+body.dark-mode .progress-ring::before {
+    background: #2e3338;
+}
+
+.progress-ring span {
+    position: relative;
+    font-size: 14px;
+    font-weight: bold;
+    z-index: 2;
+}
+
+body.dark-mode .progress-ring span {
+    color: #ffffff;
+}
+
+/* 🌙 Giorni calendario - Dark migliorato */
+
+/* ===== BASE ===== */
+
+.calendar-day {
+    border-radius: 10px;
+    transition: 0.2s ease;
+}
+
+/* ===== LIGHT MODE ===== */
+
+body:not(.dark-mode) .calendar-day {
+    background-color: #f1f3f4;
+    color: #333;
+}
+
+/* Giorni allenamento (Lun-Mer-Ven) */
+body:not(.dark-mode) .calendar-day.training-day {
+    background-color: #e8f5e9;
+}
+
+/* Hover light */
+body:not(.dark-mode) .calendar-day:hover {
+    background-color: #dde3e6;
+}
+
+/* ===== DARK MODE DEFINITIVO ===== */
+
+
+/* ===== DARK MODE GIORNI CALENDARIO ===== */
+
+body.dark-mode .calendar-day {
+    background-color: #2e3338;
+    color: #ffffff;
+    border-radius: 12px;
+    transition: 0.2s ease;
+}
+
+/* Hover */
+body.dark-mode .calendar-day:hover {
+    background-color: #3a4046;
+}
+
+/* Numero giorno più visibile */
+body.dark-mode .calendar-day .day-number {
+    color: red !important;
+    font-size: 1.3rem !important;
+}
+
+/* Giorni ALLENAMENTO (Lun-Mer-Ven) */
+body.dark-mode .calendar-day.training-day {
+    background-color: #2f3a33;   /* verde scuro elegante */
+}
+
+/* Giorni NON allenamento */
+body.dark-mode .calendar-day:not(.training-day) {
+    background-color: #23272b;
+}
+
+
+
+/* Oggi */
+body.dark-mode .calendar-day.today {
+    border: 2px solid #4fc3f7;
+}
+/* Oggi (vale per entrambe le modalità) */
+.calendar-day.today {
+    border: 2px solid #0077b6;
+}
+
+/* ===== Barra giorni allenamento ===== */
+
+.calendar-day {
+    position: relative;
+    overflow: hidden;
+}
+
+/* Barra verticale */
+.calendar-day.training-day::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 8px;
+    bottom: 8px;
+    width: 4px;
+    border-radius: 4px;
+    background: var(--level-color, #0077b6);
+}
+
+/* Dark mode leggermente più luminosa */
+body.dark-mode .calendar-day.training-day::before {
+    filter: brightness(1.2);
+}
+/* ✨ Animazione riempimento */
+.animate-ring {
+    animation: fillRing 0.6s ease;
+}
+
+@keyframes fillRing {
+    0% { --progress: 0; }
+}
+
+/* 💎 Effetto hover */
+.calendar-day:hover .progress-ring {
+    transform: scale(1.08);
+    transition: 0.2s ease;
+}
+
+.stat-mese {
+    margin-bottom: 20px;
+    text-align: center;
+}
+
+.stat-label {
+    font-size: 14px;
+    margin-bottom: 6px;
+    font-weight: 500;
+}
+
+
+.stat-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 20px;
+    overflow: hidden;
+    transition: 0.3s ease;
+}
+
+body:not(.dark-mode) .stat-bar {
+    background: #e0e0e0;
+}
+
+body.dark-mode .stat-bar {
+    background: #333;
+}
+
+.stat-bar-fill {
+    height: 100%;
+    width: 0%;
+    transition: width 0.6s ease;
+}
+
+/* Light */
+body:not(.dark-mode) .stat-bar-fill {
+    background: linear-gradient(90deg, #4CAF50, #2e7d32);
+}
+
+/* Dark */
+body.dark-mode .stat-bar-fill {
+    background: linear-gradient(90deg, #66bb6a, #43a047);
+    box-shadow: 0 0 6px rgba(76,175,80,0.4);
+}
+.stat-percent {
+    margin-top: 6px;
+    font-size: 14px;
+    font-weight: bold;
+}
+
+/* STREAK BOX */
+.streak-box {
+    margin-bottom: 15px;
+    padding: 12px;
+    border-radius: 14px;
+    text-align: center;
+    font-size: 14px;
+    transition: 0.3s ease;
+}
+
+/* Light */
+body:not(.dark-mode) .streak-box {
+    background: linear-gradient(135deg, #fff3e0, #ffe0b2);
+    color: #333;
+}
+
+/* Dark */
+body.dark-mode .streak-box {
+    background: linear-gradient(135deg, #1e1e1e, #2a2a2a);
+    color: #ffffff;
+    border: 1px solid #333;
+    box-shadow: 0 0 10px rgba(255,140,0,0.15);
+}
+
+/* ===================================================
+   THEME OVERRIDE – TECH BLUE EDITION
+   Non modifica classi o struttura
+   Solo restyling visivo
+=================================================== */
+
+:root {
+  --blue-main: #0077b6;
+  --blue-dark: #023e8a;
+  --blue-accent: #00b4d8;
+  --black-deep: #0b1220;
+  --gray-tech: #1e293b;
+}
+
+/* ===== BODY ===== */
+
+body {
+  background: linear-gradient(180deg, #f8fbff, #eef6fb) !important;
+  color: var(--gray-tech) !important;
+}
+
+/* ===== CONTAINER ===== */
+
+.container {
+  border-radius: 26px !important;
+  box-shadow: 0 12px 35px rgba(2,62,138,0.08) !important;
+  border: 1px solid rgba(0,119,182,0.08) !important;
+}
+
+/* ===== TITOLO PRINCIPALE ===== */
+
+h1 {
+  font-weight: 900 !important;
+  letter-spacing: -1px !important;
+  background: linear-gradient(135deg, var(--blue-main), var(--blue-dark));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ===== TITOLI SECONDARI ===== */
+
+h2, h3, h4 {
+  color: var(--blue-dark) !important;
+}
+
+/* ===== BOTTONI (TUTTI) ===== */
+
+button,
+.btn {
+  background: linear-gradient(135deg, var(--blue-main), var(--blue-dark)) !important;
+  color: white !important;
+  border-radius: 18px !important;
+  border: none !important;
+  font-weight: 700 !important;
+  box-shadow: 0 8px 22px rgba(0,119,182,0.25) !important;
+  transition: all 0.25s ease !important;
+}
+
+button:hover,
+.btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 28px rgba(0,119,182,0.35) !important;
+}
+
+/* ===== CARD GENERICHE ===== */
+
+.card,
+.giorno-card,
+.guida-card,
+.item-misura,
+.item-storico,
+.stretch-card {
+  border-radius: 20px !important;
+  border: 1px solid rgba(0,119,182,0.12) !important;
+  box-shadow: 0 8px 22px rgba(2,62,138,0.05) !important;
+  transition: 0.2s ease !important;
+}
+
+.card:hover,
+.giorno-card:hover {
+  transform: translateY(-2px);
+}
+
+/* ===== CALENDARIO ===== */
+
+.calendar-day {
+  border-radius: 14px !important;
+  font-weight: 600 !important;
+}
+
+.calendar-day.training-day::before {
+  background: var(--blue-main) !important;
+}
+
+/* ===== PROGRESS BAR ===== */
+
+.stat-bar-fill,
+.progress-bar-fill {
+  background: linear-gradient(90deg, var(--blue-main), var(--blue-accent)) !important;
+}
+
+/* ===== TIMER OVERLAY ===== */
+
+#timer-overlay {
+  background: linear-gradient(135deg, var(--blue-dark), var(--blue-main)) !important;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25) !important;
+}
+
+/* ===== INPUT ===== */
+
+input,
+textarea,
+select {
+  border-radius: 14px !important;
+  border: 1px solid rgba(0,119,182,0.15) !important;
+}
+
+input:focus,
+textarea:focus,
+select:focus {
+  border-color: var(--blue-main) !important;
+  box-shadow: 0 0 0 3px rgba(0,119,182,0.1) !important;
+  outline: none !important;
+}
+
+/* ===== DARK MODE ===== */
+
+body.dark-mode {
+  background: linear-gradient(180deg, var(--black-deep), #050b14) !important;
+}
+
+body.dark-mode .container {
+  background: var(--gray-tech) !important;
+  border: 1px solid rgba(255,255,255,0.05) !important;
+}
+
+body.dark-mode .card,
+body.dark-mode .giorno-card,
+body.dark-mode .guida-card {
+  background: #1a2332 !important;
+  border: 1px solid rgba(255,255,255,0.08) !important;
+}
+
+body.dark-mode h1 {
+  background: linear-gradient(135deg, var(--blue-accent), white);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
+
+/* ==========================================
+   DARK MODE – CALENDARIO FIX PREMIUM
+========================================== */
+
+body.dark-mode .calendar-day {
+  background: #1c2636 !important;   /* non nero puro */
+  color: #cbd5e1 !important;        /* grigio chiaro elegante */
+  border: 1px solid rgba(255,255,255,0.06) !important;
+  transition: all 0.2s ease !important;
+}
+
+/* Hover */
+body.dark-mode .calendar-day:hover {
+  background: #24344d !important;
+  color: white !important;
+  border-color: rgba(0,180,216,0.6) !important;
+}
+
+/* Giorni con allenamento */
+body.dark-mode .calendar-day.training-day {
+  background: #0f3057 !important;
+  color: white !important;
+  border: 1px solid rgba(0,180,216,0.6) !important;
+  box-shadow: 0 0 10px rgba(0,180,216,0.3);
+}
+
+/* Linea laterale allenamento */
+body.dark-mode .calendar-day.training-day::before {
+  background: var(--blue-accent) !important;
+}
+
+/* Giorno attuale */
+body.dark-mode .calendar-day.today {
+  background: linear-gradient(135deg, #023e8a, #0077b6) !important;
+  color: white !important;
+  font-weight: 700 !important;
+  box-shadow: 0 0 15px rgba(0,119,182,0.5);
+}
+
+/* Numeri piccoli (se presenti span interni) */
+body.dark-mode .calendar-day span {
+  color: inherit !important;
+}
+/* ==========================================
+   DARK MODE – FIX DEFINITIVO NUMERI CALENDARIO
+========================================== */
+
+/* Forza colore a TUTTO dentro la casella */
+body.dark-mode .calendar-day,
+body.dark-mode .calendar-day * {
+  color: #f1f5f9 !important;
+}
+
+/* Giorni allenamento più forti */
+body.dark-mode .calendar-day.training-day,
+body.dark-mode .calendar-day.training-day * {
+  color: #ffffff !important;
+  font-weight: 700 !important;
+}
+
+/* Giorno corrente */
+body.dark-mode .calendar-day.today,
+body.dark-mode .calendar-day.today * {
+  color: #ffffff !important;
+  font-weight: 800 !important;
+}
+
+/* Giorni fuori mese */
+body.dark-mode .calendar-day.disabled,
+body.dark-mode .calendar-day.disabled * {
+  color: #64748b !important;
+}
+
+body.dark-mode #calendario-grid div:not(.has-workout):not(.today) {
+  background: #1e2a3d !important;
+}
+
+.btn-reset {
+        background-color: #ff7675;
+        color: white;
+        border: none;
+        padding: 8px 15px;
+        border-radius: 12px;
+        cursor: pointer;
+        font-size: 0.8em;
+        transition: opacity 0.3s;
+    }
+    .btn-reset:hover { opacity: 0.8; }
+    
+    .stats-card {
+    background: linear-gradient(135deg, #ffffff, #f3f9ff);
+    border-radius: 20px;
+    padding: 16px 18px;
+    margin-bottom: 16px;
+    box-shadow: 0 10px 25px rgba(0,119,182,0.12);
+    border: 1px solid rgba(0,119,182,0.08);
+}
+
+.stats-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 12px;
+}
+
+.stat-item {
+    flex: 1;
+    text-align: center;
+}
+
+.stat-number {
+    font-size: 22px;
+    font-weight: 800;
+    color: #023e8a;
+}
+
+.stat-label-small {
+    font-size: 12px;
+    opacity: 0.7;
+}
+
+.stat-divider {
+    width: 1px;
+    height: 30px;
+    background: rgba(0,0,0,0.08);
+}
+
+.stats-progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 13px;
+    margin-bottom: 6px;
+    font-weight: 600;
+}
+
+.stats-bar {
+    height: 8px;
+    border-radius: 20px;
+    background: #e0e0e0;
+    overflow: hidden;
+}
+
+.stats-bar-fill {
+    height: 100%;
+    width: 0%;
+    border-radius: 20px;
+    background: linear-gradient(90deg, #00b4d8, #0077b6);
+    transition: width 0.6s ease;
+}
+
+/* ===== DARK MODE – FIX CARD PREMIUM ===== */
+
+body.dark-mode .stats-card {
+    background: linear-gradient(135deg, #1c2636, #111827);
+    border: 1px solid rgba(255,255,255,0.05);
+    box-shadow: 0 10px 25px rgba(0,0,0,0.4);
+}
+
+/* Numeri grandi */
+body.dark-mode .stat-number {
+    color: #38bdf8 !important;   /* azzurro leggibile */
+}
+
+/* Label piccole */
+body.dark-mode .stat-label-small {
+    color: #cbd5e1 !important;
+}
+
+/* Testo completamento */
+body.dark-mode .stats-progress-label {
+    color: #e2e8f0 !important;
+}
+
+/* Barra sfondo */
+body.dark-mode .stats-bar {
+    background: #2e3338;
+}
+
+/* Percentuale */
+body.dark-mode #stat-percent {
+    color: #38bdf8 !important;
+}
+
+/* ===== DARK MODE – FIX NUMERI CALENDARIO DEFINITIVO ===== */
+
+body.dark-mode #calendario-grid div,
+body.dark-mode #calendario-grid div .day-number {
+    color: #f1f5f9 !important;   /* grigio chiarissimo leggibile */
+}
+
+/* Giorno con workout */
+body.dark-mode #calendario-grid div.has-workout {
+    color: #dcfce7 !important;
+}
+
+/* Oggi */
+body.dark-mode #calendario-grid div.today {
+    color: #ffffff !important;
+    font-weight: 700;
+}
+
+/* Se selezionato */
+body.dark-mode #calendario-grid div.active-day {
+    color: #ffffff !important;
+}
+/* === BOX RISCALDAMENTO – DARK MODE === */
+/* Assicurati di cambiare il selettore se hai usato id="tapis-roulant" o un altro nome */
+
+/* Sfondo e bordo del box */
+body.dark-mode #box-riscaldamento {
+    background: #2e3338 !important; /* Grigio scuro invece di giallo scuro */
+    border-color: #38bdf8 !important; /* Bordo azzurro invece di giallo scuro */
+    color: #ffffff !important;      /* Testo "RISCALDAMENTO: ..." in BIANCO */
+}
+
+/* Titolo "RISCALDAMENTO: ..." in azzurro chiaro per risaltare */
+body.dark-mode #box-riscaldamento strong {
+    color: #7dd3fc !important;
+}
+
+/* Dettagli tecnici grigio scuro su grigio chiaro per contrasto */
+body.dark-mode #box-riscaldamento small {
+    color: #cbd5e1 !important;
+}
+.reset-link {
+    background: none;
+    border: none;
+    color: #999;
+    font-size: 12px;
+    text-decoration: underline;
+    cursor: pointer;
+}
+
+.reset-modal {
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.45);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 9999;
+}
+
+.reset-box {
+    background: white;
+    padding: 25px;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 320px;
+    text-align: center;
+    animation: fadeIn 0.2s ease;
+}
+
+.reset-box h3 {
+    margin-top: 0;
+}
+
+.reset-actions {
+    margin-top: 20px;
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+}
+
+.reset-actions button {
+    flex: 1;
+    padding: 8px;
+    border-radius: 12px;
+    border: none;
+    cursor: pointer;
+}
+
+.reset-actions .danger {
+    background: #e74c3c;
+    color: white;
+}
+    </style>
+
+</head>
+<body>
+    <button class="dark-mode-toggle" onclick="toggleDarkMode()">🌓</button>
+
+    <div id="timer-overlay" class="hidden">
+        <div>
+            <div id="timer-label"></div>
+            <div id="timer-display">00:00</div>
+        </div>
+        <button id="btn-salta" class="btn-salta" onclick="stopTimer()">SALTA</button>
+    </div>
+
+    <div id="app-container" class="container">
+    <h1>My Pilates Plan</h1>
+
+   <div id="selezione-attrezzi" class="container hidden">
+    <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 20px;">
+        <h2 style="color:#0077b6; margin: 0; text-align: center;">Scegli i tuoi attrezzi</h2>
+    </div>
+
+    <p style="text-align:center; font-size:13px;">
+        Seleziona gli attrezzi che hai disponibili
+    </p>
+
+    <div id="lista-attrezzi" style="margin:20px 0;"></div>
+
+    <button class="btn" onclick="salvaAttrezzi()">SALVA E CONTINUA</button>
+</div>
+ 
+
+ <div id="dashboard">
+     <div style="background: #e3f2fd; padding: 15px; border-radius: 20px; margin-bottom: 20px; border: 1px solid #0077b6;">
+        <label style="font-weight: bold; display: block; margin-bottom: 5px;">
+IL TUO LIVELLO:
+<span id="badge-livello" class="badge-livello">MEDIO</span>
+</label>
+        <select id="select-livello" onchange="cambiaLivello(this.value)" style="width: 100%; padding: 10px; border-radius: 10px; border: none; font-weight: bold; color: #0077b6;">
+            <option value="BASSO">BASSO (2 Round - Leggero)</option>
+            <option value="MEDIO">MEDIO (3 Round - Standard)</option>
+            <option value="AVANZATO">AVANZATO (4 Round - Intenso)</option>
+        </select>
+    </div>
+        <div id="settimana-lista"></div>
+        <button class="btn" onclick="generaNuovaSettimana()">Genera Nuova Settimana</button>
+        <button class="btn" style="background:#9c27b0; margin-top:10px;" onclick="mostraCalendario()">📅 Calendario Workout</button>
+
+        <button class="btn" style="background:#6c757d; margin-top:10px;" onclick="modificaAttrezzi()">
+        ⚙️ Modifica Attrezzi
+        </button>
+        <button class="btn" style="background:#0077b6; margin-top:10px;" onclick="mostraProgressi()">📈 I Miei Progressi</button>
+        <button class="btn" style="background:#4A7c59; margin-top:10px;" onclick="mostraAlimentazione()">🍎 Diario Alimentare</button>
+        <button class="btn" style="background:#48cae4; margin-top:10px;" onclick="mostraLibreria()">📚 Tutti gli Esercizi</button>
+        <button class="btn" style="background:#6c757d; margin-top:10px;" onclick="mostraGuida()">❓ Guida all'uso</button>
+        <hr style="margin:30px 0; opacity:0.15;">
+
+<button onclick="apriResetModal()" class="reset-link">
+    Ripristina dati allenamento
+</button>
+    </div>
+<div id="guida-section" class="container hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <button onclick="tornaAllaDashboard()" style="background:none; border:none; color:#0077b6; cursor:pointer; font-size: 22px;">❮</button>
+        <h2 style="color:#0077b6; margin: 0; flex-grow: 1; text-align: center;">❓ Guida & FAQ</h2>
+    </div>
+<div class="guida-card">
+        <h3>🏃‍♂️ Allenamento Smart</h3>
+        <p>
+Ogni settimana l'app sceglie <strong>3 attrezzi diversi</strong> per te.
+</p>
+
+<p>
+Ogni sessione è organizzata in round composti da <strong>13 esercizi</strong>.
+Il numero di round, l’intensità e le ripetizioni cambiano in base al livello selezionato (Base, Intermedio o Avanzato).
+</p>
+
+<p>
+Gli esercizi sono distribuiti in modo bilanciato per lavorare su tutto il corpo: addome, interno coscia, glutei, gambe, braccia e schiena.
+</p>
+
+<p>
+Il 13° esercizio di ogni round è sempre un <strong>finisher addome dinamico</strong> pensato per aumentare l’intensità dell’allenamento.
+</p>
+
+<p>
+È presente anche una sezione cardio con tre opzioni: <strong>tapis roulant, camminata o cardio sul posto</strong>.
+Puoi scegliere quella più adatta a te direttamente dall’app.
+</p> 
+
+
+<p>
+È presente anche una sezione cardio con <strong>tre opzioni</strong>: tapis roulant, camminata e cardio sul posto. 
+Puoi scegliere quella più adatta a te direttamente dall’app.
+</p>
+    </div>
+
+    <div class="guida-card">
+        <h3>🍎 Nutrizione Dinamica</h3>
+        <p>Nella sezione <strong>Diario Alimentare</strong>, troverai un consiglio che cambia in base all'attrezzo del giorno. Se usi i pesi, ti suggeriremo proteine; se fai stretching, più idratazione.</p>
+    </div>
+
+    <div class="guida-card">
+        <h3>🎯 Sfida dei 30 Giorni</h3>
+        <p>Scegli una cattiva abitudine da eliminare (es. "No Zucchero"). Segna ogni vittoria quotidiana per far crescere il tuo <strong>streak</strong>. Se salti un giorno, la sfida si resetta!</p>
+    </div>
+
+    <div class="guida-card">
+        <h3>📈 Misurazioni</h3>
+        <p>Ti consigliamo di inserire le tue misure (Peso, Vita, Fianchi, Cosce) <strong>una volta a settimana</strong>, preferibilmente al mattino a digiuno, per monitorare i risultati reali.</p>
+    </div>    
+    <div class="guida-card">
+    <h3>🔄 Ripristinare il programma</h3>
+<p>
+Puoi ricominciare da zero usando il pulsante
+<strong>"Ripristina dati allenamento"</strong> in fondo alla Dashboard.
+</p>
+
+<p>
+Questa funzione cancella allenamenti completati, calendario e progressi,
+mantenendo salvate le impostazioni di livello e modalità scura.
+</p>
+
+</div>
+    <h3 style="color:#0077b6; margin: 20px 0 10px 0; font-size: 16px;">🏃‍♂️ ALLENAMENTO</h3>
+    <div class="guida-card" onclick="toggleFaq(this)" style="cursor:pointer;">
+    <h3 style="font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin:0;">
+        Cosa cambia tra i livelli? <span style="font-size: 10px;">▼</span>
+    </h3>
+    <p class="faq-content hidden" style="margin-top: 10px; font-size: 13px;">
+        L’app prevede tre livelli di difficoltà: Base, Intermedio e Avanzato.
+        Cambiano numero di round, intensità e ripetizioni degli esercizi,
+        mantenendo sempre la struttura in round da 13 esercizi.
+    </p>
+</div> 
+    <div class="guida-card" onclick="toggleFaq(this)" style="cursor:pointer;">
+       
+        <h3 style="font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin:0;">
+            Come funzionano i round e le pause? <span style="font-size: 10px;">▼</span>
+        </h3>
+        <p class="faq-content hidden" style="margin-top: 10px; font-size: 13px;">
+    Il numero di round varia in base al livello selezionato.
+    Ogni round è composto da 13 esercizi.
+    Dopo aver completato un round, clicca su "SEGNA ROUND" per attivare automaticamente il timer di pausa prima di proseguire.
+</p> 
+    </div>
+
+    <div class="guida-card" onclick="toggleFaq(this)" style="cursor:pointer;">
+        <h3 style="font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin:0;">
+            Non ho il tapis roulant, cosa faccio? <span style="font-size: 10px;">▼</span>
+        </h3>
+        <p class="faq-content hidden" style="margin-top: 10px; font-size: 13px;">
+    Nella sezione cardio puoi scegliere tra tapis roulant, camminata o cardio sul posto.
+    Se non hai il tapis roulant, seleziona una delle altre opzioni disponibili.
+</p> 
+    </div>
+
+    <h3 style="color:#4A7c59; margin: 20px 0 10px 0; font-size: 16px;">🍎 ALIMENTAZIONE</h3>
+    <div class="guida-card" onclick="toggleFaq(this)" style="cursor:pointer; border-left-color: #4A7c59;">
+        <h3 style="font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin:0; color: #4A7c59;">
+            Perché il consiglio del giorno cambia? <span style="font-size: 10px;">▼</span>
+        </h3>
+        <p class="faq-content hidden" style="margin-top: 10px; font-size: 13px;">
+            Il consiglio è <strong>dinamico</strong>: si adatta all'attrezzo che userai oggi. Se usi i pesi, riceverai consigli proteici; se fai stretching, focus sull'idratazione.
+        </p>
+    </div>
+
+    <div class="guida-card" onclick="toggleFaq(this)" style="cursor:pointer; border-left-color: #4A7c59;">
+        <h3 style="font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin:0; color: #4A7c59;">
+            Cosa significano i colori nel diario? <span style="font-size: 10px;">▼</span>
+        </h3>
+        <p class="faq-content hidden" style="margin-top: 10px; font-size: 13px;">
+            🟢 <strong>Sano:</strong> Pasti equilibrati. <br>
+            🟡 <strong>Neutro:</strong> Sgarri leggeri o pasti fuori casa. <br>
+            🔴 <strong>Sfizio:</strong> Alcol, dolci o fritti. Serve a monitorare l'equilibrio settimanale.
+        </p>
+    </div>
+
+    <h3 style="color:#e65100; margin: 20px 0 10px 0; font-size: 16px;">🎯 PROGRESSI & SFIDE</h3>
+    <div class="guida-card" onclick="toggleFaq(this)" style="cursor:pointer; border-left-color: #e65100;">
+        <h3 style="font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin:0; color: #e65100;">
+            Come funziona la Sfida 30 giorni? <span style="font-size: 10px;">▼</span>
+        </h3>
+        <p class="faq-content hidden" style="margin-top: 10px; font-size: 13px;">
+            Scegli un'abitudine da cambiare. Ogni giorno che resisti, clicca su "VINTO OGGI". Se dimentichi di segnarlo, la sfida potrebbe resettarsi: la costanza è la chiave!
+        </p>
+    </div>
+
+    <div class="guida-card" onclick="toggleFaq(this)" style="cursor:pointer; border-left-color: #e65100;">
+        <h3 style="font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin:0; color: #e65100;">
+            Ogni quanto devo inserire le misure? <span style="font-size: 10px;">▼</span>
+        </h3>
+        <p class="faq-content hidden" style="margin-top: 10px; font-size: 13px;">
+            Consigliamo di farlo <strong>una volta a settimana</strong>, preferibilmente al mattino a digiuno, per avere dati confrontabili nello storico.
+        </p>
+    </div>
+
+    <h3 style="color:#48cae4; margin: 20px 0 10px 0; font-size: 16px;">📚 LIBRERIA</h3>
+    <div class="guida-card" onclick="toggleFaq(this)" style="cursor:pointer; border-left-color: #48cae4;">
+        <h3 style="font-size: 14px; display: flex; justify-content: space-between; align-items: center; margin:0; color: #48cae4;">
+            Posso vedere come si fa un esercizio? <span style="font-size: 10px;">▼</span>
+        </h3>
+        <p class="faq-content hidden" style="margin-top: 10px; font-size: 13px;">
+            Sì, nella <strong>Libreria</strong> clicca sul nome di qualsiasi esercizio per leggere la spiegazione dettagliata su posizione e movimento.
+        </p>
+    </div>
+
+    <button class="btn" style="margin-top:20px;" onclick="tornaAllaDashboard()">HO CAPITO!</button>
+</div>
+
+    <div id="libreria-section" class="container hidden" style="margin-top:0; width: 100%; padding:0; box-shadow: none; border:none;">
+        <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 10px;">
+            <button onclick="tornaAllaDashboard()" style="background:none; border:none; color:#0077b6; cursor:pointer; font-size: 20px;">❮</button>
+            <h2 style="color:#0077b6; margin: 0; flex-grow: 1; text-align: center;">📚 Libreria</h2>
+        </div>
+        
+        <input type="text" id="input-ricerca" placeholder="Cerca esercizio o focus..." 
+               onkeyup="filtraLibreria()" 
+               style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; margin-bottom:20px; box-sizing:border-box;">
+
+        <div id="libreria-lista-completa"></div>
+    </div>
+
+</div>
+<div id="progressi-section" class="container hidden">
+    <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+        <button onclick="tornaAllaDashboard()" style="background:none; border:none; color:#0077b6; cursor:pointer; font-size: 22px; padding: 0;">❮</button>
+        <h2 style="color:#0077b6; margin: 0; flex-grow: 1; text-align: center;">📈 I Miei Progressi</h2>
+    </div>
+    
+    <div class="card">
+        <h3 style="margin-top:0; font-size: 16px; text-transform: uppercase; color:#0077b6;">Nuove Misure</h3>
+        <div class="grid-misure">
+            <input type="number" id="peso" placeholder="Peso (kg)" step="0.1">
+            <input type="number" id="vita" placeholder="Vita (cm)">
+            <input type="number" id="fianchi" placeholder="Fianchi (cm)">
+            <input type="number" id="coscia" placeholder="Coscia (cm)">
+        </div>
+        <button onclick="salvaMisure()" class="btn" style="margin-top: 10px;">SALVA PROGRESSI</button>
+    </div>
+
+    <h3 style="color: #0077b6; font-size: 16px; text-transform: uppercase; margin-top: 30px;">Storico Misurazioni</h3>
+    <div id="lista-storico">
+        </div>
+    
+    <button class="btn" style="margin-top:20px; background: white; color: #0077b6; border: 2px solid #0077b6;" onclick="tornaAllaDashboard()">⬅ TORNA ALLA DASHBOARD</button>
+</div>
+ 
+
+
+ <div id="alimentazione-section" class="container hidden">
+     <button onclick="tornaAllaDashAlim()" style="background:none; border:none; color:#0077b6; cursor:pointer; font-size: 22px; padding: 0;">❮</button>
+    <h2 style="color:#0077b6; text-align: center;">🍎 Diario & Sfide</h2>
+    
+    <div style="background: #e0f2f1; padding: 15px; border-radius: 20px; margin-bottom: 20px; text-align: center; border: 1px solid #b2dfdb;">
+        <small style="color:#00796b; font-weight: bold; text-transform: uppercase; display: block; margin-bottom: 5px;">💡 Consiglio del giorno</small>
+        <p id="suggerimento-testo" style="font-size: 13px; margin: 0; color: #004d40; line-height: 1.4;"></p>
+    </div>
+
+    <div style="background: #e1f5fe; padding: 20px; border-radius: 20px; margin-bottom: 20px; text-align: center; border: 1px solid #b3e5fc;">
+        <h4 style="margin:0; color:#01579b;">💧 Acqua (Obiettivo 2L)</h4>
+        <div id="water-icons" style="font-size: 28px; margin: 15px 0; cursor:pointer; letter-spacing: 5px;"></div>
+        <div style="width:100%; background:white; height:10px; border-radius:10px; overflow:hidden; border: 1px solid #81d4fa;">
+            <div id="water-fill" style="width:0%; height:100%; background: linear-gradient(90deg, #4fc3f7, #0288d1); transition:0.5s;"></div>
+        </div>
+        <small id="water-count" style="display:block; margin-top:10px; color:#0288d1; font-weight:bold;">0 / 10 Bicchieri</small>
+    <small onclick="resetAcqua()" style="cursor:pointer; text-decoration:underline; color:#999; font-size:10px; display:block; margin-top:5px;">Svuota tutto</small>
+   
+    </div>
+
+    <div id="box-sfida-custom" style="background: #fff3e0; padding: 20px; border-radius: 20px; border: 1px solid #ffb74d; margin-bottom: 20px; text-align: center;">
+        <div id="setup-sfida">
+            <h4 style="margin: 0 0 10px 0; color: #e65100;">🎯 Nuova Sfida 30gg</h4>
+            <input type="text" id="custom-challenge-name" placeholder="Esempio: No Dolci" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ffb74d; box-sizing: border-box; text-align: center; margin-bottom: 10px;">
+            <div style="display:flex; justify-content: center; gap:8px; margin-bottom: 15px;">
+                <span class="tag-suggerimento" onclick="setChallenge('🚫 No Dolci')">No Dolci</span>
+                <span class="tag-suggerimento" onclick="setChallenge('☕ No Zucchero')">No Zucchero</span>
+            </div>
+            <button class="btn" style="background:#e65100;" onclick="avviaSfidaCustom()">INIZIA SFIDA</button>
+        </div>
+        
+        <div id="progresso-sfida" class="hidden">
+            <h4 id="nome-sfida-attiva" style="margin:0; color: #e65100;"></h4>
+            <div id="giorni-sfida-text" style="font-size:40px; font-weight:900; color:#e65100; margin: 10px 0;">0 / 30</div>
+            <button id="btn-vittoria" class="btn" style="background:#4CAF50; margin-bottom: 10px;" onclick="segnaVittoria()">VINTO OGGI ✅</button>
+            <p onclick="resetSfida()" style="font-size:11px; text-decoration:underline; cursor:pointer; color: #e65100; margin: 0;">Cambia sfida</p>
+        </div>
+    </div>
+
+    <div style="background:white; padding:20px; border-radius:25px; border:1px solid #e1eef2; text-align: center;">
+        <h4 style="margin: 0 0 15px 0; color: #0077b6;">📝 Diario Alimentare</h4>
+        <select id="tipo-pasto" style="width:100%; padding:12px; margin-bottom:12px; border-radius:12px; border: 1px solid #ddd; background: #f8f9fa;">
+            <option>Colazione</option>
+            <option>Pranzo</option>
+            <option>Spuntino</option>
+            <option>Cena</option>
+        </select>
+        <textarea id="descrizione-pasto" placeholder="Cosa hai mangiato?" style="width:100%; padding:12px; border-radius:12px; border:1px solid #ddd; height: 80px; box-sizing: border-box; font-family: inherit; margin-bottom: 15px;"></textarea>
+        
+        <p style="font-size:11px; font-weight:bold; margin-bottom:10px; color: #666; text-transform: uppercase;">Com'era questo pasto?</p>
+        
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+            <div class="opzione-pasto selected" id="mood-verde" onclick="selezionaMood('🟢', this)">
+                <span>🟢</span> <div style="text-align:left;"><b style="font-size:12px;">SANO</b><br><small style="font-size:10px;">Equilibrato e leggero</small></div>
+            </div>
+            <div class="opzione-pasto" id="mood-giallo" onclick="selezionaMood('🟡', this)">
+                <span>🟡</span> <div style="text-align:left;"><b style="font-size:12px;">NEUTRO</b><br><small style="font-size:10px;">Abbondante o fuori casa</small></div>
+            </div>
+            <div class="opzione-pasto" id="mood-rosso" onclick="selezionaMood('🔴', this)">
+                <span>🔴</span> <div style="text-align:left;"><b style="font-size:12px;">SFIZIO</b><br><small style="font-size:10px;">Dolci, fritti o alcol</small></div>
+            </div>
+        </div>
+        <button class="btn" onclick="salvaPasto()">AGGIUNGI AL DIARIO</button>
+    </div>
+<div id="lista-pasti-oggi" style="margin-top:20px;"></div>
+    
+    <button class="btn" style="margin-top:20px; background: white; color: #0077b6; border: 2px solid #0077b6;" onclick="tornaAllaDashAlim()">⬅ TORNA ALLA DASHBOARD</button>
+
+</div> 
+    
+    <div id="progresso-sfida" class="hidden" style="text-align: center;">
+        <h3 id="nome-sfida-attiva" style="color:#e65100; margin: 10px 0;"></h3>
+        <div id="giorni-sfida-text" style="font-size: 36px; font-weight: 900; color: #fb8c00;">0 / 30</div>
+        <button id="btn-vittoria" class="btn" style="background:#4CAF50; margin-top:10px; width:100%;" onclick="segnaVittoria()">HO VINTO OGGI! ✅</button>
+        <p onclick="resetSfida()" style="color:#e65100; font-size:11px; text-decoration:underline; cursor:pointer; margin-top:15px;">Abbandona e cambia sfida</p>
+    </div>
+</div>
+
+</div>
+
+        <div id="allenamento" class="hidden">
+            <button onclick="tornaAllaDashboard()" style="background:none; border:none; color:#4A7c59; cursor:pointer; font-weight: bold; margin-bottom: 10px;">< Indietro</button>
+            <h2 id="giorno-titolo"></h2>
+            <div class="progress-container">
+    <div id="exercise-progress" class="progress-bar"></div>
+</div>
+
+            <div id="box-riscaldamento" style="background: #fff3cd; padding: 15px; border-radius: 20px; margin-bottom: 15px; border-left: 5px solid #ffc107;">
+    <div id="riscaldamento-contenuto">
+        </div>
+    <button onclick="cambiaRiscaldamento()" style="width:100%; margin-top:10px; background:rgba(0,0,0,0.05); border:1px dashed #e6ae00; border-radius:10px; padding:8px; font-size:11px; font-weight:bold; cursor:pointer;">
+        🔄 CAMBIA MODALITÀ (Tapis / Cardio / Aperto)
+    </button>
+</div>
+            <div id="esercizi-lista"></div>
+            <div id="round-control" style="margin-top: 20px; text-align: center; border-top: 1px solid #eee; padding-top: 20px;">
+                <p style="font-size: 18px; font-weight: bold;">Round Completati: <span id="round-count" style="color:#d32f2f">0</span>/3</p>
+                <button class="btn" onclick="segnaRound()">SEGNA ROUND E PAUSA</button>
+            </div>
+        </div>
+    </div>
+<div id="calendario-section" class="container hidden">
+    <div style="display:flex; align-items:center; justify-content:space-between; margin-bottom:20px;">
+        <button onclick="tornaAllaDashboard()" style="background:none; border:none; font-size:22px; color:#0077b6;">❮</button>
+        <h2 style="margin:0; color:#0077b6;">📅 Calendario Workout</h2>
+        
+
+    </div>
+
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+        <button onclick="cambiaMese(-1)" style="background:none; border:none; font-size:20px;">◀</button>
+        <h3 id="mese-anno" style="margin:0;"></h3>
+        <button onclick="cambiaMese(1)" style="background:none; border:none; font-size:20px;">▶</button>
+    </div>
+<div class="stats-card">
+
+    <div class="stats-top">
+        <div class="stat-item">
+            <div class="stat-number" id="streak-current">0</div>
+            <div class="stat-label-small">🔥 Serie</div>
+        </div>
+
+        <div class="stat-divider"></div>
+
+        <div class="stat-item">
+            <div class="stat-number" id="streak-record">0</div>
+            <div class="stat-label-small">🏆 Record</div>
+        </div>
+    </div>
+
+    <div class="stats-progress">
+        <div class="stats-progress-label">
+            Completamento mese
+            <span id="stat-percent">0%</span>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stats-bar-fill" id="stat-bar-fill"></div>
+        </div>
+    </div>
+
+</div>
+    <div style="display: grid; grid-template-columns: repeat(7, 1fr); text-align: center; font-weight: bold; font-size: 0.7em; margin-bottom: 8px; color: #636e72; text-transform: uppercase;">
+        <div>Lun</div><div>Mar</div><div>Mer</div><div>Gio</div><div>Ven</div><div>Sab</div><div>Dom</div>
+    </div>
+    
+    <div id="calendario-grid" style="display:grid; grid-template-columns: repeat(7, 1fr); gap:8px;"></div>
+
+    <div style="margin-top: 25px; padding-top: 15px; border-top: 1px solid #eee; display: grid; grid-template-columns: 1fr 1fr; gap: 10px; font-size: 0.75em;">
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 12px; height: 12px; background: #f1fbf2; border: 1px solid #c8e6c9; border-radius: 3px;"></div>
+            <span>Allenamento (L-M-V)</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 12px; height: 12px; background: #f1f3f4; border: 1px solid #ddd; border-radius: 3px;"></div>
+            <span>Riposo</span>
+        </div>
+        
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 12px; height: 12px; background: #e8f5e9; border: 2px solid #4CAF50; border-radius: 3px;"></div>
+            <span>Sessione Fatta</span>
+        </div>
+        <div style="display: flex; align-items: center; gap: 6px;">
+            <div style="width: 12px; height: 12px; border: 2px solid #0077b6; border-radius: 3px;"></div>
+            <span>Oggi</span>
+        </div>
+    </div>
+<div style="margin-top:15px; font-size:0.75em; line-height:1.6;">
+<b>Legenda Attrezzi:</b><br>
+CL = Corpo Libero · RG = Ring · RL = Rullo · PS = Pesi<br>
+EC = Elastico Chiuso · FA = Fascia Aperta<br>
+PP = Palla Piccola · PG = Palla Grande
+</div>
+
+    <button class="btn" style="margin-top:20px; background:white; color:#0077b6; border:2px solid #0077b6;" onclick="tornaAllaDashboard()">⬅ TORNA ALLA DASHBOARD</button>
+</div>
+ 
+<script>
+    let roundCorrenti = 0;
+let giornoSelezionato = null;
+    let giornoCorrente = null;
+
+    let eserciziCorrenti = []; // Questa variabile ricorderà gli esercizi scelti per la sessione
+
+    const CONFIG_LIVELLI = {
+    "BASSO": { round: 2, repsMoltiplicatore: 0.8, tempoEsercizio: 30, pausa: 60 },
+    "MEDIO": { round: 3, repsMoltiplicatore: 1, tempoEsercizio: 45, pausa: 45 },
+    "AVANZATO": { round: 4, repsMoltiplicatore: 1.5, tempoEsercizio: 60, pausa: 30 }
+};
+
+// Livello predefinito
+let livelloAttuale = localStorage.getItem("livelloPilates") || "MEDIO";
+
+    let dataCorrente = new Date();
+let vistaCalendario = "mese";
+
+const attrezzoShort = {
+    "Corpo Libero": "CL",
+    "Ring": "RG",
+    "Rullo": "RL",
+    "Pesi(da 1 a 4kg)": "PS",
+    "Elastico Chiuso": "EC",
+    "Fascia Aperta": "FA",
+    "Palla Piccola": "PP",
+    "Palla Grande": "PG"
+};
+
+
+const tuttiGliAttrezzi = ["Corpo Libero", "Ring", "Rullo", "Pesi(da 1 a 4kg)", "Elastico Chiuso", "Fascia Aperta", "Palla Piccola", "Palla Grande"];
+
+
+document.addEventListener("DOMContentLoaded", function () {
+
+    // 🔹 Ripristina livello salvato
+    livelloAttuale = localStorage.getItem("livelloPilates") || "MEDIO";
+    document.getElementById("select-livello").value = livelloAttuale;
+
+    // 🔹 Badge livello
+    const badge = document.getElementById("badge-livello");
+    if (badge) {
+        badge.textContent = livelloAttuale;
+
+        if (livelloAttuale === "BASSO") {
+            badge.style.background = "#4CAF50";
+        } else if (livelloAttuale === "MEDIO") {
+            badge.style.background = "#0077b6";
+        } else {
+            badge.style.background = "#d32f2f";
+        }
+    }
+
+    // 🔹 Lista attrezzi
+    creaListaAttrezzi();
+
+    const attrezziSalvati = localStorage.getItem("attrezziSelezionati");
+    if (!attrezziSalvati) {
+        mostraSelezioneAttrezzi();
+    }
+
+    // 🔹 Allenamento attivo
+    const salvato = localStorage.getItem("allenamentoAttivo");
+    if (salvato) {
+        eserciziCorrenti = JSON.parse(salvato);
+    }
+
+    // 🔹 Dashboard iniziale
+    renderDashboard();
+    generaCalendario();   // 👈 QUI
+
+    // 🔹 Aggiorna round UI allenamento
+    aggiornaRoundUI();
+
+    // 🔹 Tooltip
+    inizializzaTooltip();
+});
+function mostraSelezioneAttrezzi() {
+    document.getElementById("dashboard").classList.add("hidden");
+    document.getElementById("selezione-attrezzi").classList.remove("hidden");
+}
+
+function creaListaAttrezzi() {
+    const container = document.getElementById("lista-attrezzi");
+    container.innerHTML = "";
+
+    tuttiGliAttrezzi.forEach(attrezzo => {
+        container.innerHTML += `
+            <div style="margin-bottom:10px;">
+                <label style="font-size:14px;">
+                    <input type="checkbox" value="${attrezzo}">
+                    ${attrezzo}
+                </label>
+            </div>
+        `;
+    });
+}
+
+function salvaAttrezzi() {
+    const selezionati = Array.from(
+        document.querySelectorAll("#lista-attrezzi input:checked")
+    ).map(input => input.value);
+
+    if (selezionati.length === 0) {
+        alert("Seleziona almeno un attrezzo!");
+        return;
+    }
+
+    localStorage.setItem("attrezziSelezionati", JSON.stringify(selezionati));
+
+    document.getElementById("selezione-attrezzi").classList.add("hidden");
+    document.getElementById("dashboard").classList.remove("hidden");
+
+    generaNuovaSettimana();
+}
+
+function modificaAttrezzi() {
+    document.getElementById("dashboard").classList.add("hidden");
+    document.getElementById("selezione-attrezzi").classList.remove("hidden");
+
+    const salvati = JSON.parse(localStorage.getItem("attrezziSelezionati")) || [];
+
+    document.querySelectorAll("#lista-attrezzi input").forEach(input => {
+        input.checked = salvati.includes(input.value);
+    });
+}
+
+let usaTapisRoulant = true; 
+
+const cardioAlternativo = [
+    { nome: "Jumping Jacks", durata: "180 sec", desc: "Saltelli aprendo braccia e gambe contemporaneamente." },
+    { nome: "Corsa sul posto", durata: "240 sec", desc: "Corri sul posto portando le ginocchia mediamente alte." },
+    { nome: "Mountain Climbers", durata: "120 sec", desc: "In posizione plank, porta velocemente le ginocchia al petto." },
+    { nome: "Burpees (Slow)", durata: "180 sec", desc: "Dalla posizione eretta a plank e ritorno, senza salto se preferisci." }
+];
+
+const databaseEsercizi = {
+    "Corpo Libero": [
+       // ADDOME
+        { nome: "The hundred", focus: "Addome", reps: "100 molleggi", spiegazione: "Supina, solleva testa e spalle, distendi le gambe a 45 gradi (o piegate a 90°). Muovi le braccia su e giù in modo controllato mentre respiri: inspira per 5 movimenti, espira per 5." },
+         { nome: "The roll up", focus: "Addome", reps: "15 reps", spiegazione: "Supina, braccia tese oltre la testa. Espira, arrotola la colonna fino a sederti e fletti avanti. Ritorna lentamente vertebra per vertebra." }, 
+        { nome: "Single leg stretch", focus: "Addome", reps: "16 reps", spiegazione: "Supina, solleva testa e spalle. Porta un ginocchio al petto mentre l'altra gamba è distesa. Scambia le gambe espirando ad ogni movimento, mantenendo la parte superiore del corpo ferma." },
+        { nome: "Double leg stretch", focus: "Addome", reps: "15 reps", spiegazione: "Supina con le ginocchia al petto, solleva testa e spalle. Espirando, stendi le braccia oltre la testa e le gambe in avanti. Inspirando, torna alla posizione di partenza. Questo esercizio rinforza l'intera parete addominale." },
+        { nome: "Lower lift", focus: "Addome", reps: "15 reps", spiegazione: "Supina e mani dietro la nuca, gambe a 90°. Scendi con le gambe tese unite e risali senza inarcare la schiena." },
+        { nome: "Criss cross", focus: "Addome", reps: "16 reps", spiegazione: "Supina, con le mani dietro la nuca e le ginocchia al petto, porta il gomito destro verso il ginocchio sinistro mentre distendi la gamba destra. Alterna i lati in modo controllato, lavorando sugli obliqui." },
+        { nome: "Scissors", focus: "Addome", reps: "16 reps", spiegazione: "Supina e gambe tese al soffitto. Tira una gamba al viso con due impulsi mentre l'altra scende." },
+        { nome: "Teaser prep", focus: "Addome", reps: "15 reps", spiegazione: "Supina, sali con il busto mantenendo le gambe a tavolino, braccia tese verso i piedi." },
+        { nome: "The teaser", focus: "Addome", reps: "45 sec", spiegazione: "In equilibrio sugli ischi, gambe e braccia a V. Mantieni l'equilibrio." },
+        { nome: "Plank classico", focus: "Addome", reps: "45 sec", spiegazione: "Prona, appoggio su avambracci e punte dei piedi. Mantieni il corpo in linea retta." },
+        { nome: "Can can", focus: "Addome", reps: "16 reps", spiegazione: "Seduti su avambracci, gambe a tavolino. Ruota le ginocchia Dx/Sx/Dx e stendi le gambe in diagonale." },
+        { nome: "Side bend", focus: "Addome", reps: "15 reps per lato", spiegazione: "Sul fianco, appoggio su una mano o avambraccio. Solleva il bacino creando un arco laterale perfetto. Sali e scendi " },
+        { nome: "Side plank", focus: "Addome", reps: "45 sec per lato", spiegazione: "Sul fianco, appoggio su una mano o avambraccio. Solleva il bacino creando un arco laterale perfetto. Resta in alto in isometria." },
+        { nome: "Neck pull", focus: "Addome", reps: "15 reps", spiegazione: "Supini, mani dietro la nuca, gambe tese. Sali in posizione seduta usando solo l'addome (senza slancio)." },
+           // INTERNO GAMBA
+        { nome: "Inner thigh lifts", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Sul fianco, gamba sopra piegata avanti, gamba sotto tesa. Solleva la gamba sotto verso l'alto." },
+        { nome: "Inner thigh circles", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Sul fianco, gamba sopra piegata avanti, gamba sotto tesa. Fai piccoli cerchi con la gamba sotto." },
+        { nome: "Beats on belly", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Prona, mani sotto la fronte, gambe tese sollevate. Batti i talloni velocemente tra loro." },
+        { nome: "Frog press", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, talloni uniti e punte aperte (rana). Stendi le gambe a 45° premendo l'interno coscia." },
+        { nome: "Plie squat", focus: "Interno Gamba", reps: "16 reps", spiegazione: "In piedi, gambe larghe, punte in fuori. Scendi in squat mantenendo il busto dritto." },
+        { nome: "Side leg kick", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Sul fianco, gamba sopra tesa, sposta il piede avanti a martello e indietro a punta." },
+        { nome: "Diamond lift", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, gambe a rombo (piedi uniti), stendi le gambe verso l'alto stringendo le cosce." },
+        { nome: "Double leg circles", focus: "Interno Gamba", reps: "15 reps", spiegazione: "Supina, gambe tese al soffitto.  Divarica le gambe a V, scendi, uniscile e risali(cerchio inverso)." },
+       
+           // GAMBE
+        { nome: "Single leg circle", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Supina, una gamba tesa in alto, disegna cerchi ampi senza oscillare con il bacino." },
+        { nome: "Side kick up/down", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Sul fianco, solleva la gamba tesa lateralmente e scendi con controllo senza toccare l'altra." },
+        { nome: "Leg pull front", focus: "Gambe", reps: "14 reps", spiegazione: "Plank, solleva una gamba tesa verso l'alto mantenendo il bacino stabile, poi alterna." },
+        { nome: "Lunges (affondi)", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi, fai un passo avanti e scendi con il ginocchio dietro verso terra a 90°." },
+        { nome: "Side leg swing", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi o sul fianco, slancia la gamba avanti e indietro mantenendo il busto immobile." },
+        { nome: "Wall sit", focus: "Gambe", reps: "45 sec", spiegazione: "Appoggiata al muro. schiena aderente, gambe a 90° come se fossi seduta. Mantieni." },
+        { nome: "One leg squat prep", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi, solleva una gamba avanti, scendi leggermente con l'altra gamba e risali." },
+        { nome: "Bicycle legs", focus: "Gambe", reps: "14 reps", spiegazione: "Supina, pedala con le gambe in aria disegnando cerchi ampi e fluidi." },
+        { nome: "One leg kick", focus: "Gambe", reps: "14 reps", spiegazione: "Prona, sollevati sugli avambracci. Due calci veloci del tallone al gluteo e stendi,alternando." },
+                // GLUTEI
+        { nome: "Shoulder bridge", focus: "Glutei", reps: "14 reps", spiegazione: "Supina, piedi a terra, solleva il bacino contraendo forte i glutei." },
+        { nome: "Bridge marching", focus: "Glutei", reps: "14 reps", spiegazione: "In Bridge, solleva un piede alla volta portando il ginocchio al petto senza abbassare il bacino." },
+        { nome: "Single leg bridge", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Supina, una gamba tesa al soffitto, l'altra piegata. Solleva il bacino usando solo una gamba." },
+        { nome: "Donkey kicks", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedia, calcia il tallone verso il soffitto mantenendo il ginocchio a 90°." },
+        { nome: "Fire hydrant", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedia, apri il ginocchio lateralmente come un cane all'idrante, mantenendo il busto fermo." },
+        { nome: "Prone leg lifts", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Prona, fronte sulle mani, solleva la gamba tesa dietro senza inarcare la schiena." },
+        { nome: "Swimming legs", focus: "Glutei", reps: "45 sec", spiegazione: "Prona, gambe tese e sollevate, alterna piccoli molleggi velocissimi dall'anca." },
+        { nome: "Heel beats", focus: "Glutei", reps: "45 sec", spiegazione: "Proni, gambe sollevate etese, talloni uniti. Batti i talloni velocemente attivando i glutei." },
+        { nome: "Leg pull back", focus: "Glutei", reps: "45 sec", spiegazione: "Reverse Plank (pancia in su), mani a terra. Solleva il bacino teso e alza alternativamente una gamba." },
+        { nome: "Glute sqeeze", focus: "Glutei", reps: "45 sec", spiegazione: "Proni, gambe tese, mani sottola fronte. Contrazione isometrica dei glutei (stringi e rilascia)." },
+        // SCHIENA
+        { nome: "Swimming", focus: "Schiena", reps: "12 reps", spiegazione: "Prona. braccia e gambe tese. Solleva alternativamente braccio e gamba opposta velocemente simulando il nuoto." },
+        { nome: "Swan dive prep", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, mani sotto le spalle. Estendi la schiena sollevando il busto, mantenendo il collo lungo." },
+        { nome: "Spine stretch forward", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta, gambe divaricate. Allungati in avanti come per superare un ostacolo, arrotondando la schiena." },
+        { nome: "The saw", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta, gambe divaricate e braccia a T. Ruota il busto e flettiti verso il piede opposto." },
+        { nome: "Cat stretch", focus: "Schiena", reps: "12 reps", spiegazione: "Quadrupeda, arrotonda la schiena portando l'ombelico alla colonna, poi inarca leggermente guardando avanti." },
+        { nome: "Single leg kick", focus: "Schiena", reps: "12 reps", spiegazione: "Prona sui gomiti: Spingi il petto lontano da terra. Calcia il gluteo con il tallone due volte per gamba." },
+        { nome: "Double leg kick", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, mani intrecciate dietro la schiena: 3 calci dei talloni ai glutei, poi stendi tuttosollevando il petto." },
+        { nome: "Prone t-lift", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, braccia aperte a T. Solleva il busto e le braccia avvicinando le scapole tra loro." },
+
+        // BRACCIA
+           { nome: "Tricep dips", focus: "Braccia", reps: "12 reps", spiegazione: "Seduta, mani dietro i fianchi. Solleva il bacino e fletti i gomiti verso l'indietro." },
+        { nome: "Push ups pilates", focus: "Braccia", reps: "12 reps", spiegazione: "Plank, mani sotto le spalle. Scendi con il corpo in linea, gomiti stretti vicino ai fianchi." },
+        { nome: "Boxing", focus: "Braccia", reps: "12 reps", spiegazione: "Seduta, busto leggermente avanti. Stendi le braccia alternandole con forza e controllo." },
+        { nome: "Diamond push up", focus: "Braccia", reps: "12 reps", spiegazione: "Prona, mani a diamante sotto il petto. Spingi verso l'alto attivando i tricipiti." },
+        { nome: "Circle arms", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, braccia tese lateralmente. Disegna piccoli cerchi veloci mantenendo le spalle basse." },
+        { nome: "Arm pulses (back)", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, braccia tese dietro la schiena. Molleggia le mani l'una verso l'altra." },
+        { nome: "Wall push up", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, mani al muro larghezza spalle. Piegamenti controllati mantenendo i talloni a terra." },
+        { nome: "The seal", focus: "Braccia", reps: "12 reps", spiegazione: "Seduti, mani sotto le caviglie dall'interno. La pressione delle braccia contro le gambe attiva ibicipiti/tricipiti." },
+    ],
+    "Ring": [
+        // ADDOME 
+        { nome: "Hundred con ring", focus: "Addome", reps: "100 molleggi", spiegazione: "Supina, ring tra le caviglie da stringere costantemente mentre molleggi con le braccia." },
+        { nome: "Ring crunch", focus: "Addome", reps: "15 reps", spiegazione: "Supina, ring tra le mani. Sali in crunch e tocca le ginocchia con il ring." },
+        { nome: "Roll up con crunch", focus: "Addome", reps: "15 reps", spiegazione: "Supina, braccia al soffitto, ring tra i palmi delle mani. Sali in posizione seduta premendo il ring verso l'interno per attivare il core profondo." },
+         { nome: "Criss cross", focus: "Addome", reps: "16 reps", spiegazione: "Supini, gambe a tavolino, ring tra le mani davanti al petto. Ruota il busto portando l'esterno del ring oltre il ginocchio opposto." },
+        { nome: "Ab curl squeeze", focus: "Addome", reps: "15 reps", spiegazione: "Supina, ring tra le cosce. Schiaccia il ring ogni volta che sali in crunch." },
+        { nome: "Teaser", focus: "Addome", reps: "45 sec", spiegazione: "Seduta, ring tra le mani teso verso i piedi in equilibrio a V sul sacro." },
+        { nome: "Obliqui con ring", focus: "Addome", reps: "16 reps", spiegazione: "Supina, ring tra le mani. Ruota il busto portando il ring all'esterno del fianco opposto." },
+        { nome: "Lower lift con ring", focus: "Addome", reps: "15 reps", spiegazione: "Supina, mani sotto il sacro. Ring tra le caviglie. Scendi con le gambe tese e risali." },
+        { nome: "Side plank press", focus: "Addome", reps: "45 sec per lato", spiegazione: "Plank laterale, ring sotto la mano libera. Mentre tieni la posizione, premi il ring verso terra con piccoli impulsi." },
+        // INTERNO GAMBA
+        { nome: "Aductor squeeze", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, ring tra le ginocchia. Stringi il cerchio con forza e rilascia con controllo." },
+        { nome: "Inner thigh pulse", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, gambe tese a 90°, ring tra le caviglie. Fai piccoli impulsi rapidi verso l'interno senza mai mollare. Mantieni schiena diritta e spalle basse." },
+        { nome: "Side ring press", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Sul fianco, ring tra le cosce (sopra il ginocchio). Stringi la gamba superiore verso quella inferiore." },
+        { nome: "Ring bridge squeeze", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, ring tra le ginocchia in posizione ponte. Stringi il cerchio mentre sollevi il bacino." },
+         { nome: "Bridge adduction", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Ponte sulle spalle, ring tra  le ginocchia. Mantieni il bacino alto e molleggia chiudendo  il ring con l'interno coscia." },
+        { nome: "Ring frog press", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, piedi dentro il ring, stendi le gambe a 45° spingendo l'interno coscia verso l'esterno." }, 
+         { nome: "Seated adduction", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Seduti (gambe flesse), ring tra le ginocchia. Schiaccia il ring mantenendo la schiena dritta e le spalle basse." }, 
+        // GAMBE
+        { nome: "Ring leg press", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Supina, un piede nel ring, mani che tengono l'altro lato. Spingi la gamba contro la resistenza del cerchio." },
+        { nome: "Ring side kick", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Sul fianco, caviglia superiore nel ring. Schiaccia il ring con la gamba superiore verso quella inferiore." },
+        { nome: "Ring hamstring curl", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Prona, ring incastrato tra gluteo e caviglia. Stringi il cerchio flettendo la gamba verso il gluteo." }, 
+        { nome: "Standing balance ring", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi, ring appoggiato sulla coscia a 90°. Premi con la mano il ring contro la coscia mentre cerchi di sollevare il ginocchio." },
+        { nome: "Forward lunge with ring", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi, fai un affondo avanti premendo il ring tra le mani per stabilizzare il core e le gambe." },
+        { nome: "Ring squat hold", focus: "Gambe", reps: "45 sec", spiegazione: "In piedi, ring tra le cosce. Scendi in squat e rimani in posizione premendo costantemente il cerchio." },
+         { nome: "Leg circles con ring", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Supina, un piede nel ring, mani all'altra estremità. Disegna cerchi con la gamba tesa usando il ring come assistenza e guida." },
+        // GLUTEI
+        { nome: "Ring donkey kick", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedia, ring dietro il ginocchio. Stringi il ring tra polpaccio e coscia mentre calci su." },
+        { nome: "Prone ring squeeze", focus: "Glutei", reps: "14 reps", spiegazione: "Prona, ring tra le caviglie. Piega le ginocchia a 90° e schiaccia il ring con i talloni." },
+        { nome: "Single leg bridge ring", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Supina, una gamba in alto, l'altra a 90 gradi sul lato posteriore del ring, alza i glutei schiacciando il ring." },
+        { nome: "Clamshell ring", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Sul fianco, ring tra le ginocchia. Schiaccia il ring controllando la resistenza." },
+        { nome: "Swimming con ring", focus: "Glutei", reps: "45 sec", spiegazione: "Prona, ring tra le mani avanti sollevato, gambe che nuotano velocemente." },
+          { nome: "Abductor bridge", focus: "Glutei", reps: "14 reps", spiegazione: "Supina, ginocchia dentro il ring, alzati in ponte spingendo le gambe verso l'esterno." },
+            { nome: "Side leg press", focus: "Glutei", reps: "14 reps", spiegazione: "Sul fianco, ring tra le caviglie (all'esterno). Solleva entrambe le gambe; la superiore preme in basso attivando il gluteo medio." },
+        
+        //SCHIENA
+        { nome: "Ring swan", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, mani sul ring appoggiato a terra davanti a te. Premi il cerchio mentre sollevi il petto." },
+        { nome: "Ring spine twist", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta, gambe tese, ring tra le mani avanti. Ruota il busto lateralmente mantenendo la schiena dritta." },
+        { nome: "Ring back extension", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, ring dietro la schiena tra le mani. Solleva il petto portando il cerchio verso i talloni." },
+        { nome: "Overhead ring reach", focus: "Schiena", reps: "12 reps", spiegazione: "Supina, ring tra le mani. Porta il cerchio dietro la testa cercando di toccare terra senza inarcare la schiena." },
+        { nome: "Ring lat pull", focus: "Schiena", reps: "12 reps", spiegazione: "In piedi, ring sopra la testa. Tiralo giù verso il petto immaginando di unire le scapole dietro." },
+        { nome: "T-lift with ring", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, ring tra le mani, braccia tese avanti. Solleva braccia e testa mantenendo lo sguardo a terra." },
+        { nome: "Lateral stretch ring", focus: "Schiena", reps: "12 reps", spiegazione: "Seduti, ring sopra la testa. Fletti il busto lateralmente premendo il cerchio per stabilizzare le scapole." },
+        
+        // BRACCIA
+        { nome: "Ring chest press", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, ring tra le mani davanti al petto. Schiaccia con i palmi e rilascia lentamente." },
+        { nome: "Ring overhead press", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, ring sopra la testa. Schiaccia il cerchio con piccoli impulsi lavorando su spalle e tricipidi." },
+        { nome: "Side ring triceps", focus: "Braccia", reps: "12 reps per lato", spiegazione: "In piedi, ring appoggiato sulla spalla, premilo con la mano opposta verso il basso." },
+        { nome: "Bicep curl ring", focus: "Braccia", reps: "12 reps per lato", spiegazione: "In piedi, ring tra spalla e palmo della mano. Fletti il braccio premendo il cerchio." },
+        { nome: "Ring behind back", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, ring dietro la schiena. Stringi le mani tra loro premendo il cerchio." },
+        { nome: "Front arm pulses", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, braccia tese avanti con ring. Piccoli impulsi veloci di pressione." },
+        { nome: "Tricep squeeze ring", focus: "Braccia", reps: "12 reps", spiegazione: "Seduta, ring dietro la nuca, gomiti stretti. Schiaccia il cerchio con le mani." },
+        { nome: "One arm press", focus: "Braccia", reps: "12 reps per lato", spiegazione: "In piedi, ring contro il fianco, premilo con l'esterno del braccio teso." },
+    ],
+    "Rullo": [
+        // ADDOME
+        { nome: "Dead bug rullo", focus: "Addome", reps: "16 reps", spiegazione: "Supina sul rullo (lungo), solleva una gamba a tavolino alla volta alternando le senza oscillare o cadere." },
+        { nome: "Toe taps rullo", focus: "Addome", reps: "16 reps", spiegazione: "Supina sul rullo (lungo), tocca terra con le punte dei piedi alternandole." },
+        { nome: "Ab curl rullo", focus: "Addome", reps: "15 reps", spiegazione: "Supina sul rullo (lungo), esegui piccoli crunch cercando di non oscillare lateralmente." },
+        { nome: "Plank sul rullo", focus: "Addome", reps: "45 sec", spiegazione: "Prona, avambracci sul rullo. Mantieni la posizione di plank sfidando l'instabilità." },
+        { nome: "Mountain climber rullo", focus: "Addome", reps: "45 sec", spiegazione: "Prona, mani sul rullo, porta le ginocchia al petto velocemente." },
+        { nome: "Leg lowering", focus: "Addome", reps: "15 reps", spiegazione: "Rullo trasversale sotto il sacro. Mani alle estremità del rullo. Scendi con le gambe tese e unite verso il basso e risali (Lavoro intenso addome basso)." },
+        { nome: "Double leg stretch", focus: "Addome", reps: "16 reps", spiegazione: "Sdraiati sul rullo lungo la colonna. Gambe a tavolino. Stendi braccia e gambe in direzioni opposte, mantenendo la schiena aderente al rullo."}, 
+        { nome: "Knee pull in", focus: "Addome", reps: "15 reps", spiegazione: "Plank alto, tibie sopra il rullo trasversale. Respira e filetti le ginocchia al petto facendo rotolare il rullo sotto le gambe."}, 
+      // INTERNO GAMBA
+        { nome: "Adductor slide", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "In piedi, un piede a terra, l'altro sul rullo (laterale). Fai scivolare il rullo lontano e riportalo verso di te usando l'interno coscia"},
+        { nome: "Frog press", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Rullo trasversale sotto il sacro. Talloni uniti, ginocchia aperte. Stendi le gambe a 45° premendo forte i talloni tra loro."},
+        { nome: "Inner thigh pulse", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Rullo trasversale sotto il sacro. Gambe a V al soffitto. Chiudi e apri le gambe con piccoli impulsi veloci (molleggi interni)."},
+        { nome: "Adductor lift", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Sul fianco, gamba sopra sul rullo, gamba sotto tesa. Solleva la gamba inferiore verso il soffitto senza muovere il rullo."},
+            // GAMBE
+        { nome: "Single leg roller bridge", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Supina, un piede sul rullo, l'altra gamba tesa in alto. Solleva il bacino stabilizzando il rullo." },
+        { nome: "Hamstring roll", focus: "Gambe", reps: "14 reps", spiegazione: "Seduta, mani a terra dietro, gambe sul rullo. Solleva il bacino e rulla avanti/dietro per massaggiare e tonificare le cosce."},
+         { nome: "Lunge con rullo", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Affondo, piede posteriore appoggiato sul rullo. Scendi in affondo mentre il piede dietro scivola sul rullo." },
+          { nome: "Bicycle", focus: "Gambe", reps: "14 reps", spiegazione: "Rullo trasversale sotto il sacro. Gambe in aria. Pedalata ampia; l'altezza del rullo aumenta la mobilità dell'anca."},
+           { nome: "Scissors", focus: "Gambe", reps: "14 reps", spiegazione: "Rullo trasversale sotto il sacro. Gambe tese. Sforbiciata ampia: una gamba tesa verso il viso, l'altra scende verso terra."},
+            { nome: "Leg circles", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Rullo trasversale sotto il sacro. Una gamba al soffitto. Disegna cerchi ampi con la gamba tesa (stabilità del bacino rialzato)."},
+        // GLUTEI (8)
+         { nome: "Glute bridge", focus: "Glutei", reps: "14 reps", spiegazione: "Supina, entrambi i piedi sul rullo. Solleva il bacino al massimo contraendo i glutei."},
+         { nome: "Single leg bridge", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Come il ponte, ma con una gamba tesa. Focus sulla spinta del gluteo della gamba sul rullo." },
+        { nome: "Prone leg lift", focus: "Glutei", reps: "14 reps", spiegazione: "Prona, rullo sotto le cosce. Solleva le gambe tese alternandole." },
+          { nome: "Bridge pulses", focus: "Glutei", reps: "14 reps", spiegazione: "In posizione di ponte sul rullo, fai piccoli molleggi verso l'alto con il bacino." },
+          { nome: "Marching bridge", focus: "Glutei", reps: "14 reps", spiegazione: "Ponte sulle spalle con i piedi sul rullo. Solleva un piede alla volta dal rullo mantenendo il bacino alto e immobile."},
+          { nome: "Frog bridge", focus: "Glutei", reps: "14 reps", spiegazione: "Ponte, piante dei piedi unite sul rullo, ginocchia aperte. Solleva il bacino in posizione rana per isolare i glutei laterali."},
+          { nome: "Hip extension", focus: "Glutei", reps: "14 reps", spiegazione: "Proni, rullo trasversale sotto le caviglie. Solleva una gamba tesa alla volta contraendo il gluteo (pressione opposta sul rullo)."},
+              // SCHIENA
+        { nome: "Swan sul rullo", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, avambracci sul rullo avanti a te. Tira il rullo verso di te sollevando il petto in estensione." },
+        { nome: "Thoracic extension", focus: "Schiena", reps: "12 reps", spiegazione: "Supina, rullo trasversale sotto le scapole, mani alla nuca. Appoggia la testa verso terra aprendo il petto, poi risali."},
+        { nome: "Roller spine stretch", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta, gambe divaricate, rullo tra le mani a terra. Fai rotolare il rullo avanti allungando la colonna."},
+        { nome: "Swimming con rullo", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, mani sul rullo tese avanti. Solleva gambe e petto alternando piccoli movimenti delle gambe." },
+        { nome: "Mermaid sul rullo", focus: "Schiena", reps: "12 reps per lato", spiegazione: "Seduti, rullo di fianco. Fai rotolare il rullo lateralmente allungando tutto il fianco e la schiena."},
+        { nome: "Cat stretch sul rullo", focus: "Schiena", reps: "12 reps", spiegazione: "Quadrupedia, mani sopra il rullo. Arrotonda la schiena portando il rullo verso le ginocchia, poi estendi."},
+        
+        // BRACCIA
+        { nome: "Arm circles rullo", focus: "Braccia", reps: "12 reps", spiegazione: "Supina sul rullo (lungo): Disegna grandi cerchi con le braccia." },
+        { nome: "Scapular protraction", focus: "Braccia", reps: "12 reps", spiegazione: "Supina sul rullo (lungo): Spingi le braccia al soffitto staccando le scapole dal rullo."},
+        { nome: "Forearm roll-out", focus: "Braccia", reps: "12 reps", spiegazione: "In ginocchio, avambracci sul rullo. Scivola avanti col busto finché le braccia sono tese e ritorna." },
+        { nome: "Rolling plank side", focus: "Braccia", reps: "45 sec", spiegazione: "Plank laterale, avambraccio sul rullo. Mantieni la posizione cercando di non far muovere l'attrezzo." }, 
+         { nome: "Triceps press", focus: "Braccia", reps: "12 reps", spiegazione: "Sdraiati sul rullo lungo la colonna. Mani a terra. Solleva leggermente il bacino facendo forza sui tricipiti e sui piedi (tenuta)."},
+           { nome: "Push-ups sul rullo", focus: "Braccia", reps: "12 reps", spiegazione: "Mani sul rullo a terra. Esegui i piegamenti mantenendo il rullo stabile sotto le spalle." },
+            ],
+    "Pesi(da 1 a 4kg)": [
+        // ADDOME
+        { nome: "Weighted crunch", focus: "Addome", reps: "15 reps", spiegazione: "Supina, peso al petto. Sali in crunch espirando profondamente." },
+        { nome: "Weighted roll up", focus: "Addome", reps: "15 reps", spiegazione: "Supina, braccia al soffitto con i pesi. Sali lentamente." },
+        { nome: "Russian twist", focus: "Addome", reps: "16 reps", spiegazione: "Seduta, gambe sollevate. Ruota il peso da un lato all'altro del bacino." },
+        { nome: "Toe touch weighted", focus: "Addome", reps: "15 reps", spiegazione: "Supina, gambe tese al soffitto, peso tra le mani. Prova a toccare i piedi con il peso." },
+        { nome: "Weighted dead bug", focus: "Addome", reps: "15 reps per lato", spiegazione: "Supina, peso in una mano, scendi con braccio e gamba opposta." },
+        { nome: "Side plank reach", focus: "Addome", reps: "15 reps per lato", spiegazione: "Plank laterale, passa il peso sotto il fianco e poi portalo al soffitto." },
+        { nome: "Side plank isometrico", focus: "Addome", reps: "25 sec per lato", spiegazione: " In posizione di plank laterale, sollevare un manubrio verso l'alto con il braccio libero, attivando glutei e obliqui, evitando la caduta del bacino."},
+        { nome: "Side bending (piegamenti laterali)", focus: "Addome", reps: "15 reps per lato", spiegazione: " In piedi, con un manubrio in una mano, inclinare il busto lateralmente dallo stesso lato, poi tornare in posizione eretta contraendo gli addominali. Mantenere le spalle frontali."},
+        { nome: "Woodchopper", focus: "Addome", reps: "15 reps per lato", spiegazione: "In Piedi, porta il peso dall'alto (diagonale) al ginocchio opposto." },
+        { nome: "Weighted v-sit", focus: "Addome", reps: "45 sec", spiegazione: "Seduta, mantieni la V con il peso teso davanti a te." },
+        { nome: "Double leg stretch", focus: "Addome", reps: "15 reps", spiegazione: "Supini, ginocchia al petto, pesi alle mani. Stendi braccia e gambe."},
+       // INTERNO GAMBA
+        { nome: "Plie squat con peso", focus: "Interno Gamba", reps: "16 reps", spiegazione: "In piedi, gambe larghe, punte in fuori. Tieni i pesi al petto o verso terra mentre scendi in squat profondo." },
+        { nome: "Inner thigh lift con peso", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Sul fianco, appoggia un manubrio sull'interno della coscia della gamba sotto e solleva verso l'alto." },
+        { nome: "Affondi laterali", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: " Partendo in piedi, fai un passo ampio verso il lato, piegando il ginocchio corrispondente e tenendo l'altra gamba distesa. Impugna i manubri lungo i fianchi per aumentare il carico." },
+        { nome: "Affondi incrociati", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: " Esegui un affondo portando una gamba indietro e diagonalmente rispetto all'altra, tenendo un manubrio al petto o due manubri lungo i fianchi."},
+        //GAMBE
+        { nome: "Weighted squat", focus: "Gambe", reps: "14 reps", spiegazione: "In piedi, pesi sulle spalle o lungo i fianchi. Scendi in squat controllato mantenendo il petto aperto." },
+        { nome: "Alternating lunges", focus: "Gambe", reps: "14 reps", spiegazione: "In piedi, affondi alternati avanti tenendo i pesi tesi lungo i fianchi." },
+        { nome: "Deadlift (stacco)", focus: "Gambe", reps: "14 reps", spiegazione: "In piedi, gambe leggermente flesse. Scendi con i pesi verso i piedi mantenendo la schiena piatta." },
+        { nome: "Side kick con peso", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Sul fianco, appoggia il peso sulla coscia esterna. Solleva e abbassa la gamba tesa con controllo." },
+        { nome: "Calf raises con pesi", focus: "Gambe", reps: "14 reps", spiegazione: "In piedi, pesi lungo i fianchi. Sali sulle punte dei piedi e scendi lentamente senza toccare i talloni." },
+        { nome: "Weighted wall sit", focus: "Gambe", reps: "45 sec", spiegazione: " Schiena al muro in posizione di sedia, pesi sulle cosce. Tenuta isometrica; i pesi aumentano il carico su glutei equadricipiti."},
+        // GLUTEI
+        { nome: "Weighted bridge", focus: "Glutei", reps: "14 reps", spiegazione: "Supina, peso sul bacino. Solleva e contrai forte i glutei." },
+        { nome: "Single leg bridge weighted", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Supina, peso sul fianco della gamba a terra. Solleva il bacino." },
+        { nome: "Deadlift una gamba", focus: "Glutei", reps: "14 reps per lato", spiegazione: "In piedi, peso nella mano opposta alla gamba che si alza indietro. Fletti il busto avanti." },
+        { nome: "Weighted frog pumps", focus: "Glutei", reps: "14 reps", spiegazione: "Supina, piante dei piedi unite, peso sul bacino. Solleva il bacino." },
+        { nome: "Dondey kick", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedia, peso incastrato nell'incavo del ginocchio. Spingi il tallone verso il soffitto contraendo il gluteo (carico diretto)."},
+        { nome: "ClamShell weighted", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Sul fianco, peso appoggiato lateralmente sulla coscia. Apri il ginocchio superiore contro la resistenza del peso tenendo i piedi uniti."},
+          // SCHIENA
+        { nome: "Reverse fly", focus: "Schiena", reps: "12 reps", spiegazione: "In piedi e busto avanti. Apri le braccia lateralmente come ali, attivando la parte alta della schiena." },
+        { nome: "Spine twist con pesi", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta e schiena dritta, pesi al petto. Ruota il busto espirando e mantieni la colonna lunga." },
+        { nome: "Renegade row static", focus: "Schiena", reps: "12 reps", spiegazione: "In plank, mantieni la posizione sollevando un peso e tenendolo fermo contro il fianco per 5 secondi." },
+        { nome: "One arm row", focus: "Schiena", reps: "12 reps", spiegazione: "In quadrupedia o flessi avanti, peso in una mano. Tira il peso verso l'anca portando il gomito indietro (lavoro di dorsale)."},
+        { nome: "Bird-dog con peso", focus: "Schiena", reps: "12 reps", spiegazione: "Quadrupedia, un peso in una mano. Solleva braccio (col peso) e gamba opposta: sfida massima per la catena crociata."},
+        // BRACCIA
+         { nome: "Bicep curls", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, palmi in avanti, Fletti le braccia portando i pesi alle spalle. Gomiti incollati ai fianchi." },
+        { nome: "Tricep kickbacks", focus: "Braccia", reps: "12 reps", spiegazione: "Busto avanti, gomiti alti e fermi. Distendi le braccia indietro contraendo i tricipiti." },
+        { nome: "Overhead press", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, spingi i pesi dalle spalle verso il soffitto, distendendo completamente le braccia." },
+        { nome: "Front raises", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, solleva i pesi tesi davanti a te fino all'altezza degli occhi in maniera alternata." },
+        { nome: "Hammer curls", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, palmi rivolti verso l'interno. Fletti le braccia mantenendo i pesi in verticale." },
+        { nome: "Chest press", focus: "Braccia", reps: "12 reps", spiegazione: "Supina, pesi orizzontali. Spingi i pesi verso l'alto partendo dal petto, unendo i manubri al centro." },
+        { nome: "Skull crushers", focus: "Braccia", reps: "12 reps", spiegazione: "Supina, braccia tese in alto. Fletti solo i gomiti portando i pesi alle tempie e risali." }, 
+   ], 
+        "Elastico Chiuso": [
+        // ADDOME
+        { nome: "Bicycle band", focus: "Addome", reps: "16 reps", spiegazione: "Supina, elastico alle piante dei piedi. Pedala spingendo contro la resistenza." },
+        { nome: "Band leg lowers", focus: "Addome", reps: "15 reps", spiegazione: "Supina, elastico alle caviglie. Scendi con le gambe tese mantenendo la tensione verso l'esterno." },
+        { nome: "Plank out-in", focus: "Addome", reps: "16 reps", spiegazione: "Plank alto, elastico intorno alle caviglie.Apri chiudi le gambe lateralmente (passi o salti) mantenendo il core immobile."},
+        { nome: "Mountain climbers band", focus: "Addome", reps: "45 sec", spiegazione: "Prona, elastico alle piante dei piedi. Tira le ginocchia al petto alternandole." },
+        { nome: "Dead bug band", focus: "Addome", reps: "16 reps", spiegazione: "Supina, elastico ai piedi. Spingi una gamba avanti mentre l'altra resiste a tavolino." },
+        { nome: "Scissors band", focus: "Addome", reps: "16 reps", spiegazione: "Supina, elastico alle caviglie. Sforbicia verticalmente mantenendo l'elastico teso." },
+        { nome: "Side plank leg lift", focus: "Addome", reps: "15 reps per lato", spiegazione: "Side Plank, elastico sopra le ginocchia. Solleva la gamba sopra." },
+        { nome: "Obliqui band", focus: "Addome", reps: "16 reps", spiegazione: "Seduta, elastico ai polsi. Ruota il busto tirando l'elastico verso l'esterno." },
+         { nome: "Hollow position", focus: "Addome", reps: "45 sec", spiegazione: "Supina, con l'elastico attorno ai piedi, spingere con i piedi e contemporaneamente sollevare testa, spalle e gambe da terra, mantenendo la zona lombare incollata al pavimento."},
+        // INTERNO COSCIA
+        { nome: "Adductor v-hold band", focus: "Interno Gamba", reps: "45 sec", spiegazione: "Supina, elastico alle caviglie, gambe a V. Spingi verso l'esterno e mantieni." },
+        { nome: "Band squat", focus: "Interno Gamba", reps: "16 reps", spiegazione: "In Piedi, elastico sopra le ginocchia. Squat spingendo le ginocchia in fuori." },
+        { nome: "Inner thigh pull", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "In piedi, elastico a un palo o caviglia. Tira la gamba verso il centro del corpo." },
+        
+        { nome: "Plié band pulses", focus: "Interno Gamba", reps: "15 reps", spiegazione: "In plié,  elastico sopra le ginocchia. Molleggia spingendo in fuori." },
+        { nome: "Bridge band squeeze", focus: "Interno Gamba", reps: "16 reps", spiegazione: "In bridge, elastico sopra le ginocchia. Apri e chiudi le ginocchia restando su." },
+         { nome: "Seated band abduction", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Seduta, elastico sopra le ginocchia. Apri e chiudi le ginocchia concentrandoti sul ritorno controllato." },
+          { nome: "Inner thigh pulse", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Sul fianco, elastico alle caviglie. Solleva la gamba sotto verso l'alto superando la resistenza della gamba sopra." },
+          { nome: "Adductor slide", focus: "Interno Gamba", reps: "16 reps", spiegazione: "In piedi, elastico alle caviglie. Fai scivolare un piede lateralmente e riportalo al centro con un movimento di adduzione."},
+           // GAMBE
+        { nome: "Lateral band walk", focus: "Gambe", reps: "14 reps", spiegazione: "In piedi,  eastico alle caviglie. Fai passi laterali mantenendo le gambe semi-flesse e l'elastico sempre teso." },
+        { nome: "Standing leg lift", focus: "Gambe", reps: "14 reps lato", spiegazione: "In piedi, elastico alle caviglie. Solleva la gamba tesa lateralmente mantenendo il busto dritto." },
+        { nome: "Banded side kick up", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Sul fianco, elastico alle caviglie. Solleva la gamba superiore il più possibile e scendi lentamente." },
+        { nome: "Forward kick banded", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi, elastico alle caviglie. Calcia in avanti con la gamba tesa attivando il quadricipite." },
+        { nome: "Wall sit con elastico", focus: "Gambe", reps: "45 sec", spiegazione: "Contro il muro, elastico sopra le ginocchia. Mantieni lo squat spingendo le ginocchia verso l'esterno." },
+        { nome: "Hamstring curl", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi, elastico alle caviglie. Fletti il ginocchio portando il tallone al gluteo (Lavoro posteriore della coscia)."},
+        // GLUTEI (8)
+        { nome: "Glute bridge band", focus: "Glutei", reps: "14 reps", spiegazione: "Supina, elastico sopra le ginocchia. Sali in bridge spingendo i talloni." },
+        { nome: "Donkey kicks band", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedi, elastico intorno alle ginocchia. Calcia una gamba dietro." },
+        { nome: "Fire hydrant band", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedia, elastico sopra le ginocchia. Apri lateralmente." },
+        { nome: "Side kick band", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Sul fianco, calcia avanti e dietro mantenendo l'elastico teso." },
+        { nome: "Prone band lifts", focus: "Glutei", reps: "14 reps", spiegazione: "Prona, elastico alle caviglie. Solleva entrambe le gambe tese." },
+         { nome: "Plank glute lift", focus: "Glutei", reps: "14 reps", spiegazione: "Plank alto, elastico alle caviglie. Solleva una gamba tesa alla volta senza inarcare la schiena."},
+         { nome: "Glute rainbow", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedia, elastico alle caviglie. Solleva la gamba tesa è disegna un arco da destra a sinistra oltre la gamba d'appoggio."}, 
+        // SCHIENA
+        { nome: "Banded lat pull down", focus: "Schiena", reps: "12 reps", spiegazione: "In piedi, braccia tese sopra la testa, elastico tra i polsi. Tira i gomiti verso il basso aprendo l'elastico." },
+        { nome: "Banded row", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta, elastico intorno ai piedi, impugnalo con le mani. Tira i gomiti indietro unendo le scapole." },
+        { nome: "Rear delt fly", focus: "Schiena", reps: "12 reps", spiegazione: "In piedi, braccia tese avanti all'altezza del petto, elastico tra i polsi. Apri le braccia lateralmente." },
+        { nome: "Archer pull", focus: "Schiena", reps: "12 per lato", spiegazione: "In piedi, tieni un lato dell'elastico fermo, tira l'altro indietro come per scoccare una freccia." },
+        { nome: "Superman banded", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, elastico tra i polsi. Solleva busto e braccia aprendo leggermente l'elastico verso l'esterno." },
+        { nome: "Shoulder retraction", focus: "Schiena", reps: "12 reps", spiegazione: "In piedi, braccia tese avanti, elastico tra i polsi. Apri solo di 10 cm focalizzandoti sulle scapole." },
+        { nome: "Prone y-press", focus: "Schiena", reps: "12 reps", spiegazione: "Proni, braccia a Y, elastico ai polsi. Solleva petto e braccia tendendo l'elastico verso l'esterno."}, 
+        
+        // BRACCIA
+        { nome: "Bicep curl con elastico", focus: "Braccia", reps: "12 reps", spiegazione: "Seduta un'estremità dell'elastico sotto il piede, l'altra nella mano. Fletti il braccio verso la spalla." },
+        { nome: "Tricep extension", focus: "Braccia", reps: "12 reps per lato", spiegazione: "In piedi, una mano tiene l'elastico sulla spalla opposta, l'altra lo spinge verso il basso stendendo il braccio." },
+        { nome: "Overhead press banded", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, elastico tra i polsi sopra la testa. Spingi verso l'alto e l'esterno contemporaneamente piegando I gomiti." },
+        { nome: "Bust the band", focus: "Braccia", reps: "12 reps", spiegazione: "Braccia a 90°(candeliere), elastico Ai polsi. Spingi ipolsi verso l'esterno con piccoli impulsi veloci (tono spalle)."},
+        { nome: "Lateral raise", focus: "Braccia", reps: "12 reps", spiegazione: "Braccia tese avanti, elastico ai polsi. Apri le braccia verso l'esterno tendendo l'elastico (deltoidi)."},
+    ],
+    "Fascia Aperta": [
+        // ADDOME (8)
+        { nome: "Roll up con fascia", focus: "Addome", reps: "15 reps", spiegazione: "Seduti,fascia intorno ai piedi, capi nelle mani. Rotola e risali; la fascia assiste il movimento rendendolo fluido E controllato."},
+        { nome: "Teaser assistito", focus: "Addome", reps: "15 reps", spiegazione: "Supina, fascia ai piedi. Sali in equilibrio a V usando la tensione della fascia." },
+        { nome: "Hundred con fascia", focus: "Addome", reps: "100 molleggi", spiegazione: "Supina, fascia tesa tra le mani sopra le cosce o sotto la schiena mentre molleggi." },
+        { nome: "Double leg stretch", focus: "Addome", reps: "16 reps", spiegazione: "Supina, fascia tra le mani e piedi. Allunga braccia e gambe in direzioni opposte." },
+        { nome: "Obliqui", focus: "Addome", reps: "16 reps", spiegazione: "Seduta, fascia sotto i piedi. Ruota il busto tirando un capo della fascia." },
+        { nome: "Plank row", focus: "Addome", reps: "15 reps per lato", spiegazione: "In plank, blocca la fascia sotto una mano, tira l'altro capo al fianco." },
+        { nome: "Bicycle con fascia", focus: "Addome", reps: "16 reps", spiegazione: "Supini, fascia intorno ai piedi, capi alle mani. Pedalata nell'aria; la fascia oppone resistenza alla gamba che si stende (addomebasso)."},
+        { nome: "Side-plank T pull", focus: "Addome", reps: "15 reps per lato", spiegazione: "Side plank,fascia bloccata sotto la mano a terra. Tira il capo libero verso il soffitto (braccio a T) sfidando Gli obliqui."},
+        { nome: "Plank con trazione elastica", focus: "Addome", reps: "45 sec", spiegazione: "Posizionati in posizione di plank (sui gomiti o sulle mani). Passa una banda elastica aperta attorno alla parte superiore della schiena e tieni le estremità con le mani a terra. Mantieni la posizione di plank, attivando il core e spingendo contro la resistenza della fascia."},
+        { nome: "Barchetta con elastico", focus: "Addome", reps: "45 sec", spiegazione: "Sdraiato supino, avvolgi la fascia attorno ai piedi e tieni le estremità con le mani, mantenendo le braccia tese oltre la testa. Solleva leggermente testa, spalle e gambe da terra, creando una forma a barchetta. Tieni la posizione mentre tiri l'elastico."},{ nome: "Dead bug con banda elastica", focus: "Addome", reps: "45 sec per lato", spiegazione: "Sdraiato sulla schiena, avvolgi la fascia attorno a un piede e tieni le estremità con la mano opposta, tenendo il ginocchio piegato a 90°. Estendi la gamba opposta e il braccio opposto, mantenendo la tensione della fascia e la parte bassa della schiena pressata a terra."},
+        // INTERNO GAMBA 
+        { nome: "Inner thigh pull down", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Sul fianco, fascia legata alla caviglia della gamba sotto e fissata in alto (o tenuta dalla mano sopra). Solleva la gamba interna." },
+        { nome: "Frog press con fascia", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, fascia intorno ai piedi, mani ai fianchi che tengono i capi. Talloni uniti, stendi le gambe a 45° premendo l'interno coscia." },
+        { nome: "Adductor pull", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Supina, fascia al piede, gamba al soffitto. Apri la gamba lateralmente e riporta la al centro usando solo l'interno coscia."},
+        { nome: "Side leg circle inner", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Sul fianco, fascia alla caviglia della gamba sotto. Disegna piccoli cerchi mantenendo la gamba tesa e il piede a martello." },
+        { nome: "Plie squat tension", focus: "Interno Gamba", reps: "16 reps", spiegazione: "In piedi, fascia sotto i piedi divaricati, impugna i capi al petto. Scendi in squat spingendo le ginocchia verso l'esterno." },
+        { nome: "Lateral slide con fascia", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "In piedi, fascia sotto un piede e tenuta dalla mano opposta. Scivola lateralmente e richiudi con forza la gamba." },
+        { nome: "Crossed leg pull", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Supina, una gamba tesa in alto con fascia. Porta la gamba oltre la linea mediana del corpo e torna al centro con controllo." },
+        { nome: "Helicopter con fascia", focus: "Interno Gamba", reps: "16 reps per lato", spiegazione: "Supina, fascia intorno ai piedi, capi alle mani. Divaricate a V, ruota e incrocia le gambe mantenendo la tensione costante."},
+         // GAMBE
+        { nome: "Leg press con fascia", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Supina: Fascia sotto la pianta di un piede. Estendi la gamba a 45° vincendo la resistenza elastica, poi fletti con controllo." },
+        { nome: "Side kick con resistenza", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Sul fianco, fascia al piede superiore. Calcia avanti e indietro; la fascia stabilizza la traiettoria E tonifica la coscia."},
+        { nome: "Banded squat", focus: "Gambe", reps: "14 reps", spiegazione: "In piedi sopra la fascia, impugna i capi alle spalle. Esegui lo squat: la resistenza aumenta man mano che risali." },
+        { nome: "Lunge pull", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Affondo, fascia sotto il piede avanti. Scendi in affondo mentre tiri i capi della fascia verso l'alto." },
+        { nome: "Standing side kick", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi, fascia sotto il piede d'appoggio. Solleva la gamba lateralmente contro la resistenza della fascia (esterno coscia)."},
+        { nome: "Scissors assistite", focus: "Gambe", reps: "14 reps", spiegazione: "Supina, fascia intorno a entrambi i piedi. Sforbiciata ampia controllata dalla tensione elastica nelle mani." },
+        { nome: "Banded calf raises", focus: "Gambe", reps: "14 reps", spiegazione: "In piedi sulla fascia, impugna i capi tesi. Sali sulle punte dei piedi sentendo la resistenza che ti spinge giù." },
+        // GLUTEI 
+        { nome: "Donkey kick fascia", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedia, fascia sotto un piede, capi nelle mani. Calcia dietro." },
+        { nome: "Bridge fascia press", focus: "Glutei", reps: "14 reps", spiegazione: "In Bridge, fascia tesa sopra il bacino, mani a terra. Spingi contro la fascia." },
+        { nome: "Prone leg lift fascia", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Prona, fascia alla caviglia, blocca l'altro capo a terra. Solleva la gamba." },
+         { nome: "Prone flutter kicks", focus: "Glutei", reps: "14 reps", spiegazione: "Proni, fascia legata alle caviglie. Piccoli calci veloci (nuotata) mantenendo la fascia tesa per attivare i glutei."},
+        { nome: "Single leg bridge fascia", focus: "Glutei", reps: "14 reps per lato", spiegazione: "In Bridge, fascia al piede sollevato, tira verso il basso mentre il bacino sale." },
+        { nome: "Superwoman fascia", focus: "Glutei", reps: "14 reps", spiegazione: "Prona, fascia tesa tra le mani. Solleva petto e gambe." },
+         // SCHIENA
+        { nome: "Spine twist con fascia", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta, fascia tesa tra le mani avanti. Ruota il busto lateralmente mantenendo la fascia sempre in tensione." },
+        { nome: "Swan con fascia", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, fascia tra le mani tese avanti. Solleva il busto e tira la fascia verso il petto flettendo i gomiti." },
+        { nome: "Lat pull down", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta o in piedi, fascia sopra la testa. Tirala verso il petto allargando le mani e unendo le scapole." },
+        { nome: "Spine stretch forward assistito", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta, fascia ai piedi. Allungati avanti usando la fascia per aumentare lo stretch e controllare il ritorno." },
+        { nome: "T-raise con fascia", focus: "Schiena", reps: "12 reps", spiegazione: "In piedi o seduta, braccia tese avanti, fascia tra i palmi. Apri le braccia a T sentendo lavorare la parte alta del dorso." },
+        // BRACCIA
+        { nome: "Bicep curl", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi sulla fascia, impugna i capi. Fletti i gomiti portando le mani alle spalle con i gomiti fermi ai fianchi." },
+        { nome: "Tricep extension", focus: "Braccia", reps: "12 reps per lato", spiegazione: "In piedi, una mano tiene la fascia dietro la schiena bassa, l'altra la tira dal collo verso l'alto stendendo il gomito." },
+        { nome: "Chest press con fascia", focus: "Braccia", reps: "12 reps", spiegazione: "Fascia dietro la schiena (sotto le ascelle). Spingi le mani avanti unendole e torna con controllo." },
+        { nome: "Overhead press", focus: "Braccia", reps: "12 reps", spiegazione: "Seduta sulla fascia, impugna i capi alle spalle e spingi le braccia verso il soffitto distendendole completamente." },
+        { nome: "Front raise con fascia", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi sulla fascia, solleva le braccia tese davanti a te fino all'altezza delle spalle." },
+        { nome: "Lateral raise con fascia", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi sulla fascia, solleva le braccia lateralmente vincendo la resistenza elastica." },
+        { nome: "Boxing con fascia", focus: "Braccia", reps: "12 reps", spiegazione: "Fascia dietro la schiena, esegui dei pugni alternati avanti mantenendo il core stabile e la fascia in tensione." },
+        { nome: "Reverse fly", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, busto leggermente avanti, fascia tra le mani, apri le braccia lateralmente per rinforzare spalle e dorso." }, 
+    ],
+    "Palla Piccola": [
+        // ADDOME (8)
+        { nome: "Ab curl ball", focus: "Addome", reps: "15 reps", spiegazione: "Supina, palla sotto le scapole. Esegui crunch espirando profondamente." },
+        { nome: "Bicycle con palla", focus: "Addome", reps: "16 reps", spiegazione: "Supina, passa la palla dietro le ginocchia mentre pedali." },
+        { nome: "Teaser ball", focus: "Addome", reps: "15 reps", spiegazione: "Seduta, equilibrio sul sacro, palla tra le mani che tocca i piedi." },
+        { nome: "Plank ball", focus: "Addome", reps: "45 sec", spiegazione: "Prona, mani sulla palla o palla sotto le tibie. Mantieni la stabilità." },
+        { nome: "Toe taps ball", focus: "Addome", reps: "16 reps", spiegazione: "Supina, palla sotto l'osso sacro. Tocca terra alternando le punte dei piedi." },
+        { nome: "The hundred con palla", focus: "Addome", reps: "15 reps", spiegazione: "Supini, palla stretta tra le caviglie. Molleggia le braccia schiacciando la palla; connette adduttori e core profondo." },
+         { nome: "Double leg stretch", focus: "Addome", reps: "15 reps", spiegazione: "Supini, palla tra le caviglie. Stendi braccia e gambe; la pressione sulla palla attiva intensamente l'addome basso." },
+         { nome: "Knee tuck", focus: "Addome", reps: "15 reps", spiegazione: "Plank alto con i piedi sulla palla. Fletti le ginocchia al petto facendo rotolare la palla, poi stendi di nuovo."},
+         { nome: "Leg pass", focus: "Addome", reps: "16 reps", spiegazione: "Supini, palla tra le mani. Passa la palla dalle mani alle caviglie durante il crunch e stendi braccia e gambe."},
+         { nome: "Tenuta Addominale (Ball Pass)", focus: "Addome", reps: "45 sec", spiegazione: "Schiaccia la palla tra le ginocchia e porta le gambe a tavolino (90°), sollevando spalle e testa, mantenendo la contrazione."},
+         { nome: "Crunch in isometria (ball back)", focus: "Addome", reps: "45 sec", spiegazione: "Metti la palla piccola dietro la zona lombare mentre sei seduto sul tappetino. Inclinati all'indietro fino a sentire la tensione addominale e mantieni la posizione."},
+        // INTERNO COSCIA
+        { nome: "Ball squeeze hold", focus: "Interno Gamba", reps: "45 sec", spiegazione: "Seduta, palla tra le cosce. Schiaccia con forza e mantieni." },
+        { nome: "Inner thigh pulses ball", focus: "Interno Gamba", reps: "100 molleggi", spiegazione: "Supina, palla tra le ginocchia. Molleggia verso l'interno." },
+        { nome: "Bridge ball squeeze", focus: "Interno Gamba", reps: "16 reps", spiegazione: "In Bridge, palla tra le ginocchia. Schiaccia mentre sali e scendi." },
+        { nome: "Palla tra caviglie lift", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, palla tra le caviglie. Solleva le gambe a 90° schiacciando." },
+        { nome: "Wall sit ball", focus: "Interno Gamba", reps: "45 sec", spiegazione: "Al muro, palla tra le ginocchia. Schiaccia durante la sedia." },
+        { nome: "Inner thigh V-position", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, palla tra le cosce, talloni uniti. Stendi e piega le gambe." },
+         { nome: "Seated adductor lift", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Seduti, gambe a V, palla tra le caviglie. Solleva le gambe da terra di pochi centimetri mantenendo la pressione costante." },
+         // GAMBE
+        { nome: "Wall squat con palla", focus: "Gambe", reps: "14 reps", spiegazione: "In piedi, palla tra la zona lombare e il muro. Scendi in squat facendo rotolare la palla sulla schiena." },
+        { nome: "Palla side kick", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Sul fianco, palla sotto il fianco a terra. Solleva la gamba tesa; la palla ti obbliga a non crollare col busto." },
+        { nome: "Leg circles", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Supina, una gamba tesa in alto, palla sotto l'osso sacro. Disegna cerchi col piede senza dondolare." },
+        { nome: "Hamstring curl", focus: "Gambe", reps: "14 reps", spiegazione: "Supina, piedi sulla palla, bacino sollevato. Tira la palla verso i glutei con i talloni e riallunga." },
+        { nome: "Lunge balance", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Affondo, piede posteriore sulla palla. Scendi in affondo mantenendo l'equilibrio sulla palla dietro." },
+        { nome: "Palla leg swing", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi, palla tra le mani sopra la testa. Slancia la gamba avanti e tocca la palla con la punta del piede." },
+        { nome: "Quad squeeze", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Seduta, palla sotto il ginocchio. Spingi il ginocchio verso il basso schiacciando la palla e stendi il piede." },
+        { nome: "Standing balance", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi, palla tra le cosce. Esegui sollevamenti sulle punte mantenendo la palla stretta." },
+
+        // GLUTEI (8)
+        { nome: "One leg bridge ball", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Supina, un piede sulla palla. Solleva il bacino in bridge." },
+        { nome: "Ball donkey kick", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedia, palla incastrata dietro il ginocchio. Calcia su." },
+        { nome: "Glute squeeze ball", focus: "Glutei", reps: "45 sec", spiegazione: "Proni, palla tra tallone e gluteo. Spingi il tallone contro la palla verso il gluteo (isolamento bicipite femorale)." },
+        { nome: "Clamshell ball", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Sul fianco, palla sotto il fianco a terra. Apri la gamba sopra." },
+        { nome: "Fire hydrant ball", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedia, palla dietro il ginocchio. Apri lateralmente." },
+        { nome: "Prone ball lift", focus: "Glutei", reps: "14 reps", spiegazione: "Prona, palla tra le caviglie. Solleva le gambe tese." },
+        { nome: "All-fours leg lift", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Quadrupedia, palla sotto il ginocchio a terra. Solleva lateralmente la gamba libera; la base instabile attiva i glutei profondi." },
+        //SCHIENA 
+        { nome: "Swan su palla", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, mani sulla palla avanti a te. Falla rotolare verso di te sollevando il petto e aprendo le spalle." },
+        { nome: "Spine twist con palla", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta, palla tra le mani al tese in avanti. Ruota il busto lateralmente seguendo la palla con lo sguardo." },
+        { nome: "Thoracic extension", focus: "Schiena", reps: "12 reps", spiegazione: "Supini, palla sotto le scapole. Abbandona il peso e apri le braccia per mobilizzare la colonna dorsale." },
+        { nome: "Back extension", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, palla sotto lo sterno. Solleva il busto e le braccia a T cercando l'estensione dorsale." },
+        { nome: "Prone arm reach", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, palla sotto la fronte. Solleva le braccia tese lateralmente unendo le scapole." },
+        { nome: "Swimming con palla", focus: "Schiena", reps: "12 reps", spiegazione: "Prona, palla sotto lo sterno. Muovi gambe e braccia velocemente mantenendo il busto fermo." },
+        { nome: "Mermaid con palla", focus: "Schiena", reps: "12 reps", spiegazione: "Seduti(z-sit), palla lateralmente. Falla rotolare lontano flettendo il busto; allunga profondamente fianco e schiena." },
+        // BRACCIA
+         { nome: "Palla chest press", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, palla tra i palmi davanti al petto. Schiaccia la palla con forza e rilascia lentamente." },
+        { nome: "Tricep push", focus: "Braccia", reps: "12 reps per lato", spiegazione: "In piedi, appoggia la palla al muro, premila con il palmo e stendi il braccio attivando il tricipite." },
+        { nome: "Overhead squeeze", focus: "Braccia", reps: "12 reps", spiegazione: "In piedi, palla tra le mani sopra la testa. Stringi la palla mentre pieghi e stendi i gomiti." },
+        { nome: "Bicep curl con palla", focus: "Braccia", reps: "12 reps per lato", spiegazione: "In piedi, palla tra avambraccio e spalla. Stringi la palla flettendo il braccio al massimo." },
+        { nome: "Palla push ups", focus: "Braccia", reps: "12 reps", spiegazione: "Plank, una mano sulla palla, l'altra a terra. Esegui il piegamento e scambia la palla di mano." },
+        { nome: "Lateral arm circles", focus: "Braccia", reps: "12 reps per lato", spiegazione: "In piedi, tieni la palla lateralmente con un braccio teso e disegna piccoli cerchi veloci." },
+        { nome: "Tricep dips su palla", focus: "Braccia", reps: "12 reps", spiegazione: "Seduta, mani sulla palla dietro i fianchi (palla molto sgonfia). Fletti i gomiti e risali." },
+    ], 
+    "Palla Grande": [
+    // ADDOME
+    { nome: "Ball crunch", focus: "Addome", reps: "15 reps", spiegazione: "Seduta sulla palla, cammina avanti finché la zona lombare è appoggiata. Mani dietro la nuca, sali in crunch." },
+    { nome: "Plank on ball", focus: "Addome", reps: "45 sec", spiegazione: "Appoggia gli avambracci sulla palla, gambe tese a terra. Mantieni il corpo in linea sfidando l'instabilità." },
+    { nome: "Dead bug con palla", focus: "Addome", reps: "16 reps", spiegazione: "Supina, tieni la palla tra ginocchia e mani. Estendi braccio e gamba opposta senza far cadere la palla." },
+    { nome: "Ball pass", focus: "Addome", reps: "15 reps", spiegazione: "Supina, passa la palla dalle mani alle caviglie e viceversa, scendendo ogni volta quasi a terra." },
+    { nome: "Obliqui sulla palla", focus: "Addome", reps: "15 reps per lato", spiegazione: "Fianco appoggiato alla palla, piedi al muro per stabilità. Solleva il busto lateralmente." },
+    { nome: "Knee tucks", focus: "Addome", reps: "15 reps", spiegazione: "Posizione in plank con stinchi sulla palla. Tira le ginocchia al petto facendo rotolare la palla." },
+    { nome: "Pike (v-push)", focus: "Addome", reps: "15 reps", spiegazione: "In plank con piedi sulla palla, solleva il bacino verso l'alto portando la palla verso le mani." },
+    { nome: "Crunch isometrico con estensione", focus: "Addome", reps: "45 sec", spiegazione: "Sdraiato con la schiena sulla palla, esegui un crunch parziale e mantieni la contrazione massima degli addominali" },
+    // INTERNO GAMBA
+    { nome: "Ball squeeze supino", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, palla tra le caviglie sollevate. Stringi con forza per 2 secondi e rilascia." },
+    { nome: "Wall squat con palla", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Palla tra schiena e muro. Piedi larghi, scendi in squat stringendo idealmente le cosce verso l'interno." },
+    { nome: "Frog press su palla", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, palla tra i piedi a 'rana'. Stendi le gambe in alto stringendo l'interno coscia." },
+    { nome: "Side ball squeeze", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Supina, gambe tese che stringono la palla. Ruota leggermente le gambe a destra e sinistra." },
+    { nome: "Adductor bridge", focus: "Interno Gamba", reps: "16 reps", spiegazione: "In ponte con i piedi sopra la palla, tieni le ginocchia unite mentre sali e scendi." },
+    { nome: "Standing ball press", focus: "Interno Gamba", reps: "16 reps", spiegazione: "In piedi, palla tra le cosce sopra il ginocchio. Stringi e rilascia senza farla cadere." },
+
+    { nome: "Seated adductor pulse", focus: "Interno Gamba", reps: "16 reps", spiegazione: "Seduti sulla palla, schiena dritta. Cerca di strizzare la palla verso l'interno usando i muscoli del pavimento pelvico." },
+    // GAMBE
+    { nome: "Ball leg curl", focus: "Gambe", reps: "14 reps", spiegazione: "Supina, talloni sulla palla. Solleva il bacino e tira la palla verso i glutei flettendo le ginocchia." },
+    { nome: "Bulgarian split su palla", focus: "Gambe", reps: "14 reps per lato", spiegazione: "In piedi, un piede appoggiato dietro sulla palla. Esegui un affondo con la gamba avanti." },
+    { nome: "Ball side kicks", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Inginocchiata di fianco alla palla, busto appoggiato lateralmente. Slancia la gamba esterna." },
+    { nome: "Wall slide squat", focus: "Gambe", reps: "14 reps", spiegazione: "Palla tra schiena e muro. Scendi in squat; la palla guida la colonna e permette una discesa profonda." },
+    { nome: "Hamstring stretch active", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Supina, palla sotto un tallone. Spingi la palla lontano e tirala a te mantenendo il bacino basso." },
+    { nome: "Side lunges with ball", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Affondi laterali tenendo la palla al petto per mantenere l'equilibrio." },
+    { nome: "Wall sit on ball", focus: "Gambe", reps: "45 sec", spiegazione: "Appoggia la schiena alla palla contro il muro e mantieni la posizione di squat statico." },
+     { nome: "Lateral leg lift", focus: "Gambe", reps: "14 reps per lato", spiegazione: "Sul fianco, palla tra le caviglie. Solleva entrambe le gambe tese controllando la catena laterale." },
+
+    // GLUTEI
+    { nome: "Ball bridge", focus: "Glutei", reps: "14 reps", spiegazione: "Supina, piedi piatti sulla palla. Solleva il bacino contraendo i glutei al massimo." },
+    { nome: "Hip thrust su palla", focus: "Glutei", reps: "14 reps", spiegazione: "Scapole sulla palla, piedi a terra. Scendi col bacino e risali spingendo dai talloni." },
+    { nome: "Single leg bridge ball", focus: "Glutei", reps: "14 reps per lato", spiegazione: "Un solo piede sulla palla, l'altra gamba su. Solleva il bacino gestendo l'equilibrio su una sola gamba instabile." },
+    { nome: "Prona leg lifts", focus: "Glutei", reps: "14 reps", spiegazione: "Pancia sulla palla, mani a terra. Solleva entrambe le gambe tese dietro di te." },
+    { nome: "Reverse hyper on ball", focus: "Glutei", reps: "14 reps", spiegazione: "Busto sulla palla, mani a terra. Solleva le gambe unite oltre la linea del busto." },
+    { nome: "Ball bridge marching", focus: "Glutei", reps: "14 reps", spiegazione: "In ponte sulla palla, solleva alternativamente un piede mantenendo il bacino immobile." },
+    { nome: "Heel squeeze", focus: "Glutei", reps: "14 reps", spiegazione: "Prona sulla palla, talloni uniti. Premi i talloni tra loro con forza contraendo i glutei." },
+    { nome: "Side leg lift", focus: "Glutei", reps: "14 reps", spiegazione: "In ginocchio, un fianco sulla palla. Solleva la gamba esterna lateralmente; la palla isola il movimento del gluteo." },
+
+    // SCHIENA
+    { nome: "Superman su palla", focus: "Schiena", reps: "12 reps", spiegazione: "Pancia sulla palla, solleva braccio destro e gamba sinistra contemporaneamente." },
+    { nome: "Y-extension", focus: "Schiena", reps: "12 reps", spiegazione: "Pancia sulla palla, solleva il busto portando le braccia fuori a 'Y' per le scapole." },
+    { nome: "Back extension", focus: "Schiena", reps: "12 reps", spiegazione: "Bacino sulla palla, piedi al muro. Mani dietro la nuca, solleva il busto estendendo la schiena." },
+    { nome: "Spine twist on ball", focus: "Schiena", reps: "12 reps", spiegazione: "Seduta sulla palla, braccia a T. Ruota il busto a destra e sinistra mantenendo il bacino fermo." },
+    { nome: "Scapular squeeze", focus: "Schiena", reps: "12 reps", spiegazione: "Pancia sulla palla, braccia lungo i fianchi. Avvicina le scapole sollevando leggermente il petto." },
+    { nome: "Cat-cow su palla", focus: "Schiena", reps: "12 reps", spiegazione: "In ginocchio, mani sulla palla. Arrotonda e inarca la schiena facendo rotolare leggermente la palla." },
+
+    // BRACCIA
+    { nome: "Ball push ups", focus: "Braccia", reps: "12 reps", spiegazione: "Mani a terra, stinchi o punte dei piedi sulla palla. Esegui i piegamenti mantenendo il core saldo." },
+    { nome: "Incline push ups", focus: "Braccia", reps: "12 reps", spiegazione: "Mani sulla palla, piedi a terra. Piegamenti sulle braccia per i pettorali." },
+    { nome: "Ball tricep dips", focus: "Braccia", reps: "12 reps", spiegazione: "Seduta sul bordo della palla, mani sulla palla. Scendi coi glutei e risali lavorando sui tricipiti." },
+    { nome: "Circle arms on ball", focus: "Braccia", reps: "12 reps", spiegazione: "Seduta sulla palla, braccia tese fuori. Disegna piccoli cerchi mantenendo la postura perfetta." },
+    { nome: "Tricep extension nall", focus: "Braccia", reps: "12 reps", spiegazione: "Pancia sulla palla, braccia tese dietro. Molleggia le mani verso l'alto attivando i tricipiti." },
+    { nome: "Ball chest fly", focus: "Braccia", reps: "12 reps", spiegazione: "Appoggiata con la schiena sulla palla, braccia a T. Chiudi le braccia davanti al petto." },
+    { nome: "Shoulder press on ball", focus: "Braccia", reps: "12 reps", spiegazione: "Seduta sulla palla, spingi le braccia verso l'alto mantenendo le spalle basse." },
+]
+
+};
+
+let pianoSettimanale = JSON.parse(localStorage.getItem('pilates_piano')) || null;
+
+let timerInterval;
+// Dati iniziali
+let bicchieriAcqua = parseInt(localStorage.getItem('pilates_acqua_oggi')) || 0;
+let sfidaCustom = JSON.parse(localStorage.getItem('pilates_sfida_custom')) || null;
+let moodCorrente = "🟢"; 
+
+function startTimer(secondi, etichetta) {
+    const overlay = document.getElementById('timer-overlay');
+    const display = document.getElementById('timer-display');
+    const label = document.getElementById('timer-label');
+    const btnSalta = document.getElementById('btn-salta');
+
+    overlay.classList.remove('hidden');
+    label.innerText = etichetta;
+
+    // 🎯 Cambia testo bottone in base al tipo
+    if (etichetta.toLowerCase().includes("pausa")) {
+        btnSalta.innerText = "SALTA PAUSA";
+    } else if (etichetta.toLowerCase().includes("cardio")) {
+        btnSalta.innerText = "INTERROMPI";
+    } else {
+        btnSalta.innerText = "TERMINA";
+    }
+
+    let t = secondi;
+    clearInterval(timerInterval);
+
+    timerInterval = setInterval(() => {
+        let min = Math.floor(t / 60);
+        let sec = t % 60;
+        display.innerText = `${min}:${sec < 10 ? '0' : ''}${sec}`;
+
+        if (t <= 0) {
+            playFinishSound();
+            stopTimer();
+        }
+
+        t--;
+    }, 1000);
+}
+ function stopTimer() { 
+    clearInterval(timerInterval); 
+    document.getElementById('timer-overlay').classList.add('hidden'); 
+    
+    // Feedback sonoro (già presente, ottimo backup)
+    playFinishSound();
+
+    // Feedback vibrazione
+    if ('vibrate' in navigator) {
+        try {
+            // Alcuni browser richiedono una serie di vibrazioni per "svegliarsi"
+            navigator.vibrate([200, 100, 200]); 
+        } catch (e) {
+            console.log("Vibrazione non riuscita:", e);
+        }
+    }
+    
+    if (typeof parla === "function") {
+        parla("Pausa terminata");
+    }
+}
+ 
+function generaNuovaSettimana() {
+// Reset anche storico attrezzi
+Object.keys(localStorage).forEach(key => {
+    if (key.startsWith("allenamento_") || key.startsWith("storico_")) {
+        localStorage.removeItem(key);
+    }
+});
+    // 1. Recupero attrezzi e cronologia
+    const ultimi = JSON.parse(localStorage.getItem('ultimi_attrezzi')) || [];
+    let attrezziSelezionati = JSON.parse(localStorage.getItem("attrezziSelezionati")) || [];
+
+    // Controllo di sicurezza: se non ci sono attrezzi, avvisa l'utente
+    if (attrezziSelezionati.length === 0) {
+        alert("⚠️ Non hai selezionato nessun attrezzo! Vai in 'Modifica Attrezzi' e scegline almeno 3.");
+        modificaAttrezzi(); // Ti porta automaticamente alla selezione
+        return;
+    }
+
+    let scelti = [];
+
+    // LOGICA DI SCELTA (Basata sulle tue istruzioni)
+    // 🔹 CASO 1: Hai solo 1 attrezzo
+    if (attrezziSelezionati.length === 1) {
+        scelti = [attrezziSelezionati[0], attrezziSelezionati[0], attrezziSelezionati[0]];
+    } 
+    // 🔹 CASO 2: Hai 2 attrezzi
+    else if (attrezziSelezionati.length === 2) {
+        scelti = [attrezziSelezionati[0], attrezziSelezionati[1], attrezziSelezionati[0]];
+    } 
+    // 🔹 CASO 3: Hai 3 o più attrezzi (Logica con rotazione)
+    else {
+        // Filtro quelli NON usati la settimana scorsa
+        let disponibili = attrezziSelezionati.filter(a => !ultimi.includes(a));
+
+        // Se il filtro svuota troppo la lista (meno di 3 rimasti), uso tutti quelli selezionati
+        if (disponibili.length < 3) {
+            disponibili = [...attrezziSelezionati];
+        }
+
+        // Mischio in modo casuale
+        disponibili.sort(() => 0.5 - Math.random());
+        
+        // Prendo i primi 3 diversi
+        scelti = disponibili.slice(0, 3);
+    }
+
+    // 🔹 GARANZIA FINALE: Se per qualche errore mancano elementi, riempio fino a 3
+    while (scelti.length < 3) {
+        scelti.push(attrezziSelezionati[0]);
+    }
+
+    // 2. Creazione del piano e salvataggio
+    pianoSettimanale = {
+        "Lunedì": { attrezzo: scelti[0], round: 0 },
+        "Mercoledì": { attrezzo: scelti[1], round: 0 },
+        "Venerdì": { attrezzo: scelti[2], round: 0 }
+    };
+
+    localStorage.setItem('pilates_piano', JSON.stringify(pianoSettimanale));
+    localStorage.setItem('ultimi_attrezzi', JSON.stringify(scelti));
+
+    // 3. AGGIORNAMENTO IMMEDIATO DELLA UI
+    renderDashboard(); 
+    
+    // Feedback visivo per l'utente
+    alert("✅ Nuovo piano generato con successo!");
+}
+
+function avviaAllenamento(giorno) {
+
+    giornoSelezionato = giorno;
+    stretchingAvviato = false;
+    allenamentoCompletato = false;
+
+    const datiGiorno = pianoSettimanale[giorno];
+    const attrezzo = datiGiorno.attrezzo;
+
+    // 🔑 Chiavi separate
+    const chiaveGiorno = "allenamento_" + giorno;
+    const chiaveStorico = "storico_" + attrezzo;
+
+    const salvato = localStorage.getItem(chiaveGiorno);
+
+    if (salvato) {
+        eserciziCorrenti = JSON.parse(salvato);
+    } else {
+
+        const tuttiEsercizi = databaseEsercizi[attrezzo] || [];
+
+        // 📜 Recupera storico per questo attrezzo
+        let storico = JSON.parse(localStorage.getItem(chiaveStorico)) || [];
+
+        // 🚫 Escludi esercizi già usati
+        let disponibili = tuttiEsercizi.filter(es =>
+            !storico.includes(es.nome)
+        );
+
+        // 🔄 Se non bastano, reset automatico
+        if (disponibili.length < 13) {
+            storico = [];
+            disponibili = [...tuttiEsercizi];
+            localStorage.removeItem(chiaveStorico);
+        }
+
+        // --- ORGANIZZAZIONE PER FOCUS ---
+        const cat = {
+            "Addome": [],
+            "Interno Gamba": [],
+            "Glutei": [],
+            "Gambe": [],
+            "Braccia": [],
+            "Schiena": []
+        };
+
+        disponibili.forEach(es => {
+
+            let f = es.focus;
+
+            if (f === "Core" || f === "Addome Basso" ||
+                f === "Addome Profondo" || f === "Fianchi")
+                f = "Addome";
+
+            if (f === "Spalle" || f === "Braccia & Spalle")
+                f = "Braccia";
+
+            if (cat[f]) cat[f].push(es);
+        });
+
+        const pesca = (focus, quantita) => {
+            if (!cat[focus] || cat[focus].length === 0) return [];
+            return [...cat[focus]]
+                .sort(() => 0.5 - Math.random())
+                .slice(0, quantita);
+        };
+
+        // --- NUOVA STRUTTURA TOTAL BODY BILANCIATA ---
+const gambe = pesca("Gambe", 2);
+const glutei = pesca("Glutei", 2);
+const interno = pesca("Interno Gamba", 2);
+// --- ADDOME: 1 dinamico + 1 isometrico ---
+let addomeTutti = cat["Addome"] || [];
+
+let addomeIsometrici = addomeTutti.filter(es =>
+    es.nome.toLowerCase().includes("plank") ||
+    es.nome.toLowerCase().includes("hold") ||
+    es.nome.toLowerCase().includes("hollow")
+);
+
+let addomeDinamici = addomeTutti.filter(es =>
+    !es.nome.toLowerCase().includes("plank") &&
+    !es.nome.toLowerCase().includes("hold") &&
+    !es.nome.toLowerCase().includes("hollow")
+);
+
+const pescaRandom = arr =>
+    arr.sort(() => 0.5 - Math.random())[0];
+
+const addome = [
+    pescaRandom(addomeDinamici),
+    pescaRandom(addomeIsometrici)
+].filter(Boolean);
+const braccia = pesca("Braccia", 2);
+const schiena = pesca("Schiena", 2);
+
+// esercizio dinamico finale scelto tra gambe o addome
+// 🔥 13° esercizio = ADDOME DINAMICO diverso dal 4°
+
+const addomeGiaUsato = addome[0]; // Il 4° esercizio (dinamico)
+
+const addomeDinamiciDisponibili = addomeDinamici
+    .filter(es => es && es.nome !== addomeGiaUsato?.nome);
+
+const finale = addomeDinamiciDisponibili.length > 0
+    ? addomeDinamiciDisponibili[
+        Math.floor(Math.random() * addomeDinamiciDisponibili.length)
+      ]
+    : null; 
+
+eserciziCorrenti = [
+    gambe[0],
+    schiena[0],
+    glutei[0],
+    addome[0],
+    braccia[0],
+    interno[0],
+    gambe[1],
+    schiena[1],
+    glutei[1],
+    addome[1],
+    braccia[1],
+    interno[1],
+    finale
+].filter(Boolean);
+        // 📌 Aggiorna storico attrezzo
+        eserciziCorrenti.forEach(es => {
+            storico.push(es.nome);
+        });
+
+        localStorage.setItem(chiaveStorico, JSON.stringify(storico));
+
+        // 💾 Salva workout per il giorno
+        localStorage.setItem(
+            chiaveGiorno,
+            JSON.stringify(eserciziCorrenti)
+        );
+    }
+
+    // --- UI SETUP ---
+    const livello = localStorage.getItem("livelloPilates") || "MEDIO";
+    const config = CONFIG_LIVELLI[livello];
+
+    document.getElementById('giorno-titolo').innerText =
+        `Allenamento: ${giorno} (${attrezzo})`;
+
+    roundCorrenti = pianoSettimanale[giorno]?.round || 0;
+
+    document.querySelector('#round-control p').innerHTML =
+        `Round Completati:
+        <span id="round-count"
+        style="color:${roundCorrenti >= config.round ? '#4CAF50' : '#d32f2f'}">
+        ${roundCorrenti}
+        </span>/${config.round}`;
+
+   document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('allenamento').classList.remove('hidden');
+
+    const stretchingSection = document.getElementById("stretching-section");
+    if (stretchingSection) {
+        stretchingSection.style.display = "block";
+    }
+
+aggiornaRiscaldamentoUI();
+    aggiornaUIEsercizi();
+    window.scrollTo(0, 0);
+    
+}
+
+
+ function aggiornaUIEsercizi() {
+    const lista = document.getElementById('esercizi-lista');
+    if (!lista) return;
+
+    // 🔥 Cancella TUTTO il contenuto
+    lista.innerHTML = "";
+
+    const livello = livelloAttuale || localStorage.getItem("livelloPilates") || "MEDIO";
+    const config = CONFIG_LIVELLI[livello];
+
+    // USA SOLO GLI ESERCIZI GIÀ SALVATI NELLA SESSIONE
+    eserciziCorrenti.forEach((es, index) => {
+        let repsDinamiche = calcolaReps(es.reps);
+        let secondiPerTimer = es.reps.includes("sec") ? config.tempoEsercizio : 45;
+
+        // --- LOGICA AGGIUNTA PER "PER LATO" ---
+        const terminiUnilaterali = ["side", "single", "lunge", "affondi", "kick", "circle", "one leg", "monolaterale"];
+        const isUnilaterale = terminiUnilaterali.some(t => es.nome.toLowerCase().includes(t));
+        
+        // Aggiunge "per lato" se è un esercizio unilaterale e non lo ha già scritto
+        if (isUnilaterale && !repsDinamiche.toLowerCase().includes("lato")) {
+            repsDinamiche += " per lato";
+        }
+        // --------------------------------------
+
+        let parti = es.spiegazione.split(':');
+        let azione = parti.length > 1 ? parti[1].trim() : es.spiegazione;
+        
+        let tBtn = es.reps.includes("sec") ? 
+            `<button onclick="event.stopPropagation(); startTimer(${secondiPerTimer}, '${es.nome}')" style="background:#4A7c59;color:white;border:none;border-radius:12px;padding:4px 10px;cursor:pointer;font-size:11px;font-weight:bold;margin-top:5px;">⏱️ AVVIA</button>` : "";
+        
+        const item = document.createElement('div');
+        item.className = 'esercizio-item';
+        
+        item.onclick = function() {
+            this.classList.toggle('fatto');
+            if (typeof aggiornaProgressBar === 'function') aggiornaProgressBar();
+        };
+
+        item.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:flex-start;">
+                <strong style="font-size:17px;color:#023e8a;">${index+1}. ${es.nome}</strong>
+                <div style="display:flex;flex-direction:column;align-items:flex-end;">
+                    <span style="background:#48cae4;color:white;padding:3px 8px;border-radius:8px;font-weight:bold;font-size:13px;">${repsDinamiche}</span>
+                    ${tBtn}
+                </div>
+            </div>
+            <div style="background:#f0faff;padding:12px;border-radius:12px;border-left:5px solid #0077b6;margin-top:10px;">
+                <div>
+                    <strong style="color:#0077b6;text-transform:uppercase;font-size:11px;">🎬 Azione:</strong><br>
+                    <span style="font-size:15px;">${azione}</span>
+                </div>
+            </div>
+            <div style="font-size:12px; color:#666; margin-top:8px; font-weight:bold;">
+                🎯 FOCUS: ${es.focus.toUpperCase()}
+            </div>
+        `;
+
+        lista.appendChild(item);
+    });
+
+    // 🔹 Frase informativa stretching finale
+    const fraseStretching = document.createElement("div");
+    fraseStretching.style.marginTop = "25px";
+    fraseStretching.style.padding = "12px";
+    fraseStretching.style.background = "#fff3cd";
+    fraseStretching.style.borderRadius = "12px";
+    fraseStretching.style.fontWeight = "bold";
+    fraseStretching.style.textAlign = "center";
+    fraseStretching.style.color = "#856404";
+    fraseStretching.innerHTML = "✨ Al termine dei round inizierà lo stretching finale";
+
+    lista.appendChild(fraseStretching);
+}
+
+function segnaRound() {
+
+    const livello = livelloAttuale || localStorage.getItem("livelloPilates") || "MEDIO";
+    const config = CONFIG_LIVELLI[livello];
+    const maxRound = config.round;
+
+    if (roundCorrenti >= maxRound) return;
+
+    roundCorrenti++;
+
+    // 🔥 Aggiorna UI numero round
+    document.getElementById('round-count').innerText = roundCorrenti;
+
+    // 🔥 Aggiorna colore se completato
+    if (roundCorrenti >= maxRound) {
+        document.getElementById('round-count').style.color = "#4CAF50";
+    }
+
+    // 🔥 Salva nel piano settimanale
+    if (pianoSettimanale[giornoSelezionato]) {
+        pianoSettimanale[giornoSelezionato].round = roundCorrenti;
+        localStorage.setItem('pilates_piano', JSON.stringify(pianoSettimanale)); salvaAllenamentoCalendario(giornoSelezionato);
+        generaCalendario();  
+        aggiornaStreak();
+    }
+
+    // 🔥 Se completato tutto
+    if (roundCorrenti === maxRound) {
+
+        const oggi = new Date();
+
+const dataKey = 
+    oggi.getFullYear() + "-" +
+    String(oggi.getMonth() + 1).padStart(2, '0') + "-" +
+    String(oggi.getDate()).padStart(2, '0');
+
+        const titoloAttrezzo = document.getElementById('giorno-titolo')
+            .innerText.split('(')[1]
+            .replace(')','')
+            .trim();
+
+        let workoutSalvati = JSON.parse(localStorage.getItem("workoutCalendario")) || {};
+
+        workoutSalvati[dataKey] = { 
+            attrezzo: titoloAttrezzo,
+            round: maxRound
+        };
+
+        localStorage.setItem("workoutCalendario", JSON.stringify(workoutSalvati));
+
+        mostraStretchingFinale();
+
+    } else {
+    resetEserciziRound();
+    startTimer(60, "PAUSA ROUND " + roundCorrenti);
+}
+}
+function resetEserciziRound() {
+    document.querySelectorAll('.esercizio-item.fatto')
+        .forEach(el => el.classList.remove('fatto'));
+
+    if (typeof aggiornaProgressBar === 'function') {
+        aggiornaProgressBar();
+    }
+}
+// NUOVA FUNZIONE DA AGGIUNGERE SOTTO
+function mostraFineAllenamento() {
+    const container = document.getElementById('allenamento');
+    
+    container.innerHTML = `
+        <div style="text-align: center; padding: 30px 10px; animation: fadeIn 0.8s ease-out;">
+            <div style="font-size: 70px; margin-bottom: 10px;">🏆</div>
+            <h2 style="color: #0077b6; font-size: 26px;">Allenamento Completato!</h2>
+            <p style="color: #455a64; margin-bottom: 25px;">Hai terminato i 3 round e lo stretching di oggi.</p>
+            
+            <div style="background: #e1f5fe; padding: 20px; border-radius: 20px; text-align: left; margin-bottom: 30px; border-left: 5px solid #0077b6;">
+                <strong style="color: #0077b6; display: block; margin-bottom: 10px;">💡 Ricorda per la trasformazione:</strong>
+                <ul style="margin: 0; padding-left: 20px; color: #2d3436; font-size: 14px; line-height: 1.6;">
+                    <li>Espira sempre nel momento di massimo sforzo.</li>
+                    <li>Succhia l'ombelico verso la colonna vertebrale.</li>
+                    <li>Mantieni precisione millimetrica (piede flex o punta).</li>
+                </ul>
+            </div>
+
+            <button class="btn" onclick="location.reload()">TORNA ALLA DASHBOARD</button>
+        </div>
+    `;
+    window.scrollTo(0, 0);
+}
+ 
+ function mostraStretchingFinale() {
+    // Nascondiamo la lista esercizi per focalizzarci sullo stretching
+    document.getElementById('esercizi-lista').innerHTML = ""; 
+    
+    document.getElementById('round-control').innerHTML = `
+        <div class="box-defaticamento" style="background: #e0f2f1; padding: 25px; border-radius: 20px; border: 2px solid #0077b6; text-align: center; box-shadow: 0 4px 15px rgba(0,0,0,0.05); animation: fadeIn 0.5s;">
+            <h3 style="color: #0077b6; margin-top: 0; font-size: 22px;">🌊 Defaticamento Rigenerante</h3>
+            <p style="font-size: 14px; color: #455a64; line-height: 1.5; margin-bottom: 20px;">
+                Espira profondamente e rilassa i muscoli. <br>
+                <strong>Ricorda:</strong> mantieni l'ombelico verso la colonna e precisione millimetrica.
+            </p>
+            
+            
+
+            <div style="text-align: left; background: white; padding: 15px; border-radius: 12px; border-left: 4px solid #48cae4;">
+                <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center;">
+                    <div class="stretch-card" style="flex: 1;">
+                        <strong style="color:#0077b6;">🧘 POSIZIONE DEL BAMBINO</strong><br>
+                        <small style="color:#666;">Fronte a terra, allunga le braccia avanti.</small>
+                    </div>
+                    <button onclick="startTimer(60, 'Posizione del Bambino')" style="background:#0077b6;color:white;border:none;border-radius:12px;padding:8px 12px;cursor:pointer;font-size:11px;font-weight:bold;margin-left:10px;">⏱️ 60s</button>
+                </div>
+                
+                <div style="margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 10px;">
+                    <div class="stretch-card" style="flex: 1;">
+                        <strong style="color:#0077b6;">🦋 FARFALLA</strong><br>
+                        <small style="color:#666;">Pianta dei piedi uniti, ginocchia in fuori.</small>
+                    </div>
+                    <button onclick="startTimer(60, 'Farfalla')" style="background:#0077b6;color:white;border:none;border-radius:12px;padding:8px 12px;cursor:pointer;font-size:11px;font-weight:bold;margin-left:10px;">⏱️ 60s</button>
+                </div>
+                
+                <div style="display: flex; justify-content: space-between; align-items: center; border-top: 1px solid #eee; padding-top: 10px;">
+                    <div class="stretch-card" style="flex: 1;">
+                        <strong style="color:#0077b6;">🐍 COBRA</strong><br>
+                        <small style="color:#666;">Distendi le braccia e allunga l'addome.</small>
+                    </div>
+                    <button onclick="startTimer(60, 'Cobra')" style="background:#0077b6;color:white;border:none;border-radius:12px;padding:8px 12px;cursor:pointer;font-size:11px;font-weight:bold;margin-left:10px;">⏱️ 60s</button>
+                </div>
+            </div>
+
+            <button class="btn" style="margin-top: 25px; background: #2e7d32;" onclick="concludiSessioneFinale()">🏆 COMPLETA SESSIONE</button>
+        </div>`;
+    window.scrollTo(0, 0);
+}
+
+// Funzione per il gran finale
+function concludiSessioneFinale() {
+    alert("Ottimo lavoro! Sessione completata con successo. 🎉");
+    location.reload();
+}
+
+function tornaAllaDashboard() {
+    // Nasconde tutte le sezioni secondarie
+    document.getElementById('allenamento').classList.add('hidden');
+    document.getElementById('libreria-section').classList.add('hidden');
+    document.getElementById('progressi-section').classList.add('hidden');
+    document.getElementById('alimentazione-section').classList.add('hidden');
+    document.getElementById('calendario-section').classList.add('hidden'); // ← AGGIUNTA
+
+    // Mostra la dashboard principale
+    document.getElementById('dashboard').classList.remove('hidden');
+    
+    // Torna in cima alla pagina
+    window.scrollTo(0, 0);
+}
+ 
+function tornaAllaDashDati() {
+    tornaAllaDashboard();
+} 
+
+function mostraProgressi() {
+    // Nascondi la dashboard e le altre sezioni
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('alimentazione-section').classList.add('hidden');
+    document.getElementById('libreria-section').classList.add('hidden');
+    document.getElementById('allenamento').classList.add('hidden');
+    document.getElementById('selezione-attrezzi').classList.add('hidden');
+
+    // Mostra la sezione progressi
+    document.getElementById('progressi-section').classList.remove('hidden');
+    
+    // Carica i dati salvati
+    aggiornaStoricoUI();
+    window.scrollTo(0, 0);
+}
+function salvaMisure() {
+    // Recupero i valori dagli input
+    const p = document.getElementById('peso').value;
+    const v = document.getElementById('vita').value;
+    const f = document.getElementById('fianchi').value;
+    const c = document.getElementById('coscia').value;
+
+    // Controllo validità (almeno il peso deve essere inserito)
+    if(!p || p <= 0) { 
+        alert("Per favore, inserisci almeno il peso per salvare il progresso."); 
+        return; 
+    }
+
+    const nuovaMisura = {
+        data: new Date().toLocaleDateString('it-IT'),
+        peso: p, 
+        vita: v || "-", 
+        fianchi: f || "-", 
+        coscia: c || "-"
+    };
+
+    // Carico lo storico esistente o creo un array vuoto
+    let storico = JSON.parse(localStorage.getItem('pilates_misure')) || [];
+    
+    // Aggiungo la nuova misura all'inizio della lista
+    storico.unshift(nuovaMisura);
+    
+    // Salvo nel localStorage
+    localStorage.setItem('pilates_misure', JSON.stringify(storico));
+    
+    // Feedback visivo
+    alert("Progressi salvati con successo! 🎉");
+    
+    // Pulisco i campi input
+    document.getElementById('peso').value = '';
+    document.getElementById('vita').value = '';
+    document.getElementById('fianchi').value = '';
+    document.getElementById('coscia').value = '';
+
+    // Aggiorno la lista visibile dello storico
+    aggiornaStoricoUI();
+}
+ 
+function aggiornaStoricoUI() {
+    const storico = JSON.parse(localStorage.getItem('pilates_misure')) || [];
+    const lista = document.getElementById('lista-storico');
+    
+    if(storico.length === 0) {
+        lista.innerHTML = "<p style='text-align:center; padding: 20px;'>Nessuna misura salvata ancora.</p>";
+        return;
+    }
+    
+    lista.innerHTML = storico.map((m, index) => `
+        <div class="item-misura">
+            <div>
+                <strong style="color:#0077b6;">${m.data}</strong><br>
+                <small>Peso: ${m.peso}kg | V: ${m.vita}cm | F: ${m.fianchi}cm | C: ${m.coscia}cm</small>
+            </div>
+            <button onclick="eliminaMisura(${index})" class="btn-delete">
+                ✕
+            </button>
+        </div>
+    `).join('');
+}
+
+function eliminaMisura(index) {
+    if(confirm("Vuoi davvero eliminare questa misurazione?")) {
+        let storico = JSON.parse(localStorage.getItem('pilates_misure')) || [];
+        // Rimuovo l'elemento corretto (attenzione al reverse)
+        const actualIndex = storico.length - 1 - index;
+        storico.splice(actualIndex, 1);
+        localStorage.setItem('pilates_misure', JSON.stringify(storico));
+        aggiornaStoricoUI();
+    }
+}
+
+function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    localStorage.setItem('pilates_darkmode', isDark);
+}
+
+// Controlla la preferenza al caricamento
+if (localStorage.getItem('pilates_darkmode') === 'true') {
+    document.body.classList.add('dark-mode');
+}
+
+renderDashboard();
+// --- LOGICA DIARIO PROGRESSI ---
+function playFinishSound() {
+    const context = new (window.AudioContext || window.webkitAudioContext)();
+    const oscillator = context.createOscillator();
+    const gainNode = context.createGain();
+
+    oscillator.type = 'sine'; // Suono dolce
+    oscillator.frequency.setValueAtTime(880, context.currentTime); // Nota La
+    
+    gainNode.gain.setValueAtTime(0.1, context.currentTime);
+    gainNode.gain.exponentialRampToValueAtTime(0.0001, context.currentTime + 1);
+
+    oscillator.connect(gainNode);
+    gainNode.connect(context.destination);
+
+    oscillator.start();
+    oscillator.stop(context.currentTime + 1);
+}
+
+function mostraLibreria() {
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('progressi-section').classList.add('hidden');
+    document.getElementById('libreria-section').classList.remove('hidden');
+    
+    const container = document.getElementById('libreria-lista-completa');
+    container.innerHTML = ''; 
+
+    for (const attrezzo in databaseEsercizi) {
+        const attrezzoDiv = document.createElement('div');
+        attrezzoDiv.innerHTML = `<div class="library-attrezzo-title">${attrezzo}</div>`;
+        
+        const gruppi = {};
+        databaseEsercizi[attrezzo].forEach(es => {
+            if (!gruppi[es.focus]) gruppi[es.focus] = [];
+            gruppi[es.focus].push(es);
+        });
+
+        for (const focus in gruppi) {
+            const groupDiv = document.createElement('div');
+            groupDiv.className = 'library-focus-group';
+            groupDiv.innerHTML = `<div class="library-focus-title">${focus}</div>`;
+            
+            gruppi[focus].forEach(es => {
+                const item = document.createElement('div');
+                item.className = 'library-item';
+                // Al clic, aggiungiamo/togliamo la classe 'active' per mostrare la descrizione
+                item.onclick = function() { this.classList.toggle('active'); };
+                
+                // MODIFICA QUI: rimosso ${es.reps}
+                item.innerHTML = `
+                    <div style="display:flex; justify-content:space-between; width:100%;">
+                        <span class="library-exercise-name">${es.nome}</span>
+                        <span style="color:#666; font-size:12px;">info ▾</span>
+                    </div>
+                    <div class="library-description">
+                        <strong>Esecuzione:</strong><br>${es.spiegazione}
+                    </div>
+                `;
+                groupDiv.appendChild(item);
+            });
+            attrezzoDiv.appendChild(groupDiv);
+        }
+        container.appendChild(attrezzoDiv);
+    }
+}
+
+ function tornaAllaDashAlim() {
+    // 1. Nascondi la sezione alimentazione
+    document.getElementById('alimentazione-section').classList.add('hidden');
+    
+    // 2. Mostra la dashboard principale
+    // (Assumendo che il tuo ID della dashboard sia 'dashboard-section')
+    document.getElementById('dashboard-section').classList.remove('hidden');
+    
+    // 3. Opzionale: Torna in cima alla pagina per evitare glitch visivi
+    window.scrollTo(0, 0);
+}
+ 
+
+// Gestione tasto flottante durante lo scroll
+window.onscroll = function() {
+    const btn = document.getElementById("btn-flottante-su");
+    // Appare se scendi più di 300px
+    if (document.body.scrollTop > 300 || document.documentElement.scrollTop > 300) {
+        btn.style.display = "block";
+    } else {
+        btn.style.display = "none";
+    }
+};
+
+// Funzione per tornare su con effetto fluido
+function tornaSu() {
+    window.scrollTo({
+        top: 0,
+        behavior: 'smooth'
+    });
+}
+// Stato iniziale del riscaldamento (0: Tapis, 1: Cardio, 2: Esterno)
+let tipoRiscaldamento = parseInt(localStorage.getItem('tipo_riscaldamento')) || 0;
+
+function aggiornaRiscaldamentoUI() {
+    const box = document.getElementById('riscaldamento-contenuto');
+    if (!box) return;
+
+    let html = "";
+    
+    switch(tipoRiscaldamento) {
+        case 0: // TAPIS ROULANT
+            html = `<strong>🏃‍♂️ RISCALDAMENTO: TAPIS ROULANT</strong><br>
+                    <small>20 min • Pendenza 3% • Vel. 5.5 - 6.0 km/h</small>
+                    <button onclick="startTimer(1200, 'TAPIS ROULANT')" style="display:block; width:100%; margin-top:8px; background:#ffc107; border:none; border-radius:8px; padding:8px; font-weight:bold; cursor:pointer;">⏱️ AVVIA 20 MIN</button>`;
+            break;
+            
+        case 1: // CARDIO SUL POSTO
+            html = `<strong>home 🏠 RISCALDAMENTO: CARDIO SOFT</strong><br>
+                    <small>Esegui: 30" Jumping Jacks, 30" Corsa sul posto, 30" Kick back (Ripeti 4 volte)</small>
+                    <button onclick="startTimer(360, 'CIRCUITO CARDIO')" style="display:block; width:100%; margin-top:8px; background:#ffc107; border:none; border-radius:8px; padding:8px; font-weight:bold; cursor:pointer;">⏱️ AVVIA 6 MIN</button>`;
+            break;
+            
+        case 2: // CAMMINATA ALL'APERTO (Nuova!)
+            html = `<strong>🌳 RISCALDAMENTO: CAMMINATA ESTERNA</strong><br>
+                    <small>25 min • Passo svelto • Braccia attive e rullata del piede completa.</small>
+                    <button onclick="startTimer(1500, 'CAMMINATA ESTERNA')" style="display:block; width:100%; margin-top:8px; background:#ffc107; border:none; border-radius:8px; padding:8px; font-weight:bold; cursor:pointer;">⏱️ AVVIA 25 MIN</button>`;
+            break;
+    }
+    
+    box.innerHTML = html;
+}
+
+function cambiaRiscaldamento() {
+    tipoRiscaldamento = (tipoRiscaldamento + 1) % 3; // Cicla tra 0, 1, 2
+    localStorage.setItem('tipo_riscaldamento', tipoRiscaldamento);
+    aggiornaRiscaldamentoUI();
+}
+
+// Chiama la funzione all'avvio dell'allenamento
+// Assicurati di aggiungere 'aggiornaRiscaldamentoUI()' dentro la funzione avviaAllenamento(giorno)
+
+function toggleRiscaldamento() {
+    usaTapisRoulant = !usaTapisRoulant;
+    aggiornaRiscaldamentoUI();
+}
+function filtraLibreria() {
+    let input = document.getElementById('input-ricerca').value.toLowerCase();
+    let items = document.querySelectorAll('.library-item');
+    let titles = document.querySelectorAll('.library-focus-group');
+
+    items.forEach(item => {
+        let testo = item.innerText.toLowerCase();
+        item.style.display = testo.includes(input) ? "flex" : "none";
+    });
+}
+
+
+function mostraAlimentazione() {
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('alimentazione-section').classList.remove('hidden');
+    document.getElementById('suggerimento-testo').innerText = ottieniSuggerimentoAlimentare();
+    renderWater();
+    aggiornaUISfida();
+    renderPasti();
+}
+
+function tornaAllaDashAlim() {
+    tornaAllaDashboard();
+} 
+
+
+function selezionaMood(mood, elemento) {
+    moodCorrente = mood;
+    document.querySelectorAll('.opzione-pasto').forEach(el => el.classList.remove('selected'));
+    elemento.classList.add('selected');
+}
+
+function setChallenge(nome) {
+    document.getElementById('custom-challenge-name').value = nome;
+}
+// --- GESTIONE SFIDA ---
+function avviaSfidaCustom() {
+    const nome = document.getElementById('custom-challenge-name').value;
+    if(!nome) return alert("Inserisci un nome per la sfida!");
+    sfidaCustom = { nome: nome, streak: 0, ultimaData: null };
+    aggiornaUISfida();
+}
+
+function segnaVittoria() {
+    const oggi = new Date().toLocaleDateString();
+    if (sfidaCustom.ultimaData === oggi) return alert("Ottimo lavoro! Per oggi hai già dato, torna domani!");
+    
+    sfidaCustom.streak++;
+    sfidaCustom.ultimaData = oggi;
+    if (sfidaCustom.streak >= 30) {
+        alert("🎉 PAZZESCA! Hai completato 30 giorni di: " + sfidaCustom.nome);
+        sfidaCustom = null;
+    }
+    aggiornaUISfida();
+}
+function salvaPasto() {
+    const tipo = document.getElementById('tipo-pasto').value;
+    const desc = document.getElementById('descrizione-pasto').value;
+    const mood = moodCorrente; // Usa la variabile globale aggiornata dai box cliccabili
+    const dataOggi = new Date().toLocaleDateString();
+
+    if (!desc) {
+        alert("Scrivi cosa hai mangiato!");
+        return;
+    }
+
+    const pasto = { tipo, desc, mood, data: dataOggi };
+    let storicoPasti = JSON.parse(localStorage.getItem('pilates_pasti')) || [];
+    storicoPasti.unshift(pasto);
+    localStorage.setItem('pilates_pasti', JSON.stringify(storicoPasti));
+
+    // Reset campi
+    document.getElementById('descrizione-pasto').value = '';
+    renderPasti();
+}
+
+
+function renderDashboard() {
+livelloAttuale = localStorage.getItem("livelloPilates") || livelloAttuale;
+
+    pianoSettimanale = JSON.parse(localStorage.getItem('pilates_piano')) || {};
+
+    const maxRound = CONFIG_LIVELLI[livelloAttuale].round;
+    const lista = document.getElementById("settimana-lista");
+    if (!lista) return;
+    lista.innerHTML = "";
+
+    if (!pianoSettimanale) {
+        lista.innerHTML = "<p style='text-align:center; color:#666;'>Nessun piano generato. Clicca il tasto sotto!</p>";
+        return;
+    }
+
+    // Recuperiamo la configurazione del livello attuale per mostrare i round corretti
+ const livelloCorrente = localStorage.getItem("livelloPilates") || livelloAttuale || "MEDIO";
+
+
+    Object.keys(pianoSettimanale).forEach(giorno => {
+        const dati = pianoSettimanale[giorno];
+        const roundFatti = dati.round || 0;
+        const div = document.createElement("div");
+        div.className = "giorno-card";
+        div.onclick = () => avviaAllenamento(giorno);
+
+        div.innerHTML = `
+            <div>
+                <strong>${giorno}</strong><br>
+                <span class="attrezzo-tag">${dati.attrezzo}</span>
+            </div>
+            <div style="text-align: right;">
+                <small style="display:block; font-weight:bold; margin-bottom:5px;
+              color:${roundFatti >= maxRound ? '#4CAF50' : '#0077b6'};">
+    ${roundFatti}/${maxRound} Round
+</small>
+                <span style="color: #0077b6; font-size: 20px;">❯</span>
+            </div>
+        `;
+        lista.appendChild(div);
+    });
+}
+
+function renderPasti() {
+    const storicoPasti = JSON.parse(localStorage.getItem('pilates_pasti')) || [];
+    const container = document.getElementById('lista-pasti-oggi');
+    const dataOggi = new Date().toLocaleDateString();
+    
+    // Filtriamo i pasti di oggi
+    const oggi = storicoPasti.filter(p => p.data === dataOggi);
+
+    if (oggi.length === 0) {
+        container.innerHTML = "<p style='font-size:13px; color:#999; text-align:center;'>Nessun pasto registrato oggi.</p>";
+        return;
+    }
+
+    let html = oggi.map((p, index) => {
+        // Troviamo l'indice reale nello storico totale per la cancellazione
+        const realIndex = storicoPasti.findIndex(sp => sp === p);
+        return `
+        <div style="background:#f8f9fa; margin-bottom:8px; padding:12px; border-radius:12px; display:flex; justify-content:space-between; align-items:center; border-left: 4px solid ${p.mood === '🟢' ? '#4CAF50' : p.mood === '🟡' ? '#FFC107' : '#F44336'}">
+            <div style="flex-grow:1;">
+                <div style="display:flex; gap:10px; font-size:12px; font-weight:bold; color:#0077b6;">
+                    <span>${p.tipo}</span>
+                    <span>${p.mood}</span>
+                </div>
+                <div style="font-size:14px; margin-top:4px; color:#2d3436;">${p.desc}</div>
+            </div>
+            <button onclick="eliminaPasto(${realIndex})" style="background:none; border:none; cursor:pointer; font-size:16px; padding:5px;">🗑️</button>
+        </div>
+    `}).join('');
+
+    // Aggiunge il tasto Reset in fondo se ci sono pasti
+    html += `<button onclick="resetDiarioAlimentare()" style="width:100%; background:none; border:1px solid #ff5252; color:#ff5252; padding:10px; border-radius:12px; margin-top:15px; font-size:12px; cursor:pointer; font-weight:bold;">🗑️ SVUOTA DIARIO DI OGGI</button>`;
+    
+    container.innerHTML = html;
+}
+
+function eliminaPasto(index) {
+    let storicoPasti = JSON.parse(localStorage.getItem('pilates_pasti')) || [];
+    if (confirm("Vuoi eliminare questo pasto?")) {
+        storicoPasti.splice(index, 1);
+        localStorage.setItem('pilates_pasti', JSON.stringify(storicoPasti));
+        renderPasti();
+    }
+}
+
+function resetDiarioAlimentare() {
+    if (confirm("Sei sicura di voler cancellare TUTTI i pasti di oggi?")) {
+        const dataOggi = new Date().toLocaleDateString();
+        let storicoPasti = JSON.parse(localStorage.getItem('pilates_pasti')) || [];
+        
+        // Manteniamo solo i pasti che NON sono di oggi
+        storicoPasti = storicoPasti.filter(p => p.data !== dataOggi);
+        
+        localStorage.setItem('pilates_pasti', JSON.stringify(storicoPasti));
+        renderPasti();
+    }
+}
+ 
+function resetAcqua() {
+    if(confirm("Vuoi azzerare il conteggio dell'acqua?")) {
+        bicchieriAcqua = 0;
+        salvaAcqua();
+    }
+}
+
+const suggerimentiNutrizionali = {
+    "Corpo Libero": "Oggi focus sulla fluidità: bevi un bicchiere d'acqua extra prima di iniziare per mantenere i tessuti elastici.",
+    "Ring": "Il Ring richiede molta forza resistente: una manciata di mandorle o noci 30 min prima ti darà l'energia giusta.",
+    "Rullo": "Sessione intensa e massaggiante: post-allenamento mangia frutta ricca di vitamina C per aiutare il collagene.",
+    "Pesi 4 kg": "Oggi lavori sul tono muscolare: assicurati di inserire una fonte proteica (uova, yogurt o legumi) nel prossimo pasto.",
+    "Elastico Chiuso": "L'elastico crea tensione costante: il magnesio (es. cioccolato fondente o spinaci) aiuterà a prevenire i crampi.",
+    "Fascia Aperta": "Focus sull'allungamento: mantieni l'idratazione alta per favorire la flessibilità dei muscoli.",
+    "Palla Piccola": "Lavoro di precisione e core: un pasto leggero ma equilibrato eviterà il senso di pesantezza durante gli addominali.",
+    "Riposo": "Giorno di recupero: prediligi tisane drenanti e fibre per aiutare il corpo a eliminare le tossine."
+};
+
+function ottieniSuggerimentoAlimentare() {
+    const oggi = new Date().toLocaleDateString('it-IT', { weekday: 'long' });
+    const giornoFormattato = oggi.charAt(0).toUpperCase() + oggi.slice(1);
+    
+    let attrezzoOggi = "Riposo";
+    
+    // Controlliamo se nel piano esiste l'allenamento per oggi
+    if (pianoSettimanale && pianoSettimanale[giornoFormattato]) {
+        attrezzoOggi = pianoSettimanale[giornoFormattato].attrezzo;
+    }
+
+    return suggerimentiNutrizionali[attrezzoOggi] || suggerimentiNutrizionali["Riposo"];
+}
+function renderWater() {
+    const container = document.getElementById('water-icons');
+    const countLabel = document.getElementById('water-count');
+    const fillBar = document.getElementById('water-fill');
+    
+    if(!container) return;
+
+    container.innerHTML = '';
+    for (let i = 1; i <= 10; i++) {
+        const span = document.createElement('span');
+        // Se il bicchiere corrente è <= a quelli bevuti, mostra la goccia piena
+        span.innerText = i <= bicchieriAcqua ? '💧' : '⚪';
+        span.style.cursor = "pointer"; 
+        
+        span.onclick = () => { 
+            // Se clicchi sulla goccia che è già l'ultima selezionata, 
+            // togliamo un bicchiere (permette di scalare uno alla volta)
+            if (i === bicchieriAcqua) {
+                bicchieriAcqua = i - 1;
+            } else {
+                bicchieriAcqua = i; 
+            }
+            salvaAcqua(); 
+        };
+        container.appendChild(span);
+    }
+
+    // Aggiornamento grafico della barra e del testo
+    if(fillBar) fillBar.style.width = (bicchieriAcqua * 10) + '%';
+    if(countLabel) countLabel.innerText = bicchieriAcqua + " / 10 Bicchieri";
+}
+ 
+
+function salvaAcqua() {
+    localStorage.setItem('pilates_acqua_oggi', bicchieriAcqua);
+    renderWater();
+}
+ 
+
+
+function aggiornaUISfida() {
+    localStorage.setItem('pilates_sfida_custom', JSON.stringify(sfidaCustom));
+    const setup = document.getElementById('setup-sfida');
+    const progresso = document.getElementById('progresso-sfida');
+    
+    if (sfidaCustom) {
+        setup.classList.add('hidden');
+        progresso.classList.remove('hidden');
+        document.getElementById('nome-sfida-attiva').innerText = sfidaCustom.nome;
+        document.getElementById('giorni-sfida-text').innerText = `${sfidaCustom.streak} / 30`;
+        const btn = document.getElementById('btn-vittoria');
+        if (sfidaCustom.ultimaData === new Date().toLocaleDateString()) {
+            btn.disabled = true; btn.style.opacity = "0.5"; btn.innerText = "COMPLETATA PER OGGI";
+        } else {
+            btn.disabled = false; btn.style.opacity = "1"; btn.innerText = "HO VINTO OGGI! ✅";
+        }
+    } else {
+        setup.classList.remove('hidden');
+        progresso.classList.add('hidden');
+    }
+}
+
+function resetSfida() {
+    if(confirm("Vuoi davvero ricominciare? La serie attuale andrà persa.")) {
+        sfidaCustom = null;
+        localStorage.removeItem('pilates_sfida_custom');
+        aggiornaUISfida();
+    }
+}
+function mostraGuida() {
+    // Nasconde tutto il resto
+    document.getElementById('dashboard').classList.add('hidden');
+    document.getElementById('guida-section').classList.remove('hidden');
+    window.scrollTo(0, 0);
+}
+
+// Aggiorna la tua funzione esistente tornaAllaDashboard aggiungendo:
+
+function toggleFaq(element) {
+    const content = element.querySelector('.faq-content');
+    const icon = element.querySelector('span');
+    
+    if (content.classList.contains('hidden')) {
+        content.classList.remove('hidden');
+        icon.innerText = "▲";
+        element.style.borderColor = "#48cae4";
+    } else {
+        content.classList.add('hidden');
+        icon.innerText = "▼";
+        element.style.borderColor = "#0077b6";
+    }
+}
+// Questo comando deve essere fuori da ogni funzione, alla fine del file
+renderDashboard();
+
+
+function mostraCalendario() {
+    document.getElementById("dashboard").classList.add("hidden");
+    document.getElementById("calendario-section").classList.remove("hidden");
+
+    generaCalendario();
+
+}
+
+let meseCorrente = new Date().getMonth();
+let annoCorrente = new Date().getFullYear();
+ 
+function generaCalendario() {
+    const grid = document.getElementById('calendario-grid');
+    if (!grid) return;
+    grid.innerHTML = "";
+
+    // ✅ USA LE VARIABILI GLOBALI
+    const mese = meseCorrente;
+    const anno = annoCorrente;
+
+    const oggi = new Date();
+    const oggiString = oggi.toISOString().split('T')[0];
+
+    const storico = JSON.parse(localStorage.getItem("calendarioAllenamenti")) || {};
+
+    const primoGiornoMese = new Date(anno, mese, 1).getDay();
+    const giorniNelMese = new Date(anno, mese + 1, 0).getDate();
+
+    const offset = primoGiornoMese === 0 ? 6 : primoGiornoMese - 1;
+
+    // ✅ Aggiorna titolo mese
+    const mesi = [
+        "Gennaio", "Febbraio", "Marzo", "Aprile",
+        "Maggio", "Giugno", "Luglio", "Agosto",
+        "Settembre", "Ottobre", "Novembre", "Dicembre"
+    ];
+
+    const titolo = document.getElementById("mese-anno");
+    if (titolo) {
+        titolo.textContent = mesi[mese] + " " + anno;
+    }
+
+    // Spazi vuoti iniziali
+    for (let i = 0; i < offset; i++) {
+        grid.innerHTML += `<div class="calendar-day empty-day" style="opacity:0"></div>`;
+    }
+
+    // Giorni del mese
+    for (let giornoCiclo = 1; giornoCiclo <= giorniNelMese; giornoCiclo++) {
+
+        const dataKey = anno + "-" +
+                        String(mese + 1).padStart(2, '0') + "-" +
+                        String(giornoCiclo).padStart(2, '0');
+
+        const haWorkout = storico[dataKey];
+        const isOggi =
+            (dataKey === oggiString &&
+             mese === oggi.getMonth() &&
+             anno === oggi.getFullYear());
+
+        let classi = "calendar-day";
+        if (isOggi) classi += " today";
+        if (haWorkout) classi += " has-workout";
+
+        let badge = "";
+        if (haWorkout) {
+            const nomeMini = haWorkout.attrezzo.substring(0, 3).toUpperCase();
+            badge = `<small class="badge-attrezzo">${nomeMini}</small><span class="checkmark">✓</span>`;
+        }
+
+        grid.innerHTML += `
+            <div class="${classi}" onclick="mostraDettaglioGiorno('${dataKey}', '${haWorkout ? haWorkout.attrezzo : ''}')">
+                <span class="day-number">${giornoCiclo}</span>
+                ${badge}
+            </div>
+        `;
+    }
+
+    aggiornaStatMese();
+    aggiornaStreak();
+}
+
+function aggiornaStatMese() {
+
+    const piano =
+        JSON.parse(localStorage.getItem("pilates_piano")) || {};
+
+    const maxRound = CONFIG_LIVELLI[livelloAttuale].round;
+
+    let totaleAllenamenti = 0;
+    let completati = 0;
+
+    const giorniNelMese =
+        new Date(annoCorrente, meseCorrente + 1, 0).getDate();
+
+    for (let giorno = 1; giorno <= giorniNelMese; giorno++) {
+
+        const data = new Date(annoCorrente, meseCorrente, giorno);
+        const giornoSettimana = data.getDay();
+
+        // Solo Lun-Mer-Ven
+        if (giornoSettimana === 1 ||
+            giornoSettimana === 3 ||
+            giornoSettimana === 5) {
+
+            totaleAllenamenti++;
+
+            const dataKey =
+                data.toISOString().split("T")[0];
+
+            if (piano[dataKey] &&
+                piano[dataKey].round >= maxRound) {
+
+                completati++;
+            }
+        }
+    }
+
+    const percentuale =
+        totaleAllenamenti === 0
+        ? 0
+        : Math.round((completati / totaleAllenamenti) * 100);
+
+    const bar = document.getElementById("stat-bar-fill");
+    const testo = document.getElementById("stat-percent");
+
+    if (bar) bar.style.width = percentuale + "%";
+    if (testo) testo.textContent = percentuale + "%";
+}
+
+
+
+function aggiornaStreak() {
+
+    const piano = JSON.parse(localStorage.getItem("pilates_piano")) || {};
+    const maxRound = CONFIG_LIVELLI[livelloAttuale].round;
+
+    let streak = 0;
+    let record = parseInt(localStorage.getItem("streak_record")) || 0;
+
+    const oggi = new Date();
+    oggi.setHours(0,0,0,0);
+
+    let data = new Date(oggi);
+
+    while (true) {
+
+        const giornoSettimana = data.getDay();
+
+        // Consideriamo solo Lun-Mer-Ven
+        if (giornoSettimana === 1 || giornoSettimana === 3 || giornoSettimana === 5) {
+
+            const dataKey =
+    data.getFullYear() + "-" +
+    String(data.getMonth() + 1).padStart(2, '0') + "-" +
+    String(data.getDate()).padStart(2, '0');
+
+            if (piano[dataKey] && piano[dataKey].round >= maxRound) {
+                streak++;
+            } else {
+                break;
+            }
+        }
+
+        data.setDate(data.getDate() - 1);
+
+        // Evita loop infinito
+        if (streak > 365) break;
+    }
+
+    if (streak > record) {
+        record = streak;
+        localStorage.setItem("streak_record", record);
+    }
+
+    document.getElementById("streak-current").textContent = streak;
+    document.getElementById("streak-record").textContent = record;
+}
+function mostraDettaglioGiorno(dataKey) {
+
+    const workoutSalvati = JSON.parse(localStorage.getItem("workoutCalendario")) || {};
+    const dato = workoutSalvati[dataKey];
+
+    if (!dato) {
+        alert("📅 Giorno di riposo o nessun allenamento registrato.");
+        return;
+    }
+
+    const livello = livelloAttuale || localStorage.getItem("livelloPilates") || "MEDIO";
+    const maxRound = CONFIG_LIVELLI[livello].round;
+
+    alert(
+        "📅 Data: " + dataKey +
+        "\n\n🏋️ Attrezzo: " + dato.attrezzo +
+        "\n🔥 Round completati: " + (dato.round || 0) + "/" + maxRound
+    );
+}
+
+function cambiaMese(delta) {
+    meseCorrente += delta;
+
+    // Gestione cambio anno
+    if (meseCorrente < 0) {
+        meseCorrente = 11;
+        annoCorrente--;
+    }
+
+    if (meseCorrente > 11) {
+        meseCorrente = 0;
+        annoCorrente++;
+    }
+
+    generaCalendario();
+}
+function salvaWorkout(dataKey) {
+    const attrezzi = JSON.parse(localStorage.getItem("attrezziSelezionati")) || [];
+    const attrezzoUsato = prompt("Che attrezzo hai usato oggi?", attrezzi[0] || "Corpo Libero");
+
+    if (!attrezzoUsato) return;
+
+    let workoutSalvati = JSON.parse(localStorage.getItem("workoutCalendario")) || {};
+
+    workoutSalvati[dataKey] = {
+        attrezzo: attrezzoUsato
+    };
+
+    localStorage.setItem("workoutCalendario", JSON.stringify(workoutSalvati));
+
+    generaCalendario();
+}
+
+function sincronizzaAllenamentoAutomatico() {
+    const oggi = new Date();
+    const dataKey = `${oggi.getFullYear()}-${oggi.getMonth() + 1}-${oggi.getDate()}`;
+    
+    // Invece di cercare nel testo HTML che può essere nascosto, 
+    // cerchiamo nel piano d'allenamento che l'app ha salvato
+    const piano = JSON.parse(localStorage.getItem("pilates_piano")) || {};
+    const giorniSettimana = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+    const nomeGiorno = giorniSettimana[oggi.getDay()];
+    
+    let attrezzoUsato = piano[nomeGiorno] || "Allenato";
+
+    let workoutSalvati = JSON.parse(localStorage.getItem("workoutCalendario")) || {};
+    workoutSalvati[dataKey] = { attrezzo: attrezzoUsato };
+    
+    localStorage.setItem("workoutCalendario", JSON.stringify(workoutSalvati));
+    generaCalendario(); 
+}
+
+function inizializzaTooltip() {
+    const tooltipElements = document.querySelectorAll("[data-tooltip]");
+
+    tooltipElements.forEach(el => {
+        el.addEventListener("mouseenter", function () {
+            const tooltip = document.createElement("div");
+            tooltip.className = "tooltip-box";
+            tooltip.innerText = this.getAttribute("data-tooltip");
+            document.body.appendChild(tooltip);
+
+            const rect = this.getBoundingClientRect();
+            tooltip.style.left = rect.left + "px";
+            tooltip.style.top = rect.top - 35 + "px";
+
+            this._tooltip = tooltip;
+        });
+
+        el.addEventListener("mouseleave", function () {
+            if (this._tooltip) {
+                document.body.removeChild(this._tooltip);
+                this._tooltip = null;
+            }
+        });
+    });
+}
+
+
+function cambiaLivello(livello) {
+
+    const vecchioMax = CONFIG_LIVELLI[livelloAttuale].round;
+
+    livelloAttuale = livello;
+    localStorage.setItem("livelloPilates", livello);
+const selectBox = document.getElementById("select-livello");
+selectBox.classList.add("level-anim");
+
+setTimeout(() => {
+    selectBox.classList.remove("level-anim");
+}, 400);
+    const nuovoMax = CONFIG_LIVELLI[livelloAttuale].round;
+
+    let piano = JSON.parse(localStorage.getItem("pilates_piano")) || {};
+    let modificato = false;
+
+    Object.keys(piano).forEach(giorno => {
+
+        // 🔽 Se abbasso livello → taglio i round in eccesso
+        if (nuovoMax < vecchioMax && piano[giorno].round > nuovoMax) {
+            piano[giorno].round = nuovoMax;
+            modificato = true;
+        }
+
+        // 🔼 Se aumento livello → NON tocco i round già fatti
+        // (semplicemente permetto di arrivare al nuovo max)
+    });
+
+    if (modificato) {
+        localStorage.setItem("pilates_piano", JSON.stringify(piano));
+        alert("🔄 Livello aggiornato: i round sono stati adattati automaticamente.");
+    }
+
+    // 🔄 Ridisegna dashboard
+    renderDashboard();
+    generaCalendario();
+    aggiornaStreak();
+    aggiornaStatMese();
+
+    // 🔄 Aggiorna allenamento aperto se presente
+    const roundMaxEl = document.getElementById("round-max");
+    if (roundMaxEl) {
+        roundMaxEl.textContent = nuovoMax;
+    }
+
+    // Se sei dentro un allenamento aggiorniamo anche il testo
+    if (giornoSelezionato && piano[giornoSelezionato]) {
+
+        roundCorrenti = piano[giornoSelezionato].round;
+
+        const roundCountEl = document.getElementById("round-count");
+        if (roundCountEl) {
+            roundCountEl.textContent = roundCorrenti;
+            roundCountEl.style.color =
+                roundCorrenti >= nuovoMax ? "#4CAF50" : "#d32f2f";
+        }
+    }
+    const badge = document.getElementById("badge-livello");
+if (badge) {
+    badge.textContent = livello;
+
+    if (livello === "BASSO") {
+        badge.style.background = "#4CAF50";
+    } else if (livello === "MEDIO") {
+        badge.style.background = "#0077b6";
+    } else {
+        badge.style.background = "#d32f2f";
+    }
+}
+} 
+
+function aggiornaRoundUI() {
+    const maxRound = CONFIG_LIVELLI[livelloAttuale].round;
+
+    const roundMaxEl = document.getElementById("round-max");
+    if (roundMaxEl) {
+        roundMaxEl.textContent = maxRound;
+    }
+}
+function nuovaSettimana() {
+    eserciziCorrenti = [];
+    localStorage.removeItem("allenamentoAttivo");
+    alert("Nuova settimana pronta! Il prossimo allenamento sarà rigenerato.");
+}
+// Funzione per calcolare le reps in base al livello
+function calcolaReps(repsOriginali) {
+    const config = CONFIG_LIVELLI[livelloAttuale];
+    
+    // Se sono secondi (es. "45 sec")
+    if (repsOriginali.includes("sec")) {
+        return config.tempoEsercizio + " sec";
+    }
+    
+    // Se sono numeri (es. "15 reps")
+    let numero = parseInt(repsOriginali);
+    if (!isNaN(numero)) {
+        return Math.round(numero * config.repsMoltiplicatore) + " reps";
+    }
+    
+    return repsOriginali;
+}
+function salvaAllenamentoCalendario(giorno) {
+    // Ottiene la data odierna in formato AAAA-MM-GG (es: 2026-02-23)
+    const oggi = new Date().toISOString().split('T')[0];
+    
+    const attrezzo = pianoSettimanale[giorno].attrezzo;
+    const round = pianoSettimanale[giorno].round;
+
+    // Usiamo la chiave corretta
+    const chiave = "calendarioAllenamenti";
+    let storico = JSON.parse(localStorage.getItem(chiave)) || {};
+
+    // Salva i dati dell'allenamento
+    storico[oggi] = {
+        giorno: giorno,
+        attrezzo: attrezzo,
+        round: round,
+        completato: true
+    };
+
+    localStorage.setItem(chiave, JSON.stringify(storico));
+}
+
+function resetCalendario() {
+    if (confirm("Vuoi cancellare la cronologia degli allenamenti? Questa azione pulirà i dati sfasati del calendario.")) {
+        // Rimuove la chiave corretta che usiamo per salvare
+        localStorage.removeItem("calendarioAllenamenti");
+        alert("Calendario resettato con successo!");
+        location.reload(); // Forza il ricaricamento per vedere il calendario vuoto
+    }
+}
+
+function mostraDettaglioGiorno(data, attrezzo) {
+    if (!attrezzo) {
+        alert("Data: " + data + "\nNessun allenamento registrato.");
+        return;
+    }
+    alert("📅 Allenamento del: " + data + "\n🛠️ Attrezzo: " + attrezzo + "\n✅ Completato con successo!");
+}
+function apriResetModal() {
+    document.getElementById("reset-modal").classList.remove("hidden");
+}
+
+function chiudiResetModal() {
+    document.getElementById("reset-modal").classList.add("hidden");
+}
+
+function resetAllenamento() {
+    // Salviamo impostazioni che NON vogliamo perdere
+    const livello = localStorage.getItem("livelloPilates");
+    const dark = localStorage.getItem("pilates_darkmode");
+
+    // Puliamo tutto
+    localStorage.clear();
+
+    // Ripristiniamo preferenze
+    if (livello) localStorage.setItem("livelloPilates", livello);
+    if (dark) localStorage.setItem("pilates_darkmode", dark);
+
+    location.reload();
+}
+</script>
+<button id="btn-flottante-su" onclick="tornaSu()" title="Torna in alto">↑</button>
+<div id="tooltip-attrezzo"></div>
+<div id="reset-modal" class="reset-modal hidden">
+  <div class="reset-box">
+    <h3>Ripristinare i dati?</h3>
+    <p>
+      Verranno cancellati:
+      <br>• Allenamenti completati
+      <br>• Calendario
+      <br>• Progressi
+    </p>
+
+    <div class="reset-actions">
+      <button onclick="chiudiResetModal()">Annulla</button>
+      <button class="danger" onclick="resetAllenamento()">Ripristina</button>
+    </div>
+  </div>
+</div>
+</body>
+</html>
+
