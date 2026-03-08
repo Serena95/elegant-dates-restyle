@@ -26,6 +26,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const timer = useTimer();
   const [completati, setCompletati] = useState<Set<number>>(new Set());
   const [tipoRiscaldamento, setTipoRiscaldamento] = useState(0);
+  const [currentExerciseIdx, setCurrentExerciseIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const isCompleted = roundCorrenti >= maxRound;
 
   const temaConfig = TEMA_CONFIG[tema];
