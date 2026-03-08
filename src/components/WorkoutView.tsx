@@ -161,7 +161,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                   </span>
                 ))}
                 <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary/20 text-secondary-foreground font-medium ml-auto">
-                  {es.tipo.toUpperCase()}
+                  {es.categoria.toUpperCase()}
                 </span>
               </div>
             </div>

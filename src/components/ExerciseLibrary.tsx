@@ -62,7 +62,7 @@ export function ExerciseLibrary({ onBack }: ExerciseLibraryProps) {
             {/* Group by tipo within attrezzo */}
             {Object.entries(
               esercizi.reduce((acc, e) => {
-                (acc[e.tipo] = acc[e.tipo] || []).push(e);
+                (acc[e.categoria] = acc[e.categoria] || []).push(e);
                 return acc;
               }, {} as Record<string, typeof esercizi>)
             ).map(([tipo, items]) => (

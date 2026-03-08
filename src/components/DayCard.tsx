@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
 import { ChevronRight, Check } from "lucide-react";
-import { DayPlan, CONFIG_LIVELLI, TEMA_CONFIG } from "@/data/exercises";
+import { DayPlan, CONFIG_LIVELLI, ATTREZZO_ICONS } from "@/data/exercises";
 
 interface DayCardProps {
   giorno: string;
