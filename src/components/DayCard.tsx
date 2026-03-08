@@ -19,7 +19,7 @@ const TEMA_GRADIENTS: Record<string, { from: string; to: string; border: string;
 
 const DEFAULT_GRADIENT = { from: "from-blue-500/10", to: "to-indigo-500/10", border: "border-blue-200 dark:border-blue-800", accent: "bg-blue-500" };
 
-export function DayCard({ giorno, dati, livello, index, onClick }: DayCardProps) {
+export function DayCard({ giorno, dati, livello, index, focus, onClick }: DayCardProps) {
   const maxRound = CONFIG_LIVELLI[livello].round;
   const roundFatti = dati.round || 0;
   const isCompleted = roundFatti >= maxRound;
