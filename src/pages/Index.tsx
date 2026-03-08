@@ -336,7 +336,9 @@ const Index = () => {
           />
         );
       case "library":
-        return <ExerciseLibrary onBack={() => navigate("dashboard")} />;
+        return <ExerciseLibrary onBack={() => navigate("more")} />;
+      case "more":
+        return <MoreView onNavigate={(v) => navigate(v as any)} />;
       case "programs":
         return (
           <ProgramsView
