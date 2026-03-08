@@ -188,6 +188,7 @@ export type Database = {
           created_at: string
           durata_ciclo: number | null
           durata_mestruazione: number | null
+          giorni_allenamento: number[] | null
           id: string
           livello: string | null
           modalita_gravidanza: boolean | null
@@ -201,6 +202,7 @@ export type Database = {
           created_at?: string
           durata_ciclo?: number | null
           durata_mestruazione?: number | null
+          giorni_allenamento?: number[] | null
           id?: string
           livello?: string | null
           modalita_gravidanza?: boolean | null
@@ -214,6 +216,7 @@ export type Database = {
           created_at?: string
           durata_ciclo?: number | null
           durata_mestruazione?: number | null
+          giorni_allenamento?: number[] | null
           id?: string
           livello?: string | null
           modalita_gravidanza?: boolean | null
