@@ -88,7 +88,7 @@ export function useCloudData() {
     if (!user) return;
     setLoading(true);
 
-    const [settingsRes, plansRes, historyRes, measRes, foodRes, waterRes, challengeRes, profileRes] = await Promise.all([
+    const [settingsRes, plansRes, historyRes, measRes, foodRes, waterRes, challengeRes, profileRes, cycleRes] = await Promise.all([
       supabase.from("user_settings").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("workout_plans").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("workout_history").select("*").eq("user_id", user.id),
@@ -97,6 +97,7 @@ export function useCloudData() {
       supabase.from("water_tracking").select("*").eq("user_id", user.id).eq("data", new Date().toISOString().split("T")[0]).maybeSingle(),
       supabase.from("challenges").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
+      supabase.from("cycle_tracking").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
 
     if (settingsRes.data) {
