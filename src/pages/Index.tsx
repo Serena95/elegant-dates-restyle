@@ -1,4 +1,4 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useMemo, useRef } from "react";
 import { AppLayout, AppView } from "@/components/AppLayout";
 import { Dashboard } from "@/components/Dashboard";
 import { EquipmentSelection } from "@/components/EquipmentSelection";
@@ -10,8 +10,11 @@ import { ExerciseLibrary } from "@/components/ExerciseLibrary";
 import { GuideView } from "@/components/GuideView";
 import { ProfileView } from "@/components/ProfileView";
 import { SettingsView } from "@/components/SettingsView";
+import { WorkoutComplete } from "@/components/WorkoutComplete";
+import { InstallBanner } from "@/components/InstallBanner";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
+import { useBadges, Badge } from "@/hooks/useBadges";
 import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS } from "@/data/exercises";
 
 const Index = () => {
@@ -22,8 +25,50 @@ const Index = () => {
   const [eserciziCorrenti, setEserciziCorrenti] = useState<Exercise[]>([]);
   const [roundCorrenti, setRoundCorrenti] = useState(0);
   const [showGuide, setShowGuide] = useState(false);
+  const [showComplete, setShowComplete] = useState(false);
+  const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
+  const [newBadges, setNewBadges] = useState<Badge[]>([]);
+  const prevBadgeCountRef = useRef(0);
+
+  const { unlockedBadges, checkNewBadges } = useBadges(cloud.storicoCal);
+
+  // Track previous badge count
+  prevBadgeCountRef.current = unlockedBadges.length;
 
   const userName = cloud.profile.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Utente";
+
+  const weeklyStats = useMemo(() => {
+    const now = new Date();
+    const startOfWeek = new Date(now);
+    const day = startOfWeek.getDay();
+    startOfWeek.setDate(startOfWeek.getDate() - (day === 0 ? 6 : day - 1));
+    startOfWeek.setHours(0, 0, 0, 0);
+
+    let completed = 0;
+    let total = 3;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(startOfWeek);
+      d.setDate(d.getDate() + i);
+      const key = d.toISOString().split("T")[0];
+      if (cloud.storicoCal[key]?.completato) completed++;
+    }
+
+    // Streak
+    let streak = 0;
+    const d = new Date();
+    d.setHours(0, 0, 0, 0);
+    for (let i = 0; i < 365; i++) {
+      const dow = d.getDay();
+      if (dow === 1 || dow === 3 || dow === 5) {
+        const k = d.toISOString().split("T")[0];
+        if (cloud.storicoCal[k]?.completato) streak++;
+        else if (i > 0) break;
+      }
+      d.setDate(d.getDate() - 1);
+    }
+
+    return { completed, total, streak };
+  }, [cloud.storicoCal]);
 
   const effectiveView: AppView | "loading" | "equipment-init" = cloud.loading
     ? "loading"
@@ -43,26 +88,22 @@ const Index = () => {
       setView("equipment");
       return;
     }
-
     const attrezziSettimana = selezionaAttrezziSettimana(cloud.attrezzi);
     const giorni = ["Lunedì", "Mercoledì", "Venerdì"];
     const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
-    giorni.forEach((g, i) => {
-      nuovoPiano[g] = { attrezzo: attrezziSettimana[i], round: 0 };
-    });
-
+    giorni.forEach((g, i) => { nuovoPiano[g] = { attrezzo: attrezziSettimana[i], round: 0 }; });
     cloud.savePiano(nuovoPiano, { esercizi: {}, storico: cloud.allenamentiData.storico || {} });
     alert("✅ Nuovo piano generato con successo!");
   }, [cloud.attrezzi, cloud.allenamentiData.storico, cloud.savePiano]);
 
   const avviaAllenamento = useCallback((giorno: string) => {
     setGiornoSelezionato(giorno);
+    setWorkoutStartTime(Date.now());
     const dati = cloud.piano[giorno];
     if (!dati) return;
 
     const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
     const allenamentiStorico = cloud.allenamentiData.storico || {};
-
     let esercizi: Exercise[];
     const cached = allenamentiEsercizi[giorno];
 
@@ -72,7 +113,6 @@ const Index = () => {
       const attrezzo = dati.attrezzo || "Corpo Libero";
       const storici = Object.values(allenamentiStorico).flat();
       esercizi = generaEserciziGiorno(attrezzo, cloud.livello, storici);
-
       const nuovoStorico = [...storici, ...esercizi.map(e => e.id)];
       const newAllenamenti = {
         esercizi: { ...allenamentiEsercizi, [giorno]: esercizi },
@@ -93,7 +133,6 @@ const Index = () => {
     if (nuoviRound > config.round) return;
 
     setRoundCorrenti(nuoviRound);
-
     const updatedPiano = { ...cloud.piano };
     if (updatedPiano[giornoSelezionato]) {
       updatedPiano[giornoSelezionato] = { ...updatedPiano[giornoSelezionato], round: nuoviRound };
@@ -104,13 +143,20 @@ const Index = () => {
       const dataKey = new Date().toISOString().split("T")[0];
       const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
       cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true });
+
+      // Check for new badges after a short delay to let state update
+      const prevCount = prevBadgeCountRef.current;
+      setTimeout(() => {
+        const nb = checkNewBadges(prevCount);
+        setNewBadges(nb);
+        setShowComplete(true);
+      }, 500);
     }
-  }, [giornoSelezionato, roundCorrenti, cloud.livello, cloud.piano, cloud.savePiano, cloud.saveStoricoCal]);
+  }, [giornoSelezionato, roundCorrenti, cloud.livello, cloud.piano, cloud.savePiano, cloud.saveStoricoCal, checkNewBadges]);
 
   const changeLivello = useCallback((l: string) => {
     const nuovoMax = CONFIG_LIVELLI[l].round;
     cloud.setLivello(l);
-
     const updatedPiano = { ...cloud.piano };
     let changed = false;
     Object.keys(updatedPiano).forEach(g => {
@@ -142,9 +188,7 @@ const Index = () => {
               const attrezziSettimana = selezionaAttrezziSettimana(selected);
               const giorni = ["Lunedì", "Mercoledì", "Venerdì"];
               const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
-              giorni.forEach((g, i) => {
-                nuovoPiano[g] = { attrezzo: attrezziSettimana[i], round: 0 };
-              });
+              giorni.forEach((g, i) => { nuovoPiano[g] = { attrezzo: attrezziSettimana[i], round: 0 }; });
               cloud.savePiano(nuovoPiano, { esercizi: {}, storico: {} });
             }}
           />
@@ -168,6 +212,20 @@ const Index = () => {
             onBack={() => navigate("dashboard")}
           />
         </div>
+        {showComplete && (
+          <WorkoutComplete
+            esercizi={eserciziCorrenti.length}
+            tempoTotale={Math.floor((Date.now() - workoutStartTime) / 1000)}
+            attrezzo={attrezzo}
+            newBadges={newBadges}
+            onClose={() => {
+              setShowComplete(false);
+              setNewBadges([]);
+              navigate("dashboard");
+            }}
+          />
+        )}
+        <InstallBanner />
       </div>
     );
   }
@@ -175,13 +233,7 @@ const Index = () => {
   if (view === "equipment") {
     return (
       <AppLayout currentView={view} onNavigate={navigate} profile={cloud.profile} userName={userName}>
-        <EquipmentSelection
-          savedAttrezzi={cloud.attrezzi}
-          onComplete={(selected) => {
-            cloud.setAttrezzi(selected);
-            navigate("dashboard");
-          }}
-        />
+        <EquipmentSelection savedAttrezzi={cloud.attrezzi} onComplete={(selected) => { cloud.setAttrezzi(selected); navigate("dashboard"); }} />
       </AppLayout>
     );
   }
@@ -198,6 +250,9 @@ const Index = () => {
             onGeneraNuova={generaNuovaSettimana}
             onAvviaAllenamento={avviaAllenamento}
             onChangeLivello={changeLivello}
+            userName={userName}
+            weeklyStats={weeklyStats}
+            onNavigate={navigate}
           />
         );
       case "progress":
@@ -221,7 +276,7 @@ const Index = () => {
       case "library":
         return <ExerciseLibrary onBack={() => navigate("dashboard")} />;
       case "profile":
-        return <ProfileView profile={cloud.profile} onUpdateProfile={cloud.updateProfile} />;
+        return <ProfileView profile={cloud.profile} onUpdateProfile={cloud.updateProfile} unlockedBadges={unlockedBadges} />;
       case "settings":
         return (
           <SettingsView
@@ -240,6 +295,7 @@ const Index = () => {
   return (
     <AppLayout currentView={view} onNavigate={navigate} profile={cloud.profile} userName={userName}>
       {renderContent()}
+      <InstallBanner />
     </AppLayout>
   );
 };
