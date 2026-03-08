@@ -38,7 +38,7 @@ const TIPO_OPTIONS = [
   { id: "ovulazione", label: "Ovulazione", color: "bg-violet-500", lightBg: "bg-violet-500/15", border: "border-violet-400/30", icon: "🟣", textColor: "text-violet-500" },
 ];
 
-export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo, durataMestruazione, onUpdateSettings }: CycleTrackingProps) {
+export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo, durataMestruazione, onUpdateSettings, onBack }: CycleTrackingProps) {
   const [meseCorrente, setMeseCorrente] = useState(new Date().getMonth());
   const [annoCorrente, setAnnoCorrente] = useState(new Date().getFullYear());
   const [showAddModal, setShowAddModal] = useState(false);
