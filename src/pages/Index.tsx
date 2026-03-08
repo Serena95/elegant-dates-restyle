@@ -222,8 +222,8 @@ const Index = () => {
 
   const handleChangeTrainingDays = useCallback((days: number[]) => {
     cloud.setGiorniAllenamento(days);
-    // Force regeneration on next render
-    autoGenRef.current = false;
+    // Reset generation key to force regeneration
+    lastGeneratedKey.current = "";
   }, [cloud.setGiorniAllenamento]);
 
   if (effectiveView === "loading") {
