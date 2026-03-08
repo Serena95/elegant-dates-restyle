@@ -107,7 +107,6 @@ export function useNotifications(
               icon: "/pwa-192x192.png",
               badge: "/pwa-192x192.png",
               tag: "workout-reminder",
-              renotify: true,
             });
           });
         } else if (typeof Notification !== "undefined") {
