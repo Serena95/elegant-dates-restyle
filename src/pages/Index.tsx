@@ -13,6 +13,8 @@ import { SettingsView } from "@/components/SettingsView";
 import { WorkoutComplete } from "@/components/WorkoutComplete";
 import { InstallBanner } from "@/components/InstallBanner";
 import { ProgramsView } from "@/components/ProgramsView";
+import { CycleTracking } from "@/components/CycleTracking";
+import { PregnancyMode } from "@/components/PregnancyMode";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
