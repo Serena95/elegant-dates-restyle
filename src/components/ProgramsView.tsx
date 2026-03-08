@@ -25,7 +25,7 @@ export function ProgramsView({ userAttrezzi, onStartProgram, activeProgram }: Pr
           <p className="text-sm text-muted-foreground">{selectedProgram.descrizione}</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <div className="bg-card rounded-xl border border-border p-3 text-center">
             <Clock size={16} className="text-primary mx-auto mb-1" />
             <p className="text-sm font-black text-foreground">{selectedProgram.durata}</p>
