@@ -74,7 +74,7 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], liv
   };
 
   return (
-    <div ref={ref} className="space-y-6">
+    <div className="space-y-6">
       <h2 className="text-xl font-bold text-foreground">👤 Profilo</h2>
 
       {/* Avatar */}
