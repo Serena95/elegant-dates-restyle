@@ -122,6 +122,71 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
     return diff;
   }, [periodPredictions, todayKey]);
 
+  // Google Calendar sync
+  const handleSyncGoogleCalendar = useCallback(() => {
+    const allPeriods = [...periodPredictions].sort();
+    const allFertile = [...fertilePredictions].sort();
+    
+    if (allPeriods.length === 0 && allFertile.length === 0) {
+      toast.error("Nessuna previsione disponibile. Registra almeno una mestruazione.");
+      return;
+    }
+
+    // Group consecutive dates into events
+    const groupDates = (dates: string[]) => {
+      const groups: { start: string; end: string }[] = [];
+      let i = 0;
+      while (i < dates.length) {
+        const start = dates[i];
+        let end = dates[i];
+        while (i + 1 < dates.length) {
+          const curr = new Date(dates[i]);
+          const next = new Date(dates[i + 1]);
+          if ((next.getTime() - curr.getTime()) <= 86400000) {
+            end = dates[i + 1];
+            i++;
+          } else break;
+        }
+        groups.push({ start, end });
+        i++;
+      }
+      return groups;
+    };
+
+    const periodGroups = groupDates(allPeriods);
+    const fertileGroups = groupDates(allFertile);
+
+    // Open first period prediction in Google Calendar
+    const firstEvent = periodGroups[0] || fertileGroups[0];
+    if (!firstEvent) return;
+
+    const formatDate = (d: string) => d.replace(/-/g, "");
+    const endPlusOne = (d: string) => {
+      const date = new Date(d);
+      date.setDate(date.getDate() + 1);
+      return date.toISOString().split("T")[0].replace(/-/g, "");
+    };
+
+    // Build all events info for user
+    let eventCount = 0;
+    
+    // Open Google Calendar for each predicted period
+    periodGroups.forEach((group, idx) => {
+      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent("🔴 Ciclo mestruale (previsione)")}&dates=${formatDate(group.start)}/${endPlusOne(group.end)}&details=${encodeURIComponent("Previsione generata da MyPilatesPlan")}&sf=true`;
+      setTimeout(() => window.open(url, "_blank"), idx * 500);
+      eventCount++;
+    });
+
+    // Open Google Calendar for each fertile window
+    fertileGroups.forEach((group, idx) => {
+      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent("🟢 Finestra fertile (previsione)")}&dates=${formatDate(group.start)}/${endPlusOne(group.end)}&details=${encodeURIComponent("Previsione generata da MyPilatesPlan")}&sf=true`;
+      setTimeout(() => window.open(url, "_blank"), (periodGroups.length + idx) * 500);
+      eventCount++;
+    });
+
+    toast.success(`${eventCount} eventi aperti in Google Calendar! Conferma ogni evento.`);
+  }, [periodPredictions, fertilePredictions]);
+
   const cambiaMese = (d: number) => {
     let m = meseCorrente + d;
     let a = annoCorrente;
