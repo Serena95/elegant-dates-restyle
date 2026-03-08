@@ -32,10 +32,12 @@ export async function generateWorkoutSuggestion(context: AICoachContext): Promis
     const { data, error } = await supabase.functions.invoke("ai-coach", {
       body: { type: "workout_suggestion", context },
     });
-    if (error) throw error;
+    if (error) {
+      handleAIError(error);
+      throw error;
+    }
 
     const raw = data?.result || "";
-    // Extract JSON from response
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       return JSON.parse(jsonMatch[0]);
