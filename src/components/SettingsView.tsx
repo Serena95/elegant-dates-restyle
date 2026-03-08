@@ -58,7 +58,10 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
 
   const handleInstallApp = async () => {
     if (isIOS) { setShowIOSGuide(true); return; }
-    if (!installPrompt) return;
+    if (!installPrompt) {
+      toast.info("Apri il menu del browser e scegli 'Installa app' o 'Aggiungi a schermata Home'.");
+      return;
+    }
     await installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     if (outcome === "accepted") setInstallPrompt(null);
@@ -198,7 +201,7 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
 
       {/* Supporto */}
       <Section title="Supporto">
-        {!isStandalone && (installPrompt || isIOS) && (
+        {!isStandalone && (
           <SettingsRow icon={Download} label="Installa App" onClick={handleInstallApp} />
         )}
         <SettingsRow icon={HelpCircle} label="Guida all'uso" onClick={() => onNavigate("guide")} />
