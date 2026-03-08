@@ -1,4 +1,5 @@
 import { User } from "lucide-react";
+import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   BarChart3,
