@@ -492,7 +492,26 @@ const Index = () => {
       case "challenges" as any:
         return <ChallengesView onBack={() => navigate("more")} />;
       case "community" as any:
-        return <CommunityView onBack={() => navigate("more")} />;
+        return (
+          <CommunityView
+            onViewProfile={(userId) => { setPublicProfileUserId(userId); setView("public-profile" as any); }}
+            onViewLeaderboard={() => setView("leaderboard" as any)}
+            onViewNotifications={() => setView("notifications" as any)}
+          />
+        );
+      case "leaderboard" as any:
+        return (
+          <LeaderboardView
+            onBack={() => setView("community" as any)}
+            onViewProfile={(userId) => { setPublicProfileUserId(userId); setView("public-profile" as any); }}
+          />
+        );
+      case "notifications" as any:
+        return <CommunityNotifications onBack={() => setView("community" as any)} />;
+      case "public-profile" as any:
+        return publicProfileUserId ? (
+          <PublicProfileView userId={publicProfileUserId} onBack={() => setView("community" as any)} />
+        ) : null;
       default:
         return null;
     }
