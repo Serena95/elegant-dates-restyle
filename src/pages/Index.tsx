@@ -27,6 +27,7 @@ import { CommunityView } from "@/components/CommunityView";
 import { LeaderboardView } from "@/components/LeaderboardView";
 import { PublicProfileView } from "@/components/PublicProfileView";
 import { CommunityNotifications } from "@/components/CommunityNotifications";
+import { NativeBuildGuide } from "@/components/NativeBuildGuide";
 import { addWorkoutXP } from "@/services/xpService";
 import { calculateStreak } from "@/services/streakService";
 import { updateLeaderboard } from "@/services/supabase/leaderboardService";
