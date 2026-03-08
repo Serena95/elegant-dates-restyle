@@ -158,7 +158,8 @@ const Index = () => {
     if (nuoviRound >= config.round) {
       const dataKey = new Date().toISOString().split("T")[0];
       const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
-      cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true });
+      const focus = detectFocus(eserciziCorrenti);
+      cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true, focus });
 
       // Check for new badges after a short delay to let state update
       const prevCount = prevBadgeCountRef.current;
