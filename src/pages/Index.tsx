@@ -214,11 +214,9 @@ const Index = () => {
             onComplete={(selected) => {
               cloud.setAttrezzi(selected);
               setView("dashboard");
-              const attrezziSettimana = selezionaAttrezziSettimana(selected);
-              const giorni = ["Lunedì", "Mercoledì", "Venerdì"];
-              const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
-              giorni.forEach((g, i) => { nuovoPiano[g] = { attrezzo: attrezziSettimana[i], round: 0 }; });
-              cloud.savePiano(nuovoPiano, { esercizi: {}, storico: {} });
+              const result = generaSettimanaIntelligente(selected, cloud.livello, {}, {}, []);
+              cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
+              cloud.setUltimiAttrezzi(Object.values(result.piano).map(d => d.attrezzo));
             }}
           />
         </div>
