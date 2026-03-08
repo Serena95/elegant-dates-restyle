@@ -25,11 +25,11 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
   const loadSuggestions = async () => {
     setLoading(true);
     try {
-      const [sug, mot] = await Promise.all([
-        generateWorkoutSuggestion(context),
-        generateMotivationMessage({ streak: context.streak, totalWorkouts: progress.totalWorkouts }),
-      ]);
+      // Sequential calls to avoid rate limiting
+      const sug = await generateWorkoutSuggestion(context);
       setSuggestion(sug);
+      
+      const mot = await generateMotivationMessage({ streak: context.streak, totalWorkouts: progress.totalWorkouts });
       setMotivation(mot);
 
       if (needsRecovery) {
