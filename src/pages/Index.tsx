@@ -15,6 +15,7 @@ import { InstallBanner } from "@/components/InstallBanner";
 import { ProgramsView } from "@/components/ProgramsView";
 import { CycleTracking } from "@/components/CycleTracking";
 import { PregnancyMode } from "@/components/PregnancyMode";
+import { MoreView } from "@/components/MoreView";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -336,7 +337,9 @@ const Index = () => {
           />
         );
       case "library":
-        return <ExerciseLibrary onBack={() => navigate("dashboard")} />;
+        return <ExerciseLibrary onBack={() => navigate("more")} />;
+      case "more":
+        return <MoreView onNavigate={(v) => navigate(v as any)} />;
       case "programs":
         return (
           <ProgramsView
