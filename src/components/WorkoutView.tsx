@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Exercise, CONFIG_LIVELLI, ATTREZZO_ICONS, TEMA_CONFIG, detectFocus } from "@/data/exercises";
 import { useTimer } from "@/hooks/useTimer";
+import { useVoiceTrainer } from "@/hooks/useVoiceTrainer";
 import { TimerOverlay } from "./TimerOverlay";
-import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, SkipForward, X } from "lucide-react";
+import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, SkipForward, X, Volume2, VolumeX, Sparkles } from "lucide-react";
 
 interface WorkoutViewProps {
   giorno: string;
@@ -12,6 +13,8 @@ interface WorkoutViewProps {
   roundCorrenti: number;
   onSegnaRound: () => void;
   onBack: () => void;
+  voiceEnabled?: boolean;
+  aiGenerated?: boolean;
 }
 
 const RISCALDAMENTO_MODES = [
