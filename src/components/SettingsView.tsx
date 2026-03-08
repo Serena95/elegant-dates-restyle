@@ -29,7 +29,7 @@ interface SettingsViewProps {
   onToggleVoice?: (enabled: boolean) => void;
 }
 
-export function SettingsView({ onNavigate, onModificaAttrezzi }: SettingsViewProps) {
+export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice }: SettingsViewProps) {
   const { user, signOut } = useAuth();
   const { isDark, toggle } = useDarkMode();
   const [showDelete, setShowDelete] = useState(false);
