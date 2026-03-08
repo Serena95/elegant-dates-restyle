@@ -1,0 +1,1 @@
+ALTER TABLE public.user_settings ADD COLUMN IF NOT EXISTS giorni_allenamento integer[] DEFAULT '{1,3,5}';

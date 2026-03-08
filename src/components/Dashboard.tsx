@@ -1,12 +1,11 @@
 import { DayCard } from "./DayCard";
-import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo } from "@/data/exercises";
+import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel } from "@/data/exercises";
 import { CalendarDays, BarChart3, Flame, Dumbbell, Target } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface DashboardProps {
   piano: WeekPlan;
   livello: string;
-  onGeneraNuova: () => void;
   onAvviaAllenamento: (giorno: string) => void;
   onChangeLivello: (l: string) => void;
   userName?: string;
@@ -16,19 +15,21 @@ interface DashboardProps {
 }
 
 export function Dashboard({
-  piano, livello, onGeneraNuova, onAvviaAllenamento, onChangeLivello,
+  piano, livello, onAvviaAllenamento, onChangeLivello,
   userName, weeklyStats, onNavigate, focusMap,
 }: DashboardProps) {
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "MEDIO" ? "bg-primary" : "bg-pilates-red";
-  const giorni = ["Lunedì", "Mercoledì", "Venerdì"];
-  const oggi = new Date();
-  const dayOfWeek = oggi.getDay();
-  const dayMap: Record<number, string> = { 1: "Lunedì", 3: "Mercoledì", 5: "Venerdì" };
-  const oggiGiorno = dayMap[dayOfWeek];
-  const todayWorkout = oggiGiorno && piano[oggiGiorno] ? { giorno: oggiGiorno, ...piano[oggiGiorno] } : null;
+  
+  // Sort piano keys by date
+  const sortedDays = Object.keys(piano).sort();
+  
+  // Find today's workout
+  const oggi = new Date().toISOString().split("T")[0];
+  const todayKey = sortedDays.find(k => k === oggi);
+  const todayWorkout = todayKey && piano[todayKey] ? { key: todayKey, ...piano[todayKey] } : null;
 
   const greeting = () => {
-    const h = oggi.getHours();
+    const h = new Date().getHours();
     if (h < 12) return "Buongiorno";
     if (h < 18) return "Buon pomeriggio";
     return "Buonasera";
@@ -45,7 +46,7 @@ export function Dashboard({
       </motion.div>
 
       {/* Today's workout card */}
-      {todayWorkout && (todayWorkout as any).round < (CONFIG_LIVELLI[livello]?.round || 3) && (
+      {todayWorkout && todayWorkout.round < (CONFIG_LIVELLI[livello]?.round || 3) && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
@@ -58,10 +59,10 @@ export function Dashboard({
               <p className="text-lg font-black text-foreground mt-1">
                 {ATTREZZO_ICONS[todayWorkout.attrezzo] || "🏋️"} {todayWorkout.attrezzo}
               </p>
-              {focusMap?.[todayWorkout.giorno] && (
+              {focusMap?.[todayWorkout.key] && (
                 <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
                   <Target size={12} className="text-primary" />
-                  Focus: <span className="font-semibold text-foreground">{focusMap[todayWorkout.giorno].icon} {focusMap[todayWorkout.giorno].label}</span>
+                  Focus: <span className="font-semibold text-foreground">{focusMap[todayWorkout.key].icon} {focusMap[todayWorkout.key].label}</span>
                 </p>
               )}
             </div>
@@ -72,7 +73,7 @@ export function Dashboard({
             </div>
           </div>
           <button
-            onClick={() => onAvviaAllenamento(todayWorkout.giorno)}
+            onClick={() => onAvviaAllenamento(todayWorkout.key)}
             className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold shadow-md hover:opacity-90 transition flex items-center justify-center gap-2"
           >
             <Dumbbell size={18} /> Inizia Allenamento
@@ -131,21 +132,24 @@ export function Dashboard({
 
       {/* Day Cards */}
       <div className="space-y-3">
-        {Object.keys(piano).length === 0 ? (
-          <p className="text-center text-muted-foreground py-8">Nessun piano generato. Clicca il tasto sotto!</p>
+        {sortedDays.length === 0 ? (
+          <p className="text-center text-muted-foreground py-8">Il piano della settimana verrà generato automaticamente...</p>
         ) : (
-          giorni
-            .filter(g => piano[g])
-            .map((giorno, i) => (
-              <DayCard key={giorno} giorno={giorno} dati={piano[giorno]} livello={livello} index={i} focus={focusMap?.[giorno]} onClick={() => onAvviaAllenamento(giorno)} />
-            ))
+          sortedDays.map((dateKey, i) => (
+            <DayCard
+              key={dateKey}
+              giorno={dateKey}
+              label={formatDateLabel(dateKey)}
+              dati={piano[dateKey]}
+              livello={livello}
+              index={i}
+              focus={focusMap?.[dateKey]}
+              isToday={dateKey === oggi}
+              onClick={() => onAvviaAllenamento(dateKey)}
+            />
+          ))
         )}
       </div>
-
-      {/* Generate button */}
-      <button onClick={onGeneraNuova} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg hover:opacity-90 transition">
-        Genera Nuova Settimana
-      </button>
     </div>
   );
 }

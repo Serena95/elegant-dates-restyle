@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { toast } from "sonner";
+import { TrainingDaysPicker } from "./TrainingDaysPicker";
 import {
   LogOut,
   Moon,
@@ -28,9 +29,11 @@ interface SettingsViewProps {
   onModificaAttrezzi: () => void;
   voiceEnabled?: boolean;
   onToggleVoice?: (enabled: boolean) => void;
+  giorniAllenamento?: number[];
+  onChangeGiorniAllenamento?: (days: number[]) => void;
 }
 
-export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice }: SettingsViewProps) {
+export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice, giorniAllenamento = [1, 3, 5], onChangeGiorniAllenamento }: SettingsViewProps) {
   const { user, signOut } = useAuth();
   const { isDark, toggle } = useDarkMode();
   const [showDelete, setShowDelete] = useState(false);
@@ -182,6 +185,10 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
             <span className={`block w-5 h-5 rounded-full bg-card shadow-sm absolute top-1 transition-transform ${voiceEnabled ? "translate-x-6" : "translate-x-1"}`} />
           </button>
         </div>
+        <TrainingDaysPicker
+          selectedDays={giorniAllenamento}
+          onChange={(days) => onChangeGiorniAllenamento?.(days)}
+        />
         <SettingsRow icon={Droplets} label="Monitoraggio Ciclo" onClick={() => onNavigate("cycle")} />
         <SettingsRow icon={Baby} label="Modalità Gravidanza" onClick={() => onNavigate("pregnancy")} />
       </Section>
