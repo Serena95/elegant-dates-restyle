@@ -44,6 +44,14 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
   const streakData = useMemo(() => calculateStreak(storicoCal, giorniAllenamento), [storicoCal, giorniAllenamento]);
   const progressData = useMemo(() => computeProgress(storicoCal, livello), [storicoCal, livello]);
 
+  // Determine today's plan context
+  const oggi = getLocalDateKey(new Date());
+  const todayKey = sortedDays.find(k => k === oggi);
+  const todayWorkout = todayKey && piano[todayKey] ? { key: todayKey, ...piano[todayKey] } : null;
+  const isRestDay = !todayWorkout;
+  const isAlreadyCompleted = todayWorkout ? (todayWorkout.round >= (CONFIG_LIVELLI[livello]?.round || 3)) : false;
+  const todayFocusInfo = todayKey ? focusMap?.[todayKey] : undefined;
+
   const aiContext = useMemo<AICoachContext>(() => ({
     level: livello,
     equipment: attrezzi,
@@ -56,7 +64,12 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     cyclePhase,
     pregnancyMode,
     pregnancyWeek,
-  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, pregnancyMode, pregnancyWeek]);
+    todayEquipment: todayWorkout?.attrezzo,
+    todayFocus: todayFocusInfo?.label,
+    todayFocusIcon: todayFocusInfo?.icon,
+    isRestDay,
+    isAlreadyCompleted,
+  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, pregnancyMode, pregnancyWeek, todayWorkout, todayFocusInfo, isRestDay, isAlreadyCompleted]);
   
   // Find today's workout
   const oggi = getLocalDateKey(new Date());
