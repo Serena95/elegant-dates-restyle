@@ -74,7 +74,7 @@ const Index = () => {
     return { completed, total, streak };
   }, [cloud.storicoCal]);
 
-  const effectiveView: AppView | "loading" | "equipment-init" = cloud.loading
+  const effectiveView: string = cloud.loading
     ? "loading"
     : cloud.attrezzi.length === 0 && view === "dashboard"
       ? "equipment-init"
