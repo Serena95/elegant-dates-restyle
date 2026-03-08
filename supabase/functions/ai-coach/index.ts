@@ -1,4 +1,4 @@
-// AI Coach edge function - v2 with complete type
+// AI Coach edge function - v3 context-aware (synced with daily plan)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
@@ -27,16 +27,36 @@ serve(async (req) => {
 
     const cycleNote = context.cyclePhase === "mestruale" ? " L'utente è in fase mestruale, suggerisci attività dolci." : "";
 
-    if (type === "complete") {
-      // Single call that returns everything: suggestion + motivation + recovery
-      const needsRecovery = (context.streak || 0) >= 5 || context.recentIntensity === "alta" || context.cyclePhase === "mestruale";
+    // Build today's plan context
+    const isRestDay = context.isRestDay === true;
+    const isCompleted = context.isAlreadyCompleted === true;
+    const todayEquipment = context.todayEquipment || null;
+    const todayFocus = context.todayFocus || null;
 
-      systemPrompt = `Sei un coach di Pilates professionista italiano. Rispondi SEMPRE in formato JSON valido con questa struttura esatta:
+    let todayPlanContext = "";
+    if (isCompleted) {
+      todayPlanContext = "\n🎉 L'utente ha GIÀ COMPLETATO l'allenamento di oggi! Complimentati e suggerisci recupero attivo.";
+    } else if (isRestDay) {
+      todayPlanContext = "\n😴 OGGI È GIORNO DI RIPOSO (nessun allenamento programmato). Suggerisci attività di recupero: stretching leggero, mobilità, respirazione, passeggiata, foam rolling. NON suggerire allenamenti intensi.";
+    } else if (todayEquipment) {
+      todayPlanContext = `\n📋 ALLENAMENTO PROGRAMMATO OGGI: ${todayEquipment}${todayFocus ? ` con focus ${todayFocus}` : ""}. Il suggerimento DEVE essere coerente con questo allenamento. Parla di questo attrezzo e di questo focus specifico.`;
+    }
+
+    if (type === "complete") {
+      const needsRecovery = isRestDay || isCompleted || (context.streak || 0) >= 5 || context.recentIntensity === "alta" || context.cyclePhase === "mestruale";
+
+      systemPrompt = `Sei un coach di Pilates professionista italiano, empatico e motivante. Rispondi SEMPRE in formato JSON valido con questa struttura esatta:
 {
-  "suggestion": {"titolo": "string", "descrizione": "string (max 2 frasi)", "focus": "string (gruppo muscolare principale)"},
-  "motivation": "string (messaggio motivazionale 1-2 frasi, personalizzato)",
+  "suggestion": {"titolo": "string", "descrizione": "string (max 2 frasi)", "focus": "string (gruppo muscolare o attività principale)"},
+  "motivation": "string (messaggio motivazionale 1-2 frasi, personalizzato e caloroso)",
   ${needsRecovery ? '"recovery": {"consiglio": "string (max 2 frasi)", "tipo": "stretch|mobilità|riposo"}' : '"recovery": null'}
 }
+
+REGOLE IMPORTANTI:
+- Se è giorno di riposo: il campo "suggestion" deve contenere un consiglio di recupero attivo (stretching, mobilità, respirazione), NON un allenamento.
+- Se l'allenamento è già completato: complimentati nel "motivation" e suggerisci recupero nel "suggestion".
+- Se c'è un allenamento programmato: il "suggestion" DEVE parlare di quell'attrezzo e focus specifico.
+- Sii specifico, non generico. Menziona l'attrezzo per nome.
 Non aggiungere testo fuori dal JSON. Non usare markdown.`;
 
       userPrompt = `Dati utente:
@@ -48,16 +68,16 @@ Non aggiungere testo fuori dal JSON. Non usare markdown.`;
 - Ultimo focus allenato: ${context.lastFocus || "nessuno"}
 - Gruppi muscolari più allenati questa settimana: ${context.mostTrainedThisWeek || "nessuno"}
 - Ultimo tipo allenamento: ${context.lastWorkoutType || "sconosciuto"}
-- Intensità recente: ${context.recentIntensity || "media"}${cycleAdaptation}${pregnancyAdaptation}${cycleNote}
+- Intensità recente: ${context.recentIntensity || "media"}${todayPlanContext}${cycleAdaptation}${pregnancyAdaptation}${cycleNote}
 
 Genera:
-1. Un suggerimento allenamento che bilanci i gruppi muscolari
-2. Un messaggio motivazionale personalizzato (${context.streak >= 7 ? "ha una streak impressionante!" : context.streak >= 3 ? "sta costruendo una buona abitudine" : "sta iniziando il suo percorso"})
+1. Un suggerimento coerente con il piano di oggi
+2. Un messaggio motivazionale personalizzato (${isCompleted ? "ha già completato l'allenamento, celebra!" : context.streak >= 7 ? "ha una streak impressionante!" : context.streak >= 3 ? "sta costruendo una buona abitudine" : "sta iniziando il suo percorso"})
 ${needsRecovery ? "3. Un consiglio di recupero appropriato" : ""}
 Rispondi SOLO con il JSON.`;
 
     } else if (type === "workout_suggestion") {
-      systemPrompt = `Sei un coach di Pilates professionista italiano. Suggerisci un allenamento basato sui dati dell'utente. Non inventare esercizi. Usa solo esercizi comuni di Pilates e fitness funzionale. Rispondi SEMPRE in formato JSON valido con questa struttura: {"titolo": "string", "descrizione": "string (max 2 frasi)", "focus": "string (gruppo muscolare principale)"}`;
+      systemPrompt = `Sei un coach di Pilates professionista italiano. Suggerisci un allenamento basato sui dati dell'utente. Rispondi SEMPRE in formato JSON valido con questa struttura: {"titolo": "string", "descrizione": "string (max 2 frasi)", "focus": "string (gruppo muscolare principale)"}`;
       
       userPrompt = `Dati utente:
 - Livello: ${context.level || "MEDIO"}
@@ -65,17 +85,17 @@ Rispondi SOLO con il JSON.`;
 - Focus preferito: ${context.preferredFocus || "full body"}
 - Streak allenamenti: ${context.streak || 0} giorni
 - Ultimo focus allenato: ${context.lastFocus || "nessuno"}
-- Gruppi muscolari più allenati questa settimana: ${context.mostTrainedThisWeek || "nessuno"}${cycleAdaptation}${pregnancyAdaptation}
+- Gruppi muscolari più allenati questa settimana: ${context.mostTrainedThisWeek || "nessuno"}${todayPlanContext}${cycleAdaptation}${pregnancyAdaptation}
 
-Suggerisci un allenamento per oggi che bilanci i gruppi muscolari (se ieri core, oggi gambe/glutei). Rispondi SOLO con il JSON.`;
+Suggerisci un allenamento coerente con il piano di oggi. Rispondi SOLO con il JSON.`;
 
     } else if (type === "motivation") {
       systemPrompt = `Sei un coach motivazionale di Pilates italiano. Genera un messaggio motivazionale breve (1-2 frasi) e personalizzato. Rispondi SOLO con il testo del messaggio, senza virgolette.`;
-      userPrompt = `L'utente ha una streak di ${context.streak || 0} giorni. Ha completato ${context.totalWorkouts || 0} allenamenti totali. ${context.streak >= 7 ? "Ha una streak impressionante!" : context.streak >= 3 ? "Sta costruendo una buona abitudine." : "Sta iniziando il suo percorso."} Genera un messaggio motivazionale personalizzato.`;
+      userPrompt = `L'utente ha una streak di ${context.streak || 0} giorni. Ha completato ${context.totalWorkouts || 0} allenamenti totali. ${isCompleted ? "Ha appena completato l'allenamento di oggi!" : isRestDay ? "Oggi è il suo giorno di riposo." : "Deve ancora fare l'allenamento di oggi."} Genera un messaggio motivazionale personalizzato.`;
 
     } else if (type === "recovery") {
       systemPrompt = `Sei un coach di Pilates italiano esperto in recupero. Suggerisci consigli di recupero brevi e pratici. Rispondi SEMPRE in formato JSON: {"consiglio": "string (max 2 frasi)", "tipo": "stretch|mobilità|riposo"}`;
-      userPrompt = `L'utente ha una streak di ${context.streak || 0} giorni. Ultimo allenamento: ${context.lastWorkoutType || "sconosciuto"}. Intensità recente: ${context.recentIntensity || "media"}.${cycleNote} Suggerisci un consiglio di recupero. Rispondi SOLO con il JSON.`;
+      userPrompt = `L'utente ha una streak di ${context.streak || 0} giorni. Ultimo allenamento: ${context.lastWorkoutType || "sconosciuto"}. Intensità recente: ${context.recentIntensity || "media"}.${cycleNote}${todayPlanContext} Suggerisci un consiglio di recupero. Rispondi SOLO con il JSON.`;
 
     } else {
       return new Response(JSON.stringify({ error: "Unknown type" }), {
