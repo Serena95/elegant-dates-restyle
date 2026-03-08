@@ -17,6 +17,7 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
   const [motivation, setMotivation] = useState<string>("");
   const [recovery, setRecovery] = useState<RecoveryAdvice | null>(null);
   const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(false);
   const [activeTab, setActiveTab] = useState<"coach" | "recovery">("coach");
 
   const streakLevel = getStreakLevel(streak.currentStreak);
