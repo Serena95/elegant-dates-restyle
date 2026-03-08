@@ -12,6 +12,8 @@ import { ProfileView } from "@/components/ProfileView";
 import { SettingsView } from "@/components/SettingsView";
 import { WorkoutComplete } from "@/components/WorkoutComplete";
 import { InstallBanner } from "@/components/InstallBanner";
+import { ProgramsView } from "@/components/ProgramsView";
+import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
