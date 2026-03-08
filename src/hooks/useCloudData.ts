@@ -201,29 +201,39 @@ export function useCloudData() {
     setLoading(false);
   };
 
+  const upsertUserSettings = useCallback(async (updates: Record<string, any>) => {
+    if (!user) return;
+    const { data: existing } = await supabase.from("user_settings").select("id").eq("user_id", user.id).maybeSingle();
+    if (existing) {
+      await supabase.from("user_settings").update(updates as any).eq("user_id", user.id);
+    } else {
+      await supabase.from("user_settings").insert({ user_id: user.id, ...(updates as any) } as any);
+    }
+  }, [user]);
+
   const setAttrezzi = useCallback(async (v: string[]) => {
     if (!user) return;
     setAttrezziState(v);
-    await supabase.from("user_settings").update({ attrezzi_selezionati: v }).eq("user_id", user.id);
-  }, [user]);
+    await upsertUserSettings({ attrezzi_selezionati: v });
+  }, [user, upsertUserSettings]);
 
   const setLivello = useCallback(async (v: string) => {
     if (!user) return;
     setLivelloState(v);
-    await supabase.from("user_settings").update({ livello: v }).eq("user_id", user.id);
-  }, [user]);
+    await upsertUserSettings({ livello: v });
+  }, [user, upsertUserSettings]);
 
   const setUltimiAttrezzi = useCallback(async (v: string[]) => {
     if (!user) return;
     setUltimiAttrezziState(v);
-    await supabase.from("user_settings").update({ ultimi_attrezzi: v }).eq("user_id", user.id);
-  }, [user]);
+    await upsertUserSettings({ ultimi_attrezzi: v });
+  }, [user, upsertUserSettings]);
 
   const setGiorniAllenamento = useCallback(async (v: number[]) => {
     if (!user) return;
     setGiorniAllenamentoState(v);
-    await supabase.from("user_settings").update({ giorni_allenamento: v } as any).eq("user_id", user.id);
-  }, [user]);
+    await upsertUserSettings({ giorni_allenamento: v });
+  }, [user, upsertUserSettings]);
 
   const savePiano = useCallback(async (newPiano: WeekPlan, newAllenamenti?: AllenamentiData) => {
     if (!user) return;
