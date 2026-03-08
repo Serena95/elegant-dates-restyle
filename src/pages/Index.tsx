@@ -99,7 +99,7 @@ const Index = () => {
     for (let i = 0; i < 365; i++) {
       const dow = d.getDay();
       if (trainingDaysSet.has(dow)) {
-        const k = d.toISOString().split("T")[0];
+        const k = getLocalDateKey(d);
         if (cloud.storicoCal[k]?.completato) streak++;
         else if (i > 0) break;
       }
