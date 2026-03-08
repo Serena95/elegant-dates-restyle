@@ -16,7 +16,7 @@ interface DayCardProps {
 const DEFAULT_GRADIENT = { from: "from-blue-500/10", to: "to-indigo-500/10", border: "border-blue-200 dark:border-blue-800", accent: "bg-blue-500" };
 const TODAY_GRADIENT = { from: "from-primary/15", to: "to-secondary/15", border: "border-primary/30", accent: "bg-primary" };
 
-export function DayCard({ giorno, label, dati, livello, index, focus, isToday, onClick }: DayCardProps) {
+export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function DayCard({ giorno, label, dati, livello, index, focus, isToday, onClick }, ref) {
   const maxRound = CONFIG_LIVELLI[livello].round;
   const roundFatti = dati.round || 0;
   const isCompleted = roundFatti >= maxRound;
