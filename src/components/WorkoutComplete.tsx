@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Trophy, Clock, Dumbbell, Flame, Star, Share2, Zap } from "lucide-react";
+import { Trophy, Clock, Dumbbell, Flame, Star, Share2, Zap, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge, BADGE_DEFINITIONS } from "@/hooks/useBadges";
 import { Button } from "@/components/ui/button";
 import { getLevelInfo, LEVELS } from "@/services/xpService";
 import { toast } from "sonner";
+import { healthService } from "@/services/healthService";
 
 interface WorkoutCompleteProps {
   esercizi: number;
@@ -21,6 +22,7 @@ interface WorkoutCompleteProps {
 export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, onClose, xpGained, newXp, leveledUp, onShare }: WorkoutCompleteProps) {
   const [showBadges, setShowBadges] = useState(false);
   const [showXp, setShowXp] = useState(false);
+  const [healthSynced, setHealthSynced] = useState<boolean | null>(null);
   const calorie = Math.round(esercizi * 12 + tempoTotale * 0.08);
   const minuti = Math.floor(tempoTotale / 60);
   const levelInfo = newXp ? getLevelInfo(newXp) : null;
@@ -38,6 +40,22 @@ export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, on
       return () => clearTimeout(t);
     }
   }, [xpGained]);
+
+  // Auto-sync workout to Google Fit / Apple Health
+  useEffect(() => {
+    if (healthService.isAvailable() && healthService.isConnected() && minuti > 0) {
+      healthService.writeWorkout(minuti, calorie).then((success) => {
+        setHealthSynced(success);
+        if (success) {
+          toast.success(
+            healthService.getPlatform() === "ios"
+              ? "Allenamento salvato su Apple Health! 🍎"
+              : "Allenamento salvato su Google Fit! 💚"
+          );
+        }
+      });
+    }
+  }, []);
 
   const handleShare = () => {
     const text = `Ho completato il mio allenamento ${attrezzo} oggi! 💪 ${minuti} minuti, ${esercizi} esercizi, ~${calorie} kcal bruciati!`;
@@ -93,6 +111,20 @@ export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, on
             <p className="text-[10px] text-muted-foreground uppercase font-bold">Kcal</p>
           </div>
         </div>
+
+        {/* Health Sync indicator */}
+        {healthSynced && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20"
+          >
+            <Activity size={14} className="text-emerald-500" />
+            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              {healthService.getPlatform() === "ios" ? "Salvato su Apple Health" : "Salvato su Google Fit"}
+            </p>
+          </motion.div>
+        )}
 
         {/* XP Gained */}
         <AnimatePresence>
