@@ -378,6 +378,7 @@ const Index = () => {
 
   const renderContent = () => {
     if (showGuide) return <GuideView onBack={() => setShowGuide(false)} />;
+    if (showNativeGuide) return <NativeBuildGuide onBack={() => setShowNativeGuide(false)} />;
 
     switch (view) {
       case "dashboard":
