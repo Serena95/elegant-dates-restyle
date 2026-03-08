@@ -20,6 +20,8 @@ import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
 import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, FOCUS_LABELS, DayFocus, computeProgressionContext } from "@/data/exercises";
+import { generateAIWorkout } from "@/services/aiWorkout";
+import { useLocalStorage } from "@/hooks/useLocalStorage";
 
 const Index = () => {
   const cloud = useCloudData();
@@ -32,6 +34,8 @@ const Index = () => {
   const [showComplete, setShowComplete] = useState(false);
   const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
+  const [aiGenerated, setAiGenerated] = useState(false);
+  const [voiceEnabled, setVoiceEnabled] = useLocalStorage("voice_trainer_enabled", true);
   const prevBadgeCountRef = useRef(0);
 
   const { unlockedBadges, checkNewBadges } = useBadges(cloud.storicoCal);
@@ -122,9 +126,10 @@ const Index = () => {
     alert("✅ Nuovo piano generato con progressione!");
   }, [cloud.attrezzi, cloud.allenamentiData.storico, cloud.savePiano, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.livello, cloud.setUltimiAttrezzi]);
 
-  const avviaAllenamento = useCallback((giorno: string) => {
+  const avviaAllenamento = useCallback(async (giorno: string) => {
     setGiornoSelezionato(giorno);
     setWorkoutStartTime(Date.now());
+    setAiGenerated(false);
     const dati = cloud.piano[giorno];
     if (!dati) return;
 
@@ -140,7 +145,19 @@ const Index = () => {
       const storici = Object.values(allenamentiStorico).flat();
       const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
       ctx.recentExerciseIds = storici;
-      esercizi = generaEserciziGiorno(attrezzo, cloud.livello, storici, undefined, ctx);
+
+      // Try AI generation, fallback to local
+      const result = await generateAIWorkout({
+        attrezzo,
+        livello: cloud.livello,
+        storici,
+        targetCount: 7,
+        progressionCtx: ctx,
+      });
+
+      esercizi = result.exercises;
+      setAiGenerated(result.aiGenerated);
+
       const nuovoStorico = [...storici, ...esercizi.map(e => e.id)];
       const newAllenamenti = {
         esercizi: { ...allenamentiEsercizi, [giorno]: esercizi },
@@ -152,7 +169,7 @@ const Index = () => {
     setEserciziCorrenti(esercizi);
     setRoundCorrenti(dati.round || 0);
     setView("workout");
-  }, [cloud.piano, cloud.allenamentiData, cloud.savePiano, cloud.attrezzi, cloud.livello]);
+  }, [cloud.piano, cloud.allenamentiData, cloud.savePiano, cloud.attrezzi, cloud.livello, cloud.storicoCal, cloud.ultimiAttrezzi]);
 
   const segnaRound = useCallback(() => {
     if (!giornoSelezionato) return;
@@ -237,6 +254,8 @@ const Index = () => {
             roundCorrenti={roundCorrenti}
             onSegnaRound={segnaRound}
             onBack={() => navigate("dashboard")}
+            voiceEnabled={voiceEnabled}
+            aiGenerated={aiGenerated}
           />
         </div>
         {showComplete && (
@@ -339,6 +358,8 @@ const Index = () => {
               else navigate(v as AppView);
             }}
             onModificaAttrezzi={() => navigate("equipment")}
+            voiceEnabled={voiceEnabled}
+            onToggleVoice={setVoiceEnabled}
           />
         );
       case "cycle" as any:

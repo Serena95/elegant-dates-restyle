@@ -1,8 +1,9 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Exercise, CONFIG_LIVELLI, ATTREZZO_ICONS, TEMA_CONFIG, detectFocus } from "@/data/exercises";
 import { useTimer } from "@/hooks/useTimer";
+import { useVoiceTrainer } from "@/hooks/useVoiceTrainer";
 import { TimerOverlay } from "./TimerOverlay";
-import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, SkipForward, X } from "lucide-react";
+import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, SkipForward, X, Volume2, VolumeX, Sparkles } from "lucide-react";
 
 interface WorkoutViewProps {
   giorno: string;
@@ -12,6 +13,8 @@ interface WorkoutViewProps {
   roundCorrenti: number;
   onSegnaRound: () => void;
   onBack: () => void;
+  voiceEnabled?: boolean;
+  aiGenerated?: boolean;
 }
 
 const RISCALDAMENTO_MODES = [
@@ -20,16 +23,55 @@ const RISCALDAMENTO_MODES = [
   { tipo: "CAMMINATA ESTERNA", emoji: "🌳", desc: "25 min • Passo svelto • Braccia attive e rullata del piede completa.", durata: 1500, label: "25 MIN" },
 ];
 
-export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack }: WorkoutViewProps) {
+export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, voiceEnabled = true, aiGenerated = false }: WorkoutViewProps) {
   const config = CONFIG_LIVELLI[livello];
   const maxRound = config.round;
   const timer = useTimer();
+  const voice = useVoiceTrainer({ enabled: voiceEnabled });
   const [completati, setCompletati] = useState<Set<number>>(new Set());
   const [tipoRiscaldamento, setTipoRiscaldamento] = useState(0);
   const [currentExerciseIdx, setCurrentExerciseIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [voiceActive, setVoiceActive] = useState(voiceEnabled);
+  const lastTimerRef = useRef<string | null>(null);
   const isCompleted = roundCorrenti >= maxRound;
+
+  // Voice cues synced with timer
+  useEffect(() => {
+    if (!voiceActive || !timer.isActive) return;
+    const remaining = timer.timeLeft;
+    const label = timer.label;
+    
+    // Only fire cues when timer label changes (new exercise started)
+    if (label !== lastTimerRef.current) {
+      lastTimerRef.current = label;
+      // Don't announce on first tick - the start button handler does it
+    }
+
+    // Mid-exercise cue
+    if (remaining === Math.floor(config.tempoEsercizio / 2) && config.tempoEsercizio >= 20) {
+      voice.announceMidExercise();
+    }
+    // Almost done
+    if (remaining === 10 && config.tempoEsercizio >= 20) {
+      voice.announceAlmostDone();
+    }
+    // Countdown
+    if (remaining <= 5 && remaining > 0) {
+      voice.announceCountdown(remaining);
+    }
+    // End
+    if (remaining === 0 && lastTimerRef.current) {
+      voice.announceEndExercise();
+      lastTimerRef.current = null;
+    }
+  }, [timer.timeLeft, timer.isActive, timer.label, voiceActive, voice, config.tempoEsercizio]);
+
+  // Cleanup voice on unmount
+  useEffect(() => {
+    return () => voice.stop();
+  }, [voice]);
 
   const temaConfig = TEMA_CONFIG[tema];
   const temaLabel = temaConfig?.label || tema;
@@ -46,8 +88,11 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const handleSegnaRound = () => {
     onSegnaRound();
     setCompletati(new Set());
+    if (voiceActive) voice.announceRoundComplete(roundCorrenti + 1, maxRound);
     if (roundCorrenti + 1 < maxRound) {
       timer.start(config.pausa, `PAUSA ROUND ${roundCorrenti + 1}`);
+    } else if (voiceActive) {
+      voice.announceAllComplete();
     }
   };
 
@@ -89,7 +134,25 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         </button>
         <div className="flex gap-2">
           <button
-            onClick={() => setIsPaused(p => !p)}
+            onClick={() => {
+              setVoiceActive(v => {
+                if (v) voice.stop();
+                return !v;
+              });
+            }}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition ${voiceActive ? "bg-primary/15" : "bg-muted"}`}
+            title={voiceActive ? "Disattiva trainer vocale" : "Attiva trainer vocale"}
+          >
+            {voiceActive ? <Volume2 size={16} className="text-primary" /> : <VolumeX size={16} className="text-muted-foreground" />}
+          </button>
+          <button
+            onClick={() => {
+              setIsPaused(p => {
+                if (!p && voiceActive) voice.announcePause();
+                if (p && voiceActive) voice.announceResume();
+                return !p;
+              });
+            }}
             className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition"
           >
             {isPaused ? <Play size={16} className="text-primary" /> : <Pause size={16} className="text-muted-foreground" />}
@@ -110,11 +173,16 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
             <h2 className="text-xl font-bold text-foreground">
               {temaIcon} {giorno} <span className="text-primary">({temaLabel})</span>
             </h2>
-            <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+            <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
               <span>⏱️ {config.tempoEsercizio}s esercizio • {config.pausa}s pausa • {maxRound} round</span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/50 text-foreground text-xs font-bold">
                 {focus.icon} {focus.label}
               </span>
+              {aiGenerated && (
+                <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold">
+                  <Sparkles size={12} /> AI
+                </span>
+              )}
             </div>
           </>
         );
@@ -180,7 +248,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                     {config.tempoEsercizio}s
                   </span>
                   <button
-                    onClick={e => { e.stopPropagation(); timer.start(config.tempoEsercizio, es.nome); }}
+                    onClick={e => { e.stopPropagation(); timer.start(config.tempoEsercizio, es.nome); if (voiceActive) voice.announceExercise(es.nome); }}
                     className="flex items-center gap-1 bg-pilates-green text-white px-2 py-1 rounded-lg text-xs font-bold hover:opacity-80"
                   >
                     <Timer size={12} /> AVVIA
