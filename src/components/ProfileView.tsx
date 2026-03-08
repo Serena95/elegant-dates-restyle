@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { Camera, User, Dumbbell, BarChart3, Zap } from "lucide-react";
+import { Camera, User, Dumbbell, BarChart3, Zap, Crown, ShieldCheck } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
