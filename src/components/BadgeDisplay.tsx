@@ -36,4 +36,4 @@ export const BadgeDisplay = forwardRef<HTMLDivElement, BadgeDisplayProps>(functi
       </div>
     </div>
   );
-}
+});

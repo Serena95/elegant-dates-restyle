@@ -183,4 +183,4 @@ export const ProfileView = forwardRef<HTMLDivElement, ProfileViewProps>(function
       </button>
     </div>
   );
-}
+});
