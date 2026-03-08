@@ -210,6 +210,32 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         })}
       </div>
 
+      {/* Floating next exercise button */}
+      {!isCompleted && !isPaused && currentExerciseIdx < esercizi.length - 1 && (
+        <div className="sticky bottom-20 z-30">
+          <button
+            onClick={nextExercise}
+            className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-bold shadow-lg flex items-center justify-center gap-2 hover:opacity-90 transition"
+          >
+            <SkipForward size={16} /> Prossimo Esercizio ({currentExerciseIdx + 1}/{esercizi.length})
+          </button>
+        </div>
+      )}
+
+      {/* Paused overlay */}
+      {isPaused && (
+        <div className="bg-card rounded-2xl border-2 border-primary p-8 text-center space-y-4">
+          <Pause size={40} className="text-primary mx-auto" />
+          <h3 className="text-xl font-bold text-foreground">Allenamento in Pausa</h3>
+          <button
+            onClick={() => setIsPaused(false)}
+            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg flex items-center justify-center gap-2"
+          >
+            <Play size={18} /> Riprendi
+          </button>
+        </div>
+      )}
+
       {/* Stretching note */}
       <div className="bg-pilates-amber/10 border border-pilates-amber/30 p-3 rounded-xl text-center text-sm font-bold text-pilates-amber">
         ✨ Al termine dei round inizierà lo stretching finale
