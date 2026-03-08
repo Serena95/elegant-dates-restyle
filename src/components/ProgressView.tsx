@@ -80,7 +80,6 @@ export function ProgressView({ misure, onAddMisura, onDeleteMisura, onBack }: Pr
               )}
               </div>
             </div>
-            </div>
           ))}
         </div>
       )}
