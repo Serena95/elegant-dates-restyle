@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Baby, Heart, AlertTriangle, Shield } from "lucide-react";
+import { Baby, Heart, AlertTriangle, Shield, ChevronLeft } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface PregnancyModeProps {

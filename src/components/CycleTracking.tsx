@@ -146,8 +146,13 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center gap-2">
+        {onBack && (
+          <button onClick={onBack} className="text-primary">
+            <ChevronLeft size={24} />
+          </button>
+        )}
+        <div className="flex-1">
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Droplets size={22} className="text-pink-500" /> Ciclo Mestruale
           </h2>
