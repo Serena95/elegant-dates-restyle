@@ -1,5 +1,5 @@
 import { DayCard } from "./DayCard";
-import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel } from "@/data/exercises";
+import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
 import { CalendarDays, BarChart3, Flame, Dumbbell, Target } from "lucide-react";
 import { motion } from "framer-motion";
 
@@ -24,7 +24,7 @@ export function Dashboard({
   const sortedDays = Object.keys(piano).sort();
   
   // Find today's workout
-  const oggi = new Date().toISOString().split("T")[0];
+  const oggi = getLocalDateKey(new Date());
   const todayKey = sortedDays.find(k => k === oggi);
   const todayWorkout = todayKey && piano[todayKey] ? { key: todayKey, ...piano[todayKey] } : null;
 

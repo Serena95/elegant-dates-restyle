@@ -19,7 +19,7 @@ import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
-import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, FOCUS_LABELS, DayFocus, computeProgressionContext, isPianoCurrentWeek, getWeekDates } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, FOCUS_LABELS, DayFocus, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey } from "@/data/exercises";
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
@@ -87,7 +87,7 @@ const Index = () => {
     for (let i = 0; i < 7; i++) {
       const d = new Date(startOfWeek);
       d.setDate(d.getDate() + i);
-      const key = d.toISOString().split("T")[0];
+      const key = getLocalDateKey(d);
       if (cloud.storicoCal[key]?.completato) completed++;
     }
 
@@ -99,7 +99,7 @@ const Index = () => {
     for (let i = 0; i < 365; i++) {
       const dow = d.getDay();
       if (trainingDaysSet.has(dow)) {
-        const k = d.toISOString().split("T")[0];
+        const k = getLocalDateKey(d);
         if (cloud.storicoCal[k]?.completato) streak++;
         else if (i > 0) break;
       }
@@ -192,7 +192,7 @@ const Index = () => {
     cloud.savePiano(updatedPiano);
 
     if (nuoviRound >= config.round) {
-      const dataKey = new Date().toISOString().split("T")[0];
+      const dataKey = getLocalDateKey(new Date());
       const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
       const focus = detectFocus(eserciziCorrenti);
       cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true, focus });
