@@ -74,6 +74,7 @@ const Index = () => {
   const [eserciziCorrenti, setEserciziCorrenti] = useState<Exercise[]>([]);
   const [roundCorrenti, setRoundCorrenti] = useState(0);
   const [showGuide, setShowGuide] = useState(false);
+  const [showNativeGuide, setShowNativeGuide] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
   const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
