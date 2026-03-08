@@ -25,7 +25,7 @@ export function ProgramsView({ userAttrezzi, onStartProgram, activeProgram }: Pr
           <p className="text-sm text-muted-foreground">{selectedProgram.descrizione}</p>
         </div>
 
-        <div className="grid grid-cols-3 gap-3">
+      <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <div className="bg-card rounded-xl border border-border p-3 text-center">
             <Clock size={16} className="text-primary mx-auto mb-1" />
             <p className="text-sm font-black text-foreground">{selectedProgram.durata}</p>
@@ -115,7 +115,7 @@ export function ProgramsView({ userAttrezzi, onStartProgram, activeProgram }: Pr
                     <span className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-bold">ATTIVO</span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{program.descrizione}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{program.descrizione}</p>
                 <div className="flex gap-3 mt-1.5">
                   <span className="text-[10px] text-muted-foreground font-bold">{program.durata} sett.</span>
                   <span className="text-[10px] text-muted-foreground font-bold">{program.livello}</span>
