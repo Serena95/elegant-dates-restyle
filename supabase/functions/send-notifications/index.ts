@@ -267,13 +267,7 @@ Deno.serve(async (req) => {
     let errorCount = 0;
 
     for (const user of users) {
-      // Check if today is a training day for this user
       const trainingDays = (user as any).giorni_allenamento || [1, 3, 5];
-      if (!trainingDays.includes(currentDow)) continue;
-
-      // Check if it's time to send (within 5 min window of their scheduled time)
-      // Note: notifica_orario is in user's local time, but we don't know their timezone
-      // For now, we check if the notification was already sent today
       const notificaOrario = (user as any).notifica_orario || "09:00";
 
       // Get push subscriptions for this user
@@ -294,14 +288,78 @@ Deno.serve(async (req) => {
         .eq("completato", true)
         .maybeSingle();
 
-      if (history) continue; // Already completed
+      // Calculate streak for this user
+      const { data: allHistory } = await supabaseAdmin
+        .from("workout_history")
+        .select("data_key, completato")
+        .eq("user_id", user.user_id)
+        .eq("completato", true)
+        .order("data_key", { ascending: false })
+        .limit(30);
 
-      const payloadObj = {
-        title: "🏋️ Allenamento di oggi",
-        body: "Hai un allenamento programmato per oggi! Apri l'app per iniziare 💪",
-        icon: "/pwa-192x192.png",
-        url: "/",
-      };
+      let streak = 0;
+      if (allHistory && allHistory.length > 0) {
+        const dates = new Set(allHistory.map((h: any) => h.data_key));
+        const d = new Date();
+        d.setHours(0, 0, 0, 0);
+        for (let i = 0; i < 60; i++) {
+          const k = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+          const dow = d.getDay();
+          if (trainingDays.includes(dow)) {
+            if (dates.has(k)) {
+              streak++;
+            } else if (i > 0) {
+              break;
+            }
+          }
+          d.setDate(d.getDate() - 1);
+        }
+      }
+
+      // Check active challenges
+      const { data: challenges } = await supabaseAdmin
+        .from("challenge_participations")
+        .select("challenge_id, completed_days, completed")
+        .eq("user_id", user.user_id)
+        .eq("completed", false);
+
+      // Determine notification type and message
+      let payloadObj;
+
+      if (history) {
+        // Already completed today - skip workout reminder
+        // But check if challenge needs completing
+        if (challenges && challenges.length > 0) {
+          const challenge = challenges[0];
+          if (challenge.completed_days > 0) {
+            payloadObj = {
+              title: "🏆 Challenge in corso!",
+              body: `Non dimenticare la tua challenge! Giorno ${challenge.completed_days + 1} ti aspetta`,
+              icon: "/pwa-192x192.png",
+              url: "/",
+            };
+          }
+        }
+        if (!payloadObj) continue; // Nothing to notify
+      } else if (streak >= 3 && trainingDays.includes(currentDow)) {
+        // Streak at risk - training day but not completed
+        payloadObj = {
+          title: "🔥 Non perdere la tua streak!",
+          body: `Hai una streak di ${streak} giorni! Allenati oggi per mantenerla 💪`,
+          icon: "/pwa-192x192.png",
+          url: "/",
+        };
+      } else if (trainingDays.includes(currentDow)) {
+        // Normal training day reminder
+        payloadObj = {
+          title: "🏋️ Allenamento di oggi",
+          body: "Hai un allenamento programmato per oggi! Apri l'app per iniziare 💪",
+          icon: "/pwa-192x192.png",
+          url: "/",
+        };
+      } else {
+        continue;
+      }
 
       for (const sub of subscriptions) {
         const success = await sendPushNotification(
@@ -315,7 +373,6 @@ Deno.serve(async (req) => {
           sentCount++;
         } else {
           errorCount++;
-          // Clean up expired subscriptions
           await supabaseAdmin
             .from("push_subscriptions")
             .delete()
