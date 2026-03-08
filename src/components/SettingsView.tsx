@@ -151,6 +151,16 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
           </button>
         </div>
         <SettingsRow icon={Wrench} label="Modifica Attrezzi" onClick={onModificaAttrezzi} />
+        <div className="flex items-center gap-3 p-4">
+          <Volume2 size={18} className="text-muted-foreground" />
+          <span className="flex-1 text-sm font-medium text-foreground">Trainer Vocale</span>
+          <button
+            onClick={() => onToggleVoice?.(!voiceEnabled)}
+            className={`w-12 h-7 rounded-full transition-colors relative ${voiceEnabled ? "bg-primary" : "bg-muted"}`}
+          >
+            <span className={`block w-5 h-5 rounded-full bg-card shadow-sm absolute top-1 transition-transform ${voiceEnabled ? "translate-x-6" : "translate-x-1"}`} />
+          </button>
+        </div>
         <SettingsRow icon={Droplets} label="Monitoraggio Ciclo" onClick={() => onNavigate("cycle")} />
         <SettingsRow icon={Baby} label="Modalità Gravidanza" onClick={() => onNavigate("pregnancy")} />
       </Section>
