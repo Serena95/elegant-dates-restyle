@@ -16,6 +16,8 @@ import { ProgramsView } from "@/components/ProgramsView";
 import { CycleTracking } from "@/components/CycleTracking";
 import { PregnancyMode } from "@/components/PregnancyMode";
 import { MoreView } from "@/components/MoreView";
+import { WorkoutReminder } from "@/components/WorkoutReminder";
+import { useNotifications } from "@/hooks/useNotifications";
 import { LegalPage } from "@/components/LegalPage";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
