@@ -1,10 +1,22 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
 export interface NotificationSettings {
   notifiche_abilitate: boolean;
   notifica_orario: string;
+}
+
+// Convert base64url string to Uint8Array for applicationServerKey
+function urlBase64ToUint8Array(base64String: string): Uint8Array {
+  const padding = "=".repeat((4 - (base64String.length % 4)) % 4);
+  const base64 = (base64String + padding).replace(/-/g, "+").replace(/_/g, "/");
+  const rawData = atob(base64);
+  const outputArray = new Uint8Array(rawData.length);
+  for (let i = 0; i < rawData.length; ++i) {
+    outputArray[i] = rawData.charCodeAt(i);
+  }
+  return outputArray;
 }
 
 export function useNotifications(
@@ -20,6 +32,7 @@ export function useNotifications(
     notifica_orario: "09:00",
   });
   const [showInAppReminder, setShowInAppReminder] = useState(false);
+  const vapidKeyRef = useRef<string | null>(null);
 
   // Load settings from DB
   useEffect(() => {
@@ -37,6 +50,88 @@ export function useNotifications(
           });
         }
       });
+  }, [user]);
+
+  // Get VAPID public key
+  const getVapidKey = useCallback(async (): Promise<string | null> => {
+    if (vapidKeyRef.current) return vapidKeyRef.current;
+    try {
+      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
+      const res = await fetch(
+        `https://${projectId}.supabase.co/functions/v1/generate-vapid`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+      const data = await res.json();
+      if (data.publicKey) {
+        vapidKeyRef.current = data.publicKey;
+        return data.publicKey;
+      }
+    } catch (e) {
+      console.error("Failed to get VAPID key:", e);
+    }
+    return null;
+  }, []);
+
+  // Subscribe to push notifications
+  const subscribeToPush = useCallback(async () => {
+    if (!user || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+
+    try {
+      const vapidKey = await getVapidKey();
+      if (!vapidKey) return;
+
+      const registration = await navigator.serviceWorker.ready;
+      
+      // Check if already subscribed
+      let subscription = await registration.pushManager.getSubscription();
+      
+      if (!subscription) {
+        const applicationServerKey = urlBase64ToUint8Array(vapidKey);
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
+        });
+      }
+
+      const subJson = subscription.toJSON();
+      if (!subJson.endpoint || !subJson.keys?.p256dh || !subJson.keys?.auth) return;
+
+      // Save subscription to DB
+      await supabase.from("push_subscriptions").upsert(
+        {
+          user_id: user.id,
+          endpoint: subJson.endpoint,
+          p256dh: subJson.keys.p256dh,
+          auth: subJson.keys.auth,
+        } as any,
+        { onConflict: "user_id,endpoint" }
+      );
+    } catch (e) {
+      console.error("Push subscription failed:", e);
+    }
+  }, [user, getVapidKey]);
+
+  // Unsubscribe from push
+  const unsubscribeFromPush = useCallback(async () => {
+    if (!user || !("serviceWorker" in navigator)) return;
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      const subscription = await registration.pushManager.getSubscription();
+      if (subscription) {
+        const endpoint = subscription.endpoint;
+        await subscription.unsubscribe();
+        await supabase
+          .from("push_subscriptions")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("endpoint", endpoint);
+      }
+    } catch (e) {
+      console.error("Push unsubscribe failed:", e);
+    }
   }, [user]);
 
   // Request permission
@@ -70,11 +165,21 @@ export function useNotifications(
       if (enabled) {
         const perm = await requestPermission();
         if (perm !== "granted") return;
+        await subscribeToPush();
+      } else {
+        await unsubscribeFromPush();
       }
       await updateSettings({ notifiche_abilitate: enabled });
     },
-    [requestPermission, updateSettings]
+    [requestPermission, updateSettings, subscribeToPush, unsubscribeFromPush]
   );
+
+  // Auto-subscribe if notifications are already enabled
+  useEffect(() => {
+    if (settings.notifiche_abilitate && permission === "granted" && user) {
+      subscribeToPush();
+    }
+  }, [settings.notifiche_abilitate, permission, user]);
 
   // Check if today is a training day and workout not done
   const isTodayTrainingDay = useCallback(() => {
@@ -86,7 +191,7 @@ export function useNotifications(
     return !storicoCal[key]?.completato;
   }, [giorniAllenamento, storicoCal]);
 
-  // Schedule local notification
+  // Schedule local notification (fallback when app is open)
   useEffect(() => {
     if (!settings.notifiche_abilitate || permission !== "granted") return;
     if (!isTodayTrainingDay()) return;
