@@ -24,11 +24,10 @@ export function DayCard({ giorno, dati, livello, index, onClick }: DayCardProps)
   const isCompleted = roundFatti >= maxRound;
   const progress = maxRound > 0 ? (roundFatti / maxRound) * 100 : 0;
 
-  const tema = dati.tema || "core_mobilita";
-  const temaConfig = TEMA_CONFIG[tema];
-  const temaLabel = temaConfig?.label || dati.attrezzo || "Allenamento";
-  const temaIcon = temaConfig?.icon || "🏋️";
-  const gradient = TEMA_GRADIENTS[tema] || DEFAULT_GRADIENT;
+  const attrezzo = dati.attrezzo || "Corpo Libero";
+  const temaLabel = attrezzo;
+  const temaIcon = ATTREZZO_ICONS[attrezzo] || "🏋️";
+  const gradient = DEFAULT_GRADIENT;
 
   const dayNumbers: Record<string, string> = {
     "Lunedì": "01",
