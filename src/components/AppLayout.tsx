@@ -68,6 +68,7 @@ function ProfileAvatar({ profile, size = 36, onClick }: { profile: ProfileData; 
 
 export function AppLayout({ currentView, onNavigate, profile, userName, children }: AppLayoutProps) {
   const isMobile = useIsMobile();
+  const [showMore, setShowMore] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex">
