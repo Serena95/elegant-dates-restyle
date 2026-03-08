@@ -36,13 +36,14 @@ const NAV_ITEMS: { view: AppView; label: string; icon: React.ElementType }[] = [
   { view: "dashboard", label: "Dashboard", icon: LayoutDashboard },
   { view: "progress", label: "Progressi", icon: BarChart3 },
   { view: "calendar", label: "Calendario", icon: CalendarDays },
+  { view: "programs", label: "Programmi", icon: ClipboardList },
   { view: "food", label: "Alimentazione", icon: Apple },
   { view: "library", label: "Libreria", icon: BookOpen },
   { view: "profile", label: "Profilo", icon: UserCircle },
   { view: "settings", label: "Impostazioni", icon: Settings },
 ];
 
-const MOBILE_NAV_ITEMS = NAV_ITEMS.slice(0, 5); // Dashboard, Progressi, Calendario, Alimentazione, Libreria
+const MOBILE_NAV_ITEMS = NAV_ITEMS.slice(0, 5); // Dashboard, Progressi, Calendario, Programmi, Alimentazione
 
 function ProfileAvatar({ profile, size = 36, onClick }: { profile: ProfileData; size?: number; onClick?: () => void }) {
   return (
