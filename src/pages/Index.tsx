@@ -477,6 +477,10 @@ const Index = () => {
         return <LegalPage type="terms" onBack={() => setView("settings" as any)} />;
       case "premium" as any:
         return <PremiumView onNavigate={(v) => navigate(v as AppView)} />;
+      case "challenges" as any:
+        return <ChallengesView onBack={() => navigate("more")} />;
+      case "community" as any:
+        return <CommunityView onBack={() => navigate("more")} />;
       default:
         return null;
     }
