@@ -27,6 +27,7 @@ import { CommunityView } from "@/components/CommunityView";
 import { LeaderboardView } from "@/components/LeaderboardView";
 import { PublicProfileView } from "@/components/PublicProfileView";
 import { CommunityNotifications } from "@/components/CommunityNotifications";
+import { NativeBuildGuide } from "@/components/NativeBuildGuide";
 import { addWorkoutXP } from "@/services/xpService";
 import { calculateStreak } from "@/services/streakService";
 import { updateLeaderboard } from "@/services/supabase/leaderboardService";
@@ -73,6 +74,7 @@ const Index = () => {
   const [eserciziCorrenti, setEserciziCorrenti] = useState<Exercise[]>([]);
   const [roundCorrenti, setRoundCorrenti] = useState(0);
   const [showGuide, setShowGuide] = useState(false);
+  const [showNativeGuide, setShowNativeGuide] = useState(false);
   const [showComplete, setShowComplete] = useState(false);
   const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
@@ -180,6 +182,7 @@ const Index = () => {
     setView(v);
     setGiornoSelezionato(null);
     setShowGuide(false);
+    setShowNativeGuide(false);
   }, []);
 
   const avviaAllenamento = useCallback(async (giorno: string) => {
@@ -375,6 +378,7 @@ const Index = () => {
 
   const renderContent = () => {
     if (showGuide) return <GuideView onBack={() => setShowGuide(false)} />;
+    if (showNativeGuide) return <NativeBuildGuide onBack={() => setShowNativeGuide(false)} />;
 
     switch (view) {
       case "dashboard":
@@ -449,6 +453,7 @@ const Index = () => {
           <SettingsView
             onNavigate={(v) => {
               if (v === "guide") setShowGuide(true);
+              else if (v === "native-guide") setShowNativeGuide(true);
               else if (v === "cycle" || v === "pregnancy" || v === "privacy" || v === "terms") setView(v as any);
               else navigate(v as AppView);
             }}

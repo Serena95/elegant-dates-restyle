@@ -5,6 +5,7 @@ import { useDarkMode } from "@/hooks/useDarkMode";
 import { toast } from "sonner";
 import { TrainingDaysPicker } from "./TrainingDaysPicker";
 import { HealthIntegration } from "./HealthIntegration";
+import { Smartphone } from "lucide-react";
 import {
   LogOut,
   Moon,
@@ -252,6 +253,7 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
           <SettingsRow icon={Download} label="Installa App" onClick={handleInstallApp} />
         )}
         <SettingsRow icon={HelpCircle} label="Guida all'uso" onClick={() => onNavigate("guide")} />
+        <SettingsRow icon={Smartphone} label="Guida App Nativa" onClick={() => onNavigate("native-guide")} />
         <SettingsRow icon={MessageCircle} label="Contatta il supporto" onClick={() => window.open("mailto:support@mypilatesplan.app")} />
         <SettingsRow icon={Shield} label="Privacy Policy" onClick={() => onNavigate("privacy")} />
         <SettingsRow icon={FileText} label="Termini di servizio" onClick={() => onNavigate("terms")} />
