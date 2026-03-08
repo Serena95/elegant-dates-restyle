@@ -170,15 +170,6 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
                 </button>
               );
             })}
-            <button
-              onClick={() => onNavigate("more")}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
-                ["more", "settings", "profile", "library"].includes(currentView) ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              <MoreHorizontal size={20} />
-              <span className="text-[10px] font-semibold">Altro</span>
-            </button>
           </div>
         </nav>
       )}
