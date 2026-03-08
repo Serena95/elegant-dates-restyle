@@ -58,7 +58,10 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
 
   const handleInstallApp = async () => {
     if (isIOS) { setShowIOSGuide(true); return; }
-    if (!installPrompt) return;
+    if (!installPrompt) {
+      toast.info("Apri il menu del browser e scegli 'Installa app' o 'Aggiungi a schermata Home'.");
+      return;
+    }
     await installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     if (outcome === "accepted") setInstallPrompt(null);

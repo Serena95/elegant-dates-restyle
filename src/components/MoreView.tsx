@@ -55,7 +55,7 @@ export function MoreView({ onNavigate }: MoreViewProps) {
 
   const handleInstallApp = async () => {
     if (isIOS) { setShowIOSGuide(true); return; }
-    if (!installPrompt) return;
+    if (!installPrompt) { setShowIOSGuide(true); return; }
     await installPrompt.prompt();
     const { outcome } = await installPrompt.userChoice;
     if (outcome === "accepted") setInstallPrompt(null);
