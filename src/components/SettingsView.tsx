@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { useDarkMode } from "@/hooks/useDarkMode";
 import { toast } from "sonner";
+import { TrainingDaysPicker } from "./TrainingDaysPicker";
 import {
   LogOut,
   Moon,
@@ -28,6 +29,8 @@ interface SettingsViewProps {
   onModificaAttrezzi: () => void;
   voiceEnabled?: boolean;
   onToggleVoice?: (enabled: boolean) => void;
+  giorniAllenamento?: number[];
+  onChangeGiorniAllenamento?: (days: number[]) => void;
 }
 
 export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice }: SettingsViewProps) {
