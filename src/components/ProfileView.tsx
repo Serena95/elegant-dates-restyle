@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Camera, User, Dumbbell, BarChart3 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Camera, User, Dumbbell, BarChart3, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,6 +7,8 @@ import { ProfileData } from "@/hooks/useCloudData";
 import { BadgeDisplay } from "./BadgeDisplay";
 import { Badge } from "@/hooks/useBadges";
 import { ATTREZZO_ICONS } from "@/data/exercises";
+import { getLevelInfo, LEVELS } from "@/services/xpService";
+import { Progress } from "@/components/ui/progress";
 
 interface ProfileViewProps {
   profile: ProfileData;
