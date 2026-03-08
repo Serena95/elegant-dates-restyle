@@ -22,15 +22,14 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
   const streakLevel = getStreakLevel(streak.currentStreak);
   const needsRecovery = streak.currentStreak >= 5 || progress.recentIntensity === "alta" || context.cyclePhase === "mestruale";
 
-  const loadSuggestions = async () => {
+  const loadSuggestions = async (forceRefresh = false) => {
     setLoading(true);
     try {
-      // Single AI call for everything
       const result = await generateCompleteCoachData({
         ...context,
         totalWorkouts: progress.totalWorkouts,
         recentIntensity: progress.recentIntensity,
-      });
+      }, forceRefresh);
       setSuggestion(result.suggestion);
       setMotivation(result.motivation);
       if (result.recovery) setRecovery(result.recovery);
@@ -145,7 +144,7 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
                         </button>
                       )}
                       <button
-                        onClick={loadSuggestions}
+                        onClick={() => loadSuggestions(true)}
                         disabled={loading}
                         className="px-4 py-2.5 rounded-xl border border-border bg-background text-foreground font-bold text-sm hover:bg-muted transition"
                       >
