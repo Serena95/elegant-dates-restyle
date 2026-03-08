@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Exercise, CONFIG_LIVELLI, ATTREZZO_ICONS, TEMA_CONFIG } from "@/data/exercises";
 import { useTimer } from "@/hooks/useTimer";
 import { TimerOverlay } from "./TimerOverlay";
-import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell } from "lucide-react";
+import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, SkipForward, X } from "lucide-react";
 
 interface WorkoutViewProps {
   giorno: string;
@@ -26,6 +26,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const timer = useTimer();
   const [completati, setCompletati] = useState<Set<number>>(new Set());
   const [tipoRiscaldamento, setTipoRiscaldamento] = useState(0);
+  const [currentExerciseIdx, setCurrentExerciseIdx] = useState(0);
+  const [isPaused, setIsPaused] = useState(false);
+  const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const isCompleted = roundCorrenti >= maxRound;
 
   const temaConfig = TEMA_CONFIG[tema];
@@ -52,15 +55,53 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     setTipoRiscaldamento(prev => (prev + 1) % 3);
   };
 
+  const nextExercise = () => {
+    if (currentExerciseIdx < esercizi.length - 1) {
+      toggleEsercizio(currentExerciseIdx);
+      setCurrentExerciseIdx(prev => prev + 1);
+    }
+  };
+
   const risc = RISCALDAMENTO_MODES[tipoRiscaldamento];
 
   return (
     <div className="space-y-4">
       <TimerOverlay timer={timer} />
 
-      <button onClick={onBack} className="flex items-center gap-1 text-primary font-bold text-sm hover:opacity-80 transition">
-        <ChevronLeft size={18} /> Indietro
-      </button>
+      {/* Quit confirmation */}
+      {showQuitConfirm && (
+        <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowQuitConfirm(false)}>
+          <div className="bg-card rounded-2xl border border-border shadow-2xl p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+            <h3 className="text-lg font-bold text-foreground">Terminare l'allenamento?</h3>
+            <p className="text-sm text-muted-foreground">Il progresso di questo round non verrà salvato.</p>
+            <div className="flex gap-3">
+              <button onClick={() => setShowQuitConfirm(false)} className="flex-1 py-3 rounded-xl bg-muted text-foreground font-bold">Continua</button>
+              <button onClick={onBack} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Termina</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Top controls */}
+      <div className="flex items-center justify-between">
+        <button onClick={() => setShowQuitConfirm(true)} className="flex items-center gap-1 text-primary font-bold text-sm hover:opacity-80 transition">
+          <ChevronLeft size={18} /> Indietro
+        </button>
+        <div className="flex gap-2">
+          <button
+            onClick={() => setIsPaused(p => !p)}
+            className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition"
+          >
+            {isPaused ? <Play size={16} className="text-primary" /> : <Pause size={16} className="text-muted-foreground" />}
+          </button>
+          <button
+            onClick={() => setShowQuitConfirm(true)}
+            className="w-9 h-9 rounded-full bg-destructive/10 flex items-center justify-center hover:bg-destructive/20 transition"
+          >
+            <X size={16} className="text-destructive" />
+          </button>
+        </div>
+      </div>
 
       <h2 className="text-xl font-bold text-foreground">
         {temaIcon} {giorno} <span className="text-primary">({temaLabel})</span>
@@ -168,6 +209,32 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
           );
         })}
       </div>
+
+      {/* Floating next exercise button */}
+      {!isCompleted && !isPaused && currentExerciseIdx < esercizi.length - 1 && (
+        <div className="sticky bottom-20 z-30">
+          <button
+            onClick={nextExercise}
+            className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-bold shadow-lg flex items-center justify-center gap-2 hover:opacity-90 transition"
+          >
+            <SkipForward size={16} /> Prossimo Esercizio ({currentExerciseIdx + 1}/{esercizi.length})
+          </button>
+        </div>
+      )}
+
+      {/* Paused overlay */}
+      {isPaused && (
+        <div className="bg-card rounded-2xl border-2 border-primary p-8 text-center space-y-4">
+          <Pause size={40} className="text-primary mx-auto" />
+          <h3 className="text-xl font-bold text-foreground">Allenamento in Pausa</h3>
+          <button
+            onClick={() => setIsPaused(false)}
+            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg flex items-center justify-center gap-2"
+          >
+            <Play size={18} /> Riprendi
+          </button>
+        </div>
+      )}
 
       {/* Stretching note */}
       <div className="bg-pilates-amber/10 border border-pilates-amber/30 p-3 rounded-xl text-center text-sm font-bold text-pilates-amber">

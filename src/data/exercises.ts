@@ -68,12 +68,14 @@ export function selezionaAttrezziSettimana(attrezziUtente: string[]): string[] {
 }
 
 /**
- * Generate 5-6 balanced exercises for a single equipment type.
+ * Generate 6-8 balanced exercises for a single equipment type.
+ * Distribution: 2 core, 1 gambe/glutei, 1 upper body, 1 stabilità, 1 mobilità, +1 optional cardio
  */
 export function generaEserciziGiorno(
   attrezzo: string,
   livello: string,
-  storici: string[] = []
+  storici: string[] = [],
+  focus?: string
 ): Exercise[] {
   const disponibili = EXERCISE_LIBRARY.filter(e =>
     e.attrezzo === attrezzo && livelloAccessibile(e.livello, livello)
@@ -81,17 +83,32 @@ export function generaEserciziGiorno(
   if (disponibili.length === 0) return [];
 
   let pool = disponibili.filter(e => !storici.includes(e.id));
-  if (pool.length < 6) pool = disponibili;
+  if (pool.length < 8) pool = disponibili;
 
-  // Priorità di bilanciamento: 1 core, 1 gambe/glutei, 1 stabilità, 1 mobilità, 1 forza (braccia/schiena)
-  const prioritySlots: string[][] = [
-    ["core"],
-    ["gambe", "glutei"],
-    ["stabilità"],
-    ["mobilità"],
-    ["braccia", "schiena"],
-  ];
-  return pickBalanced(pool, prioritySlots, Math.min(6, pool.length));
+  // Default balanced distribution
+  let prioritySlots: string[][];
+
+  if (focus === "core") {
+    prioritySlots = [["core"], ["core"], ["core"], ["glutei"], ["stabilità"], ["mobilità"]];
+  } else if (focus === "lower_body") {
+    prioritySlots = [["gambe"], ["glutei"], ["gambe", "glutei"], ["core"], ["core"], ["mobilità"]];
+  } else if (focus === "tonificazione") {
+    prioritySlots = [["core"], ["core"], ["gambe", "glutei"], ["braccia", "schiena"], ["braccia"], ["stabilità"], ["cardio"]];
+  } else {
+    // full_body default
+    prioritySlots = [
+      ["core"],
+      ["core"],
+      ["gambe", "glutei"],
+      ["braccia", "schiena"],
+      ["stabilità"],
+      ["mobilità"],
+      ["cardio"],
+    ];
+  }
+
+  const targetCount = Math.min(prioritySlots.length, pool.length);
+  return pickBalanced(pool, prioritySlots, Math.max(6, targetCount));
 }
 
 function pickBalanced(pool: Exercise[], prioritySlots: string[][], count: number): Exercise[] {

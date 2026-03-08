@@ -12,6 +12,8 @@ import { ProfileView } from "@/components/ProfileView";
 import { SettingsView } from "@/components/SettingsView";
 import { WorkoutComplete } from "@/components/WorkoutComplete";
 import { InstallBanner } from "@/components/InstallBanner";
+import { ProgramsView } from "@/components/ProgramsView";
+import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
@@ -275,6 +277,22 @@ const Index = () => {
         );
       case "library":
         return <ExerciseLibrary onBack={() => navigate("dashboard")} />;
+      case "programs":
+        return (
+          <ProgramsView
+            userAttrezzi={cloud.attrezzi}
+            onStartProgram={(program) => {
+              // Generate workout plan based on program's first week
+              const week = program.settimane[0];
+              const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
+              week.giorni.forEach(g => {
+                nuovoPiano[g.giorno] = { attrezzo: g.attrezzo, round: 0 };
+              });
+              cloud.savePiano(nuovoPiano, { esercizi: {}, storico: cloud.allenamentiData.storico || {} });
+              navigate("dashboard");
+            }}
+          />
+        );
       case "profile":
         return <ProfileView profile={cloud.profile} onUpdateProfile={cloud.updateProfile} unlockedBadges={unlockedBadges} />;
       case "settings":
