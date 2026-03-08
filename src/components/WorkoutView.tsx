@@ -23,15 +23,18 @@ const RISCALDAMENTO_MODES = [
   { tipo: "CAMMINATA ESTERNA", emoji: "🌳", desc: "25 min • Passo svelto • Braccia attive e rullata del piede completa.", durata: 1500, label: "25 MIN" },
 ];
 
-export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack }: WorkoutViewProps) {
+export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, voiceEnabled = true, aiGenerated = false }: WorkoutViewProps) {
   const config = CONFIG_LIVELLI[livello];
   const maxRound = config.round;
   const timer = useTimer();
+  const voice = useVoiceTrainer({ enabled: voiceEnabled });
   const [completati, setCompletati] = useState<Set<number>>(new Set());
   const [tipoRiscaldamento, setTipoRiscaldamento] = useState(0);
   const [currentExerciseIdx, setCurrentExerciseIdx] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
+  const [voiceActive, setVoiceActive] = useState(voiceEnabled);
+  const lastTimerRef = useRef<string | null>(null);
   const isCompleted = roundCorrenti >= maxRound;
 
   const temaConfig = TEMA_CONFIG[tema];
