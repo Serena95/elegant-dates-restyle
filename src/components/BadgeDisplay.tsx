@@ -1,4 +1,4 @@
-import { forwardRef } from "react";
+import { BADGE_DEFINITIONS, Badge } from "@/hooks/useBadges";
 import { BADGE_DEFINITIONS, Badge } from "@/hooks/useBadges";
 import { motion } from "framer-motion";
 
