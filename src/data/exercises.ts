@@ -1,6 +1,6 @@
 // Barrel file - re-exports everything from split modules
-export type { Exercise } from "./exercise-types";
-export { CONFIG_LIVELLI, TUTTI_GLI_ATTREZZI, ATTREZZO_ICONS, ATTREZZO_SHORT, TEMA_CONFIG, suggerimentiNutrizionali } from "./exercise-types";
+export type { Exercise, FocusInfo } from "./exercise-types";
+export { CONFIG_LIVELLI, TUTTI_GLI_ATTREZZI, ATTREZZO_ICONS, ATTREZZO_SHORT, TEMA_CONFIG, suggerimentiNutrizionali, detectFocus } from "./exercise-types";
 export type { DayPlan, WeekPlan } from "./exercise-types";
 
 import { Exercise } from "./exercise-types";
