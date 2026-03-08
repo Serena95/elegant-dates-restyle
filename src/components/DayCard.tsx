@@ -110,4 +110,4 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
       <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors" />
     </motion.div>
   );
-}
+});

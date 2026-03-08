@@ -91,4 +91,4 @@ export const InstallBanner = React.forwardRef<HTMLDivElement, {}>(function Insta
       </button>
     </div>
   );
-}
+});

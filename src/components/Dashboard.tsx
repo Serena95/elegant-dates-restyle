@@ -153,4 +153,4 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
       </div>
     </div>
   );
-}
+});
