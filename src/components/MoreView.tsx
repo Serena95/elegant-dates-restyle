@@ -1,9 +1,43 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Settings, Download, ChevronRight, Droplets, Baby } from "lucide-react";
+import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles } from "lucide-react";
+import { motion } from "framer-motion";
 
 interface MoreViewProps {
   onNavigate: (view: string) => void;
 }
+
+const FEATURES = [
+  {
+    icon: Droplets,
+    label: "Monitoraggio Ciclo",
+    desc: "Tieni traccia del ciclo, sintomi e previsioni",
+    view: "cycle",
+    gradient: "from-pink-500/20 to-rose-400/10",
+    iconBg: "bg-pink-500/15",
+    iconColor: "text-pink-500",
+    borderColor: "border-pink-500/20",
+  },
+  {
+    icon: Baby,
+    label: "Modalità Gravidanza",
+    desc: "Allenamenti sicuri settimana per settimana",
+    view: "pregnancy",
+    gradient: "from-violet-500/20 to-purple-400/10",
+    iconBg: "bg-violet-500/15",
+    iconColor: "text-violet-500",
+    borderColor: "border-violet-500/20",
+  },
+  {
+    icon: BookOpen,
+    label: "Libreria Esercizi",
+    desc: "Esplora tutti gli esercizi per attrezzo",
+    view: "library",
+    gradient: "from-sky-500/20 to-blue-400/10",
+    iconBg: "bg-sky-500/15",
+    iconColor: "text-sky-500",
+    borderColor: "border-sky-500/20",
+  },
+];
 
 export function MoreView({ onNavigate }: MoreViewProps) {
   const [installPrompt, setInstallPrompt] = useState<any>(null);
@@ -27,55 +61,80 @@ export function MoreView({ onNavigate }: MoreViewProps) {
     if (outcome === "accepted") setInstallPrompt(null);
   };
 
-  const items = [
-    { icon: BookOpen, label: "Libreria Esercizi", desc: "Scopri tutti gli esercizi disponibili", view: "library" },
-    { icon: Droplets, label: "Monitoraggio Ciclo", desc: "Tieni traccia del tuo ciclo mestruale", view: "cycle" },
-    { icon: Baby, label: "Modalità Gravidanza", desc: "Allenamenti adattati alla gravidanza", view: "pregnancy" },
-    { icon: Settings, label: "Impostazioni", desc: "Preferenze, account e supporto", view: "settings" },
-  ];
-
   return (
     <div className="space-y-6">
-      <h2 className="text-xl font-bold text-foreground">Altro</h2>
+      <div>
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+          <Sparkles size={20} className="text-primary" /> Altro
+        </h2>
+        <p className="text-sm text-muted-foreground mt-0.5">Funzionalità e strumenti extra</p>
+      </div>
 
-      <div className="bg-card rounded-2xl border border-border overflow-hidden divide-y divide-border">
-        {items.map(item => {
+      {/* Feature cards */}
+      <div className="space-y-3">
+        {FEATURES.map((item, i) => {
           const Icon = item.icon;
           return (
-            <button
+            <motion.button
               key={item.view}
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
               onClick={() => onNavigate(item.view)}
-              className="w-full flex items-center gap-4 p-4 text-left transition hover:bg-muted/50"
+              className={`w-full flex items-center gap-4 p-4 rounded-2xl border ${item.borderColor} bg-gradient-to-r ${item.gradient} text-left transition-all active:scale-[0.98]`}
             >
-              <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-                <Icon size={20} className="text-primary" />
+              <div className={`w-12 h-12 rounded-2xl ${item.iconBg} flex items-center justify-center flex-shrink-0`}>
+                <Icon size={24} className={item.iconColor} />
               </div>
               <div className="flex-1 min-w-0">
-                <p className="text-sm font-semibold text-foreground">{item.label}</p>
-                <p className="text-xs text-muted-foreground">{item.desc}</p>
+                <p className="text-sm font-bold text-foreground">{item.label}</p>
+                <p className="text-xs text-muted-foreground mt-0.5">{item.desc}</p>
               </div>
-              <ChevronRight size={16} className="text-muted-foreground" />
-            </button>
+              <ChevronRight size={18} className="text-muted-foreground flex-shrink-0" />
+            </motion.button>
           );
         })}
       </div>
 
+      {/* Settings - more subtle */}
+      <motion.button
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.3 }}
+        onClick={() => onNavigate("settings")}
+        className="w-full flex items-center gap-4 p-4 rounded-2xl bg-card border border-border text-left transition-all hover:bg-muted/50 active:scale-[0.98]"
+      >
+        <div className="w-12 h-12 rounded-2xl bg-muted flex items-center justify-center flex-shrink-0">
+          <Settings size={22} className="text-muted-foreground" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-foreground">Impostazioni</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Account, preferenze e supporto</p>
+        </div>
+        <ChevronRight size={18} className="text-muted-foreground flex-shrink-0" />
+      </motion.button>
+
+      {/* Install App */}
       {!isStandalone && (installPrompt || isIOS) && (
-        <button
+        <motion.button
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.4 }}
           onClick={handleInstallApp}
-          className="w-full flex items-center gap-4 p-4 bg-card rounded-2xl border border-border transition hover:bg-muted/50"
+          className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/15 to-primary/5 border border-primary/20 text-left transition-all active:scale-[0.98]"
         >
-          <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center flex-shrink-0">
-            <Download size={20} className="text-primary" />
+          <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center flex-shrink-0">
+            <Download size={22} className="text-primary" />
           </div>
-          <div className="flex-1 min-w-0 text-left">
-            <p className="text-sm font-semibold text-foreground">Installa App</p>
-            <p className="text-xs text-muted-foreground">Aggiungi alla schermata Home</p>
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-bold text-foreground">Installa App</p>
+            <p className="text-xs text-muted-foreground mt-0.5">Aggiungi alla schermata Home</p>
           </div>
-          <ChevronRight size={16} className="text-muted-foreground" />
-        </button>
+          <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full flex-shrink-0">Installa</span>
+        </motion.button>
       )}
 
+      {/* iOS Install Guide Modal */}
       {showIOSGuide && (
         <div className="fixed inset-0 bg-foreground/40 flex items-end justify-center z-50 p-4" onClick={() => setShowIOSGuide(false)}>
           <div className="bg-card rounded-3xl border border-border shadow-2xl p-6 max-w-sm w-full space-y-3 mb-4" onClick={e => e.stopPropagation()}>
