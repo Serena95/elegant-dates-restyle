@@ -45,7 +45,12 @@ const NAV_ITEMS: { view: AppView; label: string; icon: React.ElementType }[] = [
   { view: "settings", label: "Impostazioni", icon: Settings },
 ];
 
-const MOBILE_NAV_ITEMS = NAV_ITEMS.slice(0, 5); // Dashboard, Progressi, Calendario, Programmi, Alimentazione
+const MOBILE_NAV_ITEMS = NAV_ITEMS.slice(0, 5);
+const MORE_ITEMS = [
+  { view: "library" as AppView, label: "Libreria", icon: BookOpen },
+  { view: "profile" as AppView, label: "Profilo", icon: UserCircle },
+  { view: "settings" as AppView, label: "Impostazioni", icon: Settings },
+];
 
 function ProfileAvatar({ profile, size = 36, onClick }: { profile: ProfileData; size?: number; onClick?: () => void }) {
   return (
