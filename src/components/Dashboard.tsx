@@ -12,6 +12,7 @@ interface DashboardProps {
   userName?: string;
   weeklyStats?: { completed: number; total: number; streak: number };
   onNavigate?: (view: string) => void;
+  focusMap?: Record<string, FocusInfo>;
 }
 
 export function Dashboard({
