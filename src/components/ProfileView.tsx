@@ -183,4 +183,4 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], liv
       </button>
     </div>
   );
-});
+}
