@@ -28,11 +28,31 @@ interface DashboardProps {
 export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(function Dashboard({
   piano, livello, onAvviaAllenamento, onChangeLivello,
   userName, weeklyStats, onNavigate, focusMap,
+  storicoCal = {}, giorniAllenamento = [1, 3, 5], attrezzi = [],
+  cyclePhase, pregnancyMode, pregnancyWeek,
 }, ref) {
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "MEDIO" ? "bg-primary" : "bg-pilates-red";
   
   // Sort piano keys by date
   const sortedDays = Object.keys(piano).sort();
+
+  // Compute streak & progress for AI Coach
+  const streakData = useMemo(() => calculateStreak(storicoCal, giorniAllenamento), [storicoCal, giorniAllenamento]);
+  const progressData = useMemo(() => computeProgress(storicoCal, livello), [storicoCal, livello]);
+
+  const aiContext = useMemo<AICoachContext>(() => ({
+    level: livello,
+    equipment: attrezzi,
+    streak: streakData.currentStreak,
+    lastFocus: progressData.lastFocus,
+    mostTrainedThisWeek: progressData.mostTrainedThisWeek,
+    totalWorkouts: progressData.totalWorkouts,
+    lastWorkoutType: Object.values(storicoCal).filter((v: any) => v?.completato).slice(-1)[0]?.attrezzo,
+    recentIntensity: progressData.recentIntensity,
+    cyclePhase,
+    pregnancyMode,
+    pregnancyWeek,
+  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, pregnancyMode, pregnancyWeek]);
   
   // Find today's workout
   const oggi = getLocalDateKey(new Date());
