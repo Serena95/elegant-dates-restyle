@@ -311,9 +311,30 @@ const Index = () => {
           <SettingsView
             onNavigate={(v) => {
               if (v === "guide") setShowGuide(true);
+              else if (v === "cycle" || v === "pregnancy") setView(v);
               else navigate(v as AppView);
             }}
             onModificaAttrezzi={() => navigate("equipment")}
+          />
+        );
+      case "cycle" as any:
+        return (
+          <CycleTracking
+            entries={cloud.cycleEntries}
+            onAddEntry={cloud.addCycleEntry}
+            onDeleteEntry={cloud.deleteCycleEntry}
+            durataCiclo={cloud.pregnancySettings.durata_ciclo}
+            durataMestruazione={cloud.pregnancySettings.durata_mestruazione}
+            onUpdateSettings={(s) => cloud.updatePregnancySettings(s)}
+          />
+        );
+      case "pregnancy" as any:
+        return (
+          <PregnancyMode
+            isActive={cloud.pregnancySettings.modalita_gravidanza}
+            settimanaGestazionale={cloud.pregnancySettings.settimana_gestazionale}
+            onToggle={(active) => cloud.updatePregnancySettings({ modalita_gravidanza: active, settimana_gestazionale: active ? Math.max(1, cloud.pregnancySettings.settimana_gestazionale) : 0 })}
+            onUpdateWeek={(week) => cloud.updatePregnancySettings({ settimana_gestazionale: week })}
           />
         );
       default:
