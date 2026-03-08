@@ -89,9 +89,10 @@ export function useNotifications(
       let subscription = await registration.pushManager.getSubscription();
       
       if (!subscription) {
+        const applicationServerKey = urlBase64ToUint8Array(vapidKey);
         subscription = await registration.pushManager.subscribe({
           userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey),
+          applicationServerKey: applicationServerKey.buffer as ArrayBuffer,
         });
       }
 
