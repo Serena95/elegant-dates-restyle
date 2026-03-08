@@ -248,7 +248,12 @@ const Index = () => {
         const streakData = calculateStreak(cloud.storicoCal, cloud.giorniAllenamento);
         addWorkoutXP(user.id, streakData.currentStreak).then(result => {
           setXpResult({ xpGained: result.xpGained, newXp: result.newXp, leveledUp: result.leveledUp });
+          // Update leaderboard
+          updateLeaderboard(user.id, result.xpGained).catch(console.error);
         }).catch(console.error);
+        // Sync badges to DB
+        const badgeIds = unlockedBadges.map(b => b.id);
+        syncBadges(user.id, badgeIds).catch(console.error);
       }
 
       const prevCount = prevBadgeCountRef.current;
