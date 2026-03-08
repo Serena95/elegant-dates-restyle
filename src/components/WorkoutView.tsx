@@ -257,15 +257,16 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                 </div>
               </div>
 
-              {/* GIF preview */}
-              {es.gif && (
-                <img
-                  src={es.gif}
-                  alt={es.nome}
-                  className="w-full h-36 object-cover rounded-lg mt-2 bg-muted"
-                  onError={(ev) => { (ev.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                />
-              )}
+              {/* Exercise image */}
+              <ExerciseImage
+                exerciseId={es.id}
+                exerciseName={es.nome}
+                category={es.categoria}
+                muscles={es.muscoli}
+                equipment={es.attrezzo}
+                className="w-full h-36 mt-2"
+                showGenerateButton={true}
+              />
 
               <div className="mt-2 bg-accent/50 p-3 rounded-lg border-l-4 border-primary">
                 <span className="text-xs font-bold text-primary uppercase">🎬 Azione:</span>

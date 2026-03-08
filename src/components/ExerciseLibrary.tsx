@@ -85,14 +85,15 @@ export function ExerciseLibrary({ onBack }: ExerciseLibraryProps) {
                     </div>
                     {openItem === e.id && (
                       <div className="mt-2 p-3 bg-accent/50 rounded-lg border-l-4 border-primary text-sm text-foreground space-y-2">
-                        {e.gif && (
-                          <img
-                            src={e.gif}
-                            alt={e.nome}
-                            className="w-full h-40 object-cover rounded-lg bg-muted"
-                            onError={(ev) => { (ev.currentTarget as HTMLImageElement).style.display = 'none'; }}
-                          />
-                        )}
+                        <ExerciseImage
+                          exerciseId={e.id}
+                          exerciseName={e.nome}
+                          category={e.categoria}
+                          muscles={e.muscoli}
+                          equipment={e.attrezzo}
+                          className="w-full h-40"
+                          showGenerateButton={true}
+                        />
                         <p>{e.descrizione}</p>
                         <div className="flex flex-wrap gap-1 mt-1">
                           <Dumbbell size={12} className="text-muted-foreground mt-0.5" />
