@@ -254,6 +254,8 @@ const Index = () => {
             roundCorrenti={roundCorrenti}
             onSegnaRound={segnaRound}
             onBack={() => navigate("dashboard")}
+            voiceEnabled={voiceEnabled}
+            aiGenerated={aiGenerated}
           />
         </div>
         {showComplete && (
