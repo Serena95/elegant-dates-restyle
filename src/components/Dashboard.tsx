@@ -1,6 +1,6 @@
 import { DayCard } from "./DayCard";
-import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS } from "@/data/exercises";
-import { CalendarDays, BarChart3, Flame, Dumbbell } from "lucide-react";
+import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo } from "@/data/exercises";
+import { CalendarDays, BarChart3, Flame, Dumbbell, Target } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface DashboardProps {
