@@ -85,6 +85,27 @@ export function useCloudData() {
     if (user) loadAll();
   }, [user]);
 
+  const extractEquipmentFromPlan = (planData: any): string[] => {
+    const raw = Object.values((planData || {}) as Record<string, any>)
+      .map((v: any) => v?.attrezzo)
+      .filter(Boolean) as string[];
+    return Array.from(new Set(raw));
+  };
+
+  const extractTrainingDaysFromPlan = (planData: any): number[] => {
+    const days = Object.keys((planData || {}) as Record<string, any>)
+      .map((k) => new Date(`${k}T00:00:00`).getDay())
+      .filter((d, i, arr) => arr.indexOf(d) === i);
+
+    if (days.length === 0) return [1, 3, 5];
+
+    return days.sort((a, b) => {
+      const an = a === 0 ? 7 : a;
+      const bn = b === 0 ? 7 : b;
+      return an - bn;
+    });
+  };
+
   const loadAll = async () => {
     if (!user) return;
     setLoading(true);
@@ -101,17 +122,33 @@ export function useCloudData() {
       supabase.from("cycle_tracking").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
 
+    const planData = (plansRes.data?.piano as any) || {};
+    const fallbackAttrezzi = extractEquipmentFromPlan(planData);
+    const fallbackGiorni = extractTrainingDaysFromPlan(planData);
+
     if (settingsRes.data) {
-      setAttrezziState(settingsRes.data.attrezzi_selezionati || []);
+      setAttrezziState((settingsRes.data.attrezzi_selezionati || fallbackAttrezzi) as string[]);
       setLivelloState(settingsRes.data.livello || "MEDIO");
       setUltimiAttrezziState(settingsRes.data.ultimi_attrezzi || []);
-      setGiorniAllenamentoState((settingsRes.data as any).giorni_allenamento || [1, 3, 5]);
+      setGiorniAllenamentoState((settingsRes.data as any).giorni_allenamento || fallbackGiorni);
       setPregnancySettingsState({
         modalita_gravidanza: (settingsRes.data as any).modalita_gravidanza || false,
         settimana_gestazionale: (settingsRes.data as any).settimana_gestazionale || 0,
         durata_ciclo: (settingsRes.data as any).durata_ciclo || 28,
         durata_mestruazione: (settingsRes.data as any).durata_mestruazione || 5,
       });
+    } else {
+      setAttrezziState(fallbackAttrezzi);
+      setLivelloState("MEDIO");
+      setUltimiAttrezziState([]);
+      setGiorniAllenamentoState(fallbackGiorni);
+      await supabase.from("user_settings").insert({
+        user_id: user.id,
+        attrezzi_selezionati: fallbackAttrezzi,
+        livello: "MEDIO",
+        ultimi_attrezzi: [],
+        giorni_allenamento: fallbackGiorni,
+      } as any);
     }
 
     if (plansRes.data) {
