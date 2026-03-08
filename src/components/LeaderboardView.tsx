@@ -33,11 +33,11 @@ export function LeaderboardView({ onBack, onViewProfile }: LeaderboardViewProps)
   return (
     <div className="space-y-6 pb-8">
       <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2">
-          <Trophy className="text-amber-500" size={24} />
-          <h2 className="text-2xl font-bold text-foreground">Classifica Settimanale</h2>
+        <div className="flex items-center gap-2 min-w-0">
+          <Trophy className="text-amber-500 flex-shrink-0" size={24} />
+          <h2 className="text-xl sm:text-2xl font-bold text-foreground truncate">Classifica Settimanale</h2>
         </div>
-        {onBack && <Button variant="ghost" size="sm" onClick={onBack}>Indietro</Button>}
+        {onBack && <Button variant="ghost" size="sm" onClick={onBack} className="flex-shrink-0">Indietro</Button>}
       </div>
 
       {loading ? (

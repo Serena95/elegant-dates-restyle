@@ -56,11 +56,24 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
   const isStandalone = typeof window !== "undefined" && (window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone);
 
   useEffect(() => {
+    type InstallWindow = Window & { __deferredInstallPrompt?: Event };
+    const installWindow = window as InstallWindow;
     const iosDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
     setIsIOS(iosDevice && !isStandalone);
-    const handler = (e: Event) => { e.preventDefault(); setInstallPrompt(e); };
-    window.addEventListener("beforeinstallprompt", handler);
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    // Use global install prompt
+    if (installWindow.__deferredInstallPrompt) {
+      setInstallPrompt(installWindow.__deferredInstallPrompt);
+    }
+
+    const onPromptReady = () => {
+      if (installWindow.__deferredInstallPrompt) {
+        setInstallPrompt(installWindow.__deferredInstallPrompt);
+      }
+    };
+
+    window.addEventListener("lovable-install-prompt-ready", onPromptReady);
+    return () => window.removeEventListener("lovable-install-prompt-ready", onPromptReady);
   }, []);
 
   const handleInstallApp = async () => {

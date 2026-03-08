@@ -74,10 +74,12 @@ export function ProgressView({ misure, onAddMisura, onDeleteMisura, onBack }: Pr
                   </div>
                 </div>
               {m.id && (
-                <button onClick={() => elimina(m.id!)} className="bg-destructive/10 text-destructive p-2 rounded-lg hover:bg-destructive/20">
+                <button onClick={() => elimina(m.id!)} className="bg-destructive/10 text-destructive p-2 rounded-lg hover:bg-destructive/20 flex-shrink-0 ml-2">
                   <Trash2 size={14} />
                 </button>
               )}
+              </div>
+            </div>
             </div>
           ))}
         </div>

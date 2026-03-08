@@ -149,14 +149,14 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], liv
             </div>
             <Progress value={levelInfo.progressToNext * 100} className="h-2" />
           </div>
-          <div className="flex gap-1.5 justify-center">
+          <div className="flex gap-1.5 justify-center overflow-x-auto pb-1 -mx-1 px-1">
             {LEVELS.map(l => (
               <div
                 key={l.level}
-                className={`text-center px-2 py-1 rounded-lg text-[10px] ${l.level <= levelInfo.current.level ? "bg-primary/10 font-bold" : "bg-muted/50 text-muted-foreground"}`}
+                className={`text-center px-2 py-1 rounded-lg text-[10px] flex-shrink-0 ${l.level <= levelInfo.current.level ? "bg-primary/10 font-bold" : "bg-muted/50 text-muted-foreground"}`}
               >
                 <span className="text-sm">{l.icon}</span>
-                <p>{l.name}</p>
+                <p className="whitespace-nowrap">{l.name}</p>
               </div>
             ))}
           </div>
