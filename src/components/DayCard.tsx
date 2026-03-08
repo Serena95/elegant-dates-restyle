@@ -4,37 +4,30 @@ import { DayPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo } from "@/data/exerc
 
 interface DayCardProps {
   giorno: string;
+  label: string;
   dati: DayPlan;
   livello: string;
   index: number;
   focus?: FocusInfo;
+  isToday?: boolean;
   onClick: () => void;
 }
 
-const TEMA_GRADIENTS: Record<string, { from: string; to: string; border: string; accent: string }> = {
-  "core_mobilita": { from: "from-sky-500/10", to: "to-cyan-500/10", border: "border-sky-200 dark:border-sky-800", accent: "bg-sky-500" },
-  "gambe_glutei": { from: "from-teal-500/10", to: "to-emerald-500/10", border: "border-teal-200 dark:border-teal-800", accent: "bg-teal-500" },
-  "full_body_cardio": { from: "from-orange-500/10", to: "to-red-500/10", border: "border-orange-200 dark:border-orange-800", accent: "bg-orange-500" },
-};
-
 const DEFAULT_GRADIENT = { from: "from-blue-500/10", to: "to-indigo-500/10", border: "border-blue-200 dark:border-blue-800", accent: "bg-blue-500" };
+const TODAY_GRADIENT = { from: "from-primary/15", to: "to-secondary/15", border: "border-primary/30", accent: "bg-primary" };
 
-export function DayCard({ giorno, dati, livello, index, focus, onClick }: DayCardProps) {
+export function DayCard({ giorno, label, dati, livello, index, focus, isToday, onClick }: DayCardProps) {
   const maxRound = CONFIG_LIVELLI[livello].round;
   const roundFatti = dati.round || 0;
   const isCompleted = roundFatti >= maxRound;
   const progress = maxRound > 0 ? (roundFatti / maxRound) * 100 : 0;
 
   const attrezzo = dati.attrezzo || "Corpo Libero";
-  const temaLabel = attrezzo;
   const temaIcon = ATTREZZO_ICONS[attrezzo] || "🏋️";
-  const gradient = DEFAULT_GRADIENT;
+  const gradient = isToday ? TODAY_GRADIENT : DEFAULT_GRADIENT;
 
-  const dayNumbers: Record<string, string> = {
-    "Lunedì": "01",
-    "Mercoledì": "02",
-    "Venerdì": "03",
-  };
+  // Extract day number from date for the circle
+  const dayNum = new Date(giorno + "T00:00:00").getDate();
 
   return (
     <motion.div
@@ -60,7 +53,7 @@ export function DayCard({ giorno, dati, livello, index, focus, onClick }: DayCar
         {/* Day Number Circle */}
         <div className="relative flex-shrink-0">
           <div className={`w-16 h-16 rounded-2xl ${gradient.accent} flex items-center justify-center shadow-lg`}>
-            <span className="text-2xl font-black text-white">{dayNumbers[giorno] || "0" + (index + 1)}</span>
+            <span className="text-2xl font-black text-white">{dayNum}</span>
           </div>
           {isCompleted && (
             <motion.div
@@ -76,13 +69,18 @@ export function DayCard({ giorno, dati, livello, index, focus, onClick }: DayCar
         {/* Content */}
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 mb-1">
-            <h3 className="text-lg font-bold text-foreground">{giorno}</h3>
+            <h3 className="text-lg font-bold text-foreground">{label}</h3>
+            {isToday && (
+              <span className="px-2 py-0.5 rounded-full bg-primary text-primary-foreground text-[10px] font-bold uppercase">
+                Oggi
+              </span>
+            )}
           </div>
 
           <div className="flex items-center gap-2 mb-1.5">
             <span className="text-xl">{temaIcon}</span>
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wide">
-              {temaLabel}
+              {attrezzo}
             </span>
           </div>
 

@@ -74,42 +74,85 @@ export const FOCUS_LABELS: Record<DayFocus, { label: string; icon: string }> = {
 };
 
 // ============================================================
+// DATE UTILITIES
+// ============================================================
+
+const DAY_NAMES: Record<number, string> = {
+  0: "Domenica", 1: "Lunedì", 2: "Martedì", 3: "Mercoledì",
+  4: "Giovedì", 5: "Venerdì", 6: "Sabato",
+};
+
+const MONTH_NAMES = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+
+/**
+ * Get the Monday of the current week.
+ */
+export function getMondayOfWeek(date: Date = new Date()): Date {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  const day = d.getDay();
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
+  d.setDate(diff);
+  return d;
+}
+
+/**
+ * Get dates for the given day-of-week numbers in the current week.
+ * @param giorniSettimana Array of day numbers (0=Sun, 1=Mon, ..., 6=Sat)
+ */
+export function getWeekDates(giorniSettimana: number[], refDate: Date = new Date()): string[] {
+  const monday = getMondayOfWeek(refDate);
+  return giorniSettimana.map(dayNum => {
+    const d = new Date(monday);
+    const offset = dayNum === 0 ? 6 : dayNum - 1; // Mon=0 offset, Tue=1, ..., Sun=6
+    d.setDate(d.getDate() + offset);
+    return d.toISOString().split("T")[0];
+  });
+}
+
+/**
+ * Format a date key "YYYY-MM-DD" to "Lunedì 10 Mar"
+ */
+export function formatDateLabel(dateKey: string): string {
+  const d = new Date(dateKey + "T00:00:00");
+  const dayName = DAY_NAMES[d.getDay()] || "";
+  const dayNum = d.getDate();
+  const month = MONTH_NAMES[d.getMonth()] || "";
+  return `${dayName} ${dayNum} ${month}`;
+}
+
+/**
+ * Check if a piano's keys belong to the current week for the given training days.
+ */
+export function isPianoCurrentWeek(piano: Record<string, any>, giorniSettimana: number[]): boolean {
+  const expectedDates = getWeekDates(giorniSettimana);
+  const pianoKeys = Object.keys(piano);
+  if (pianoKeys.length === 0) return false;
+  // Check if at least one expected date is in the piano
+  return expectedDates.some(d => pianoKeys.includes(d));
+}
+
+// ============================================================
 // PROGRESSION CONTEXT
 // ============================================================
 
 export interface ProgressionContext {
-  /** Which week number in the cycle (1-based, wraps after 4) */
   weekNumber: number;
-  /** IDs of exercises used in the last 2 weeks */
   recentExerciseIds: string[];
-  /** Equipment used last week (to rotate away from) */
   lastWeekEquipment: string[];
-  /** Total completed workouts (for adaptive difficulty) */
   totalCompleted: number;
-  /** Consecutive weeks with ≥2 completed workouts */
   activeStreak: number;
-  /** Weeks since last completed workout (0 = this week) */
   weeksSinceLastWorkout: number;
 }
 
-/**
- * Compute progression context from storicoCal history.
- */
 export function computeProgressionContext(
   storicoCal: Record<string, any>,
   lastWeekEquipment: string[]
 ): ProgressionContext {
   const entries = Object.entries(storicoCal).filter(([_, v]) => v?.completato);
   const totalCompleted = entries.length;
-
-  // Determine week number based on total completed (cycle of 4)
   const weekNumber = (Math.floor(totalCompleted / 3) % 4) + 1;
 
-  // Recent exercise IDs (last 2 weeks = last 6 workouts roughly)
-  // We don't have per-exercise history in storicoCal, so this comes from allenamentiData.storico
-  // passed separately
-
-  // Active streak: count consecutive weeks with ≥2 completed
   let activeStreak = 0;
   const now = new Date();
   for (let w = 0; w < 52; w++) {
@@ -126,7 +169,6 @@ export function computeProgressionContext(
     else if (w > 0) break;
   }
 
-  // Weeks since last workout
   let weeksSinceLastWorkout = 0;
   if (entries.length > 0) {
     const lastDate = entries.map(([k]) => k).sort().pop()!;
@@ -136,7 +178,7 @@ export function computeProgressionContext(
 
   return {
     weekNumber,
-    recentExerciseIds: [], // filled by caller from allenamentiData
+    recentExerciseIds: [],
     lastWeekEquipment,
     totalCompleted,
     activeStreak,
@@ -148,23 +190,20 @@ export function computeProgressionContext(
 // SMART EQUIPMENT ROTATION
 // ============================================================
 
-/**
- * Select 3 equipment types, rotating away from last week's selection.
- */
 export function selezionaAttrezziSettimana(
   attrezziUtente: string[],
-  lastWeekEquipment: string[] = []
+  lastWeekEquipment: string[] = [],
+  count: number = 3
 ): string[] {
   const normalized = attrezziUtente.map(a => a === "Pesi(da 1 a 4kg)" ? "Pesi" : a);
   if (normalized.length === 0) return [];
 
-  if (normalized.length <= 3) {
+  if (normalized.length <= count) {
     const result = [...normalized];
-    while (result.length < 3) result.push(normalized[result.length % normalized.length]);
+    while (result.length < count) result.push(normalized[result.length % normalized.length]);
     return result;
   }
 
-  // Prefer equipment NOT used last week
   const fresh = normalized.filter(a => !lastWeekEquipment.includes(a));
   const stale = normalized.filter(a => lastWeekEquipment.includes(a));
 
@@ -172,9 +211,8 @@ export function selezionaAttrezziSettimana(
   const freshShuffled = shuffle(fresh);
   const staleShuffled = shuffle(stale);
 
-  // Pick from fresh first, then fill from stale
   for (const a of [...freshShuffled, ...staleShuffled]) {
-    if (picked.length >= 3) break;
+    if (picked.length >= count) break;
     if (!picked.includes(a)) picked.push(a);
   }
 
@@ -185,25 +223,14 @@ export function selezionaAttrezziSettimana(
 // PROGRESSION-AWARE EXERCISE GENERATION
 // ============================================================
 
-/**
- * Determine effective difficulty level based on progression context.
- * Adapts up if user is consistent, down if they've been away.
- */
 function getEffectiveLevel(baseLivello: string, ctx: ProgressionContext): string {
-  // If user has been away >1 week, ease back in
   if (ctx.weeksSinceLastWorkout > 1) {
     if (baseLivello === "AVANZATO") return "MEDIO";
     return baseLivello;
   }
-
-  // No auto-upgrade of user's chosen level, but we adjust exercise selection
   return baseLivello;
 }
 
-/**
- * Get the target exercise count based on progression week.
- * Week 1: 6, Week 2: 6, Week 3: 7, Week 4: 7-8
- */
 function getTargetCount(weekNumber: number, baseLivello: string): number {
   const base = baseLivello === "AVANZATO" ? 7 : 6;
   if (weekNumber <= 2) return base;
@@ -211,34 +238,18 @@ function getTargetCount(weekNumber: number, baseLivello: string): number {
   return base + (baseLivello === "AVANZATO" ? 1 : Math.random() > 0.5 ? 1 : 0);
 }
 
-/**
- * Determine level preference for exercise selection based on week.
- * Earlier weeks: prefer base, later weeks: prefer medio/avanzato.
- */
 function getLevelPreference(weekNumber: number, baseLivello: string): string[] {
   const accessible = LIVELLO_ACCESSO[baseLivello] || ["base", "medio", "avanzato"];
-
   if (accessible.length === 1) return accessible;
-
-  // Week 1-2: mostly simpler exercises
   if (weekNumber <= 2) {
-    return accessible.length >= 2
-      ? [accessible[0], accessible[0], accessible[1]] // 66% base
-      : accessible;
+    return accessible.length >= 2 ? [accessible[0], accessible[0], accessible[1]] : accessible;
   }
-  // Week 3: balanced
-  if (weekNumber === 3) {
-    return accessible;
-  }
-  // Week 4: prefer harder
+  if (weekNumber === 3) return accessible;
   return accessible.length >= 2
     ? [accessible[accessible.length - 1], accessible[accessible.length - 1], ...accessible]
     : accessible;
 }
 
-/**
- * Generate exercises for a single day with progression awareness.
- */
 export function generaEserciziGiorno(
   attrezzo: string,
   livello: string,
@@ -250,40 +261,30 @@ export function generaEserciziGiorno(
   const effectiveLevel = getEffectiveLevel(livello, ctx);
   const targetCount = getTargetCount(ctx.weekNumber, effectiveLevel);
 
-  // Filter exercises for this equipment and accessible level
   const disponibili = EXERCISE_LIBRARY.filter(e =>
     e.attrezzo === attrezzo && livelloAccessibile(e.livello, effectiveLevel)
   );
   if (disponibili.length === 0) return [];
 
-  // Combine storici with recent exercise IDs to avoid repetition
   const allRecent = new Set([...storici, ...ctx.recentExerciseIds]);
   let pool = disponibili.filter(e => !allRecent.has(e.id));
   if (pool.length < targetCount) pool = disponibili;
 
-  // Apply level preference weighting
   const levelPref = getLevelPreference(ctx.weekNumber, effectiveLevel);
   pool = weightByLevel(pool, levelPref);
 
-  // Determine focus slots
-  let dayFocus: DayFocus | undefined;
   let prioritySlots: string[][];
 
   if (focus === "core" || focus === "core_stabilita") {
-    dayFocus = "core_stabilita";
     prioritySlots = [...FOCUS_SLOTS.core_stabilita];
   } else if (focus === "lower_body" || focus === "gambe_glutei") {
-    dayFocus = "gambe_glutei";
     prioritySlots = [...FOCUS_SLOTS.gambe_glutei];
   } else if (focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
-    dayFocus = "full_body_mobilita";
     prioritySlots = [...FOCUS_SLOTS.full_body_mobilita];
   } else {
-    // Default: full body
     prioritySlots = [...FOCUS_SLOTS.full_body_mobilita];
   }
 
-  // Week 4: add an extra slot
   if (ctx.weekNumber >= 4 && prioritySlots.length < targetCount) {
     prioritySlots.push(["core", "gambe", "glutei", "braccia"]);
   }
@@ -291,33 +292,18 @@ export function generaEserciziGiorno(
   return pickBalanced(pool, prioritySlots, Math.max(6, Math.min(targetCount, pool.length)));
 }
 
-/**
- * Weight pool by level preference - duplicate preferred-level exercises.
- */
 function weightByLevel(pool: Exercise[], levelPref: string[]): Exercise[] {
   if (levelPref.length === 0) return pool;
-
   const counts: Record<string, number> = {};
   levelPref.forEach(l => { counts[l] = (counts[l] || 0) + 1; });
-  const maxCount = Math.max(...Object.values(counts));
 
-  // For levels with higher preference, include them more in the shuffled pool
-  const weighted: Exercise[] = [];
-  pool.forEach(e => {
-    const weight = counts[e.livello] || 1;
-    // Add exercise once but use weight for sort priority
-    weighted.push(e);
-  });
-
-  // Sort so preferred levels come first, then shuffle within groups
   const byLevel: Record<string, Exercise[]> = {};
-  weighted.forEach(e => {
+  pool.forEach(e => {
     if (!byLevel[e.livello]) byLevel[e.livello] = [];
     byLevel[e.livello].push(e);
   });
 
   const result: Exercise[] = [];
-  // Add preferred levels first
   const sortedLevels = Object.keys(byLevel).sort((a, b) => (counts[b] || 0) - (counts[a] || 0));
   sortedLevels.forEach(l => {
     result.push(...shuffle(byLevel[l]));
@@ -332,11 +318,9 @@ function pickBalanced(pool: Exercise[], prioritySlots: string[][], count: number
     if (!byCat[e.categoria]) byCat[e.categoria] = [];
     byCat[e.categoria].push(e);
   });
-  // Don't re-shuffle - pool is already weighted/ordered
 
   const result: Exercise[] = [];
 
-  // First pass: pick one from each priority slot
   for (const slot of prioritySlots) {
     if (result.length >= count) break;
     const availableCats = shuffle(slot.filter(c => byCat[c] && byCat[c].length > 0));
@@ -345,7 +329,6 @@ function pickBalanced(pool: Exercise[], prioritySlots: string[][], count: number
     }
   }
 
-  // Fill remaining from any category
   if (result.length < count) {
     const remaining = shuffle(pool.filter(e => !result.find(r => r.id === e.id)));
     for (const e of remaining) {
@@ -357,7 +340,7 @@ function pickBalanced(pool: Exercise[], prioritySlots: string[][], count: number
 }
 
 // ============================================================
-// SMART WEEK GENERATION (replaces simple generation in Index.tsx)
+// SMART WEEK GENERATION (date-based keys)
 // ============================================================
 
 export interface GeneratedWeek {
@@ -369,46 +352,44 @@ export interface GeneratedWeek {
 
 /**
  * Generate a full week with smart progression.
- * Assigns focus per day, rotates equipment, respects history.
+ * Keys are now ISO date strings (YYYY-MM-DD).
  */
 export function generaSettimanaIntelligente(
   attrezziUtente: string[],
   livello: string,
   previousStorico: Record<string, string[]>,
   storicoCal: Record<string, any>,
-  lastWeekEquipment: string[]
+  lastWeekEquipment: string[],
+  giorniSettimana: number[] = [1, 3, 5]
 ): GeneratedWeek {
   const ctx = computeProgressionContext(storicoCal, lastWeekEquipment);
-  const attrezziSettimana = selezionaAttrezziSettimana(attrezziUtente, lastWeekEquipment);
-  const giorni = ["Lunedì", "Mercoledì", "Venerdì"];
+  const dateKeys = getWeekDates(giorniSettimana);
+  const attrezziSettimana = selezionaAttrezziSettimana(attrezziUtente, lastWeekEquipment, dateKeys.length);
 
   const piano: Record<string, { attrezzo: string; round: number }> = {};
   const esercizi: Record<string, Exercise[]> = {};
   const focusPerDay: Record<string, DayFocus> = {};
   let runningStorico = Object.values(previousStorico).flat();
 
-  giorni.forEach((giorno, i) => {
-    const attrezzo = attrezziSettimana[i];
-    const dayFocus = DAY_FOCUS_PATTERN[i];
+  dateKeys.forEach((dateKey, i) => {
+    const attrezzo = attrezziSettimana[i % attrezziSettimana.length];
+    const dayFocus = DAY_FOCUS_PATTERN[i % DAY_FOCUS_PATTERN.length];
 
-    // Pass recent IDs to avoid repetition
     ctx.recentExerciseIds = runningStorico;
 
     const dayExercises = generaEserciziGiorno(attrezzo, livello, [], dayFocus, ctx);
 
-    piano[giorno] = { attrezzo, round: 0 };
-    esercizi[giorno] = dayExercises;
-    focusPerDay[giorno] = dayFocus;
+    piano[dateKey] = { attrezzo, round: 0 };
+    esercizi[dateKey] = dayExercises;
+    focusPerDay[dateKey] = dayFocus;
 
-    // Add to running storico for next day's generation
     runningStorico = [...runningStorico, ...dayExercises.map(e => e.id)];
   });
 
-  // Build updated storico
   const nuovoStorico = { ...previousStorico };
-  giorni.forEach(g => {
-    const att = piano[g].attrezzo;
-    nuovoStorico[att] = [...(nuovoStorico[att] || []), ...esercizi[g].map(e => e.id)];
+  dateKeys.forEach(dk => {
+    const att = piano[dk].attrezzo;
+    nuovoStorico[att] = [...(nuovoStorico[att] || []), ...esercizi[dk].map(e => e.id)];
   });
 
   return { piano, esercizi, storico: nuovoStorico, focusPerDay };
