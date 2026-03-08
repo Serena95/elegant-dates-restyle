@@ -17,7 +17,7 @@ interface DashboardProps {
 
 export function Dashboard({
   piano, livello, onGeneraNuova, onAvviaAllenamento, onChangeLivello,
-  userName, weeklyStats, onNavigate,
+  userName, weeklyStats, onNavigate, focusMap,
 }: DashboardProps) {
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "MEDIO" ? "bg-primary" : "bg-pilates-red";
   const giorni = ["Lunedì", "Mercoledì", "Venerdì"];
