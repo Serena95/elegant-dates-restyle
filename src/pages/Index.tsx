@@ -236,6 +236,14 @@ const Index = () => {
       const focus = detectFocus(eserciziCorrenti);
       cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true, focus });
 
+      // Add XP
+      if (user) {
+        const streakData = calculateStreak(cloud.storicoCal, cloud.giorniAllenamento);
+        addWorkoutXP(user.id, streakData.currentStreak).then(result => {
+          setXpResult({ xpGained: result.xpGained, newXp: result.newXp, leveledUp: result.leveledUp });
+        }).catch(console.error);
+      }
+
       const prevCount = prevBadgeCountRef.current;
       setTimeout(() => {
         const nb = checkNewBadges(prevCount);
