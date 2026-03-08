@@ -1,12 +1,12 @@
 import { useState } from "react";
-import { Exercise, CONFIG_LIVELLI, calcolaReps, ATTREZZO_ICONS } from "@/data/exercises";
+import { Exercise, CONFIG_LIVELLI, ATTREZZO_ICONS, TEMA_CONFIG } from "@/data/exercises";
 import { useTimer } from "@/hooks/useTimer";
 import { TimerOverlay } from "./TimerOverlay";
-import { ChevronLeft, Timer, Check, RefreshCw } from "lucide-react";
+import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell } from "lucide-react";
 
 interface WorkoutViewProps {
   giorno: string;
-  attrezzo: string;
+  tema: string;
   esercizi: Exercise[];
   livello: string;
   roundCorrenti: number;
@@ -20,13 +20,17 @@ const RISCALDAMENTO_MODES = [
   { tipo: "CAMMINATA ESTERNA", emoji: "🌳", desc: "25 min • Passo svelto • Braccia attive e rullata del piede completa.", durata: 1500, label: "25 MIN" },
 ];
 
-export function WorkoutView({ giorno, attrezzo, esercizi, livello, roundCorrenti, onSegnaRound, onBack }: WorkoutViewProps) {
+export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack }: WorkoutViewProps) {
   const config = CONFIG_LIVELLI[livello];
   const maxRound = config.round;
   const timer = useTimer();
   const [completati, setCompletati] = useState<Set<number>>(new Set());
   const [tipoRiscaldamento, setTipoRiscaldamento] = useState(0);
   const isCompleted = roundCorrenti >= maxRound;
+
+  const temaConfig = TEMA_CONFIG[tema];
+  const temaLabel = temaConfig?.label || tema;
+  const temaIcon = temaConfig?.icon || "🏋️";
 
   const toggleEsercizio = (idx: number) => {
     setCompletati(prev => {
@@ -48,18 +52,7 @@ export function WorkoutView({ giorno, attrezzo, esercizi, livello, roundCorrenti
     setTipoRiscaldamento(prev => (prev + 1) % 3);
   };
 
-  const icon = ATTREZZO_ICONS[attrezzo] || "🏋️";
   const risc = RISCALDAMENTO_MODES[tipoRiscaldamento];
-
-  const formatReps = (repsStr: string, original: string) => {
-    const perLato = original.includes("per lato");
-    return (
-      <span>
-        {repsStr}
-        {perLato && <span className="text-[10px] ml-1 opacity-80">per lato</span>}
-      </span>
-    );
-  };
 
   return (
     <div className="space-y-4">
@@ -70,8 +63,12 @@ export function WorkoutView({ giorno, attrezzo, esercizi, livello, roundCorrenti
       </button>
 
       <h2 className="text-xl font-bold text-foreground">
-        {icon} {giorno} <span className="text-primary">({attrezzo})</span>
+        {temaIcon} {giorno} <span className="text-primary">({temaLabel})</span>
       </h2>
+
+      <div className="text-sm text-muted-foreground">
+        ⏱️ {config.tempoEsercizio}s esercizio • {config.pausa}s pausa • {maxRound} round
+      </div>
 
       {/* Riscaldamento */}
       <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-2xl border-l-[5px] border-amber-400 dark:border-amber-600 space-y-2">
@@ -89,7 +86,7 @@ export function WorkoutView({ giorno, attrezzo, esercizi, livello, roundCorrenti
           onClick={cambiaRiscaldamento}
           className="w-full py-2 bg-transparent border border-dashed border-amber-400 dark:border-amber-600 rounded-lg text-xs font-bold text-amber-700 dark:text-amber-300 hover:bg-amber-100 dark:hover:bg-amber-900/30 transition flex items-center justify-center gap-1"
         >
-          <RefreshCw size={12} /> CAMBIA MODALITÀ (Tapis / Cardio / Camminata)
+          <RefreshCw size={12} /> CAMBIA MODALITÀ
         </button>
       </div>
 
@@ -104,9 +101,8 @@ export function WorkoutView({ giorno, attrezzo, esercizi, livello, roundCorrenti
       {/* Exercises list */}
       <div className="space-y-3">
         {esercizi.map((es, idx) => {
-          const reps = calcolaReps(es.reps, livello);
-          const isSec = es.reps.includes("sec");
           const done = completati.has(idx);
+          const attrIcon = ATTREZZO_ICONS[es.attrezzo] || "🏋️";
 
           return (
             <div
@@ -124,29 +120,49 @@ export function WorkoutView({ giorno, attrezzo, esercizi, livello, roundCorrenti
                     {done && <Check size={16} className="text-pilates-green" />}
                     <strong className="text-base text-foreground">{idx + 1}. {es.nome}</strong>
                   </div>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span className="text-sm">{attrIcon}</span>
+                    <span className="text-xs text-muted-foreground">{es.attrezzo}</span>
+                  </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
                   <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-lg text-xs font-bold">
-                    {formatReps(reps, es.reps)}
+                    {config.tempoEsercizio}s
                   </span>
-                  {isSec && (
-                    <button
-                      onClick={e => { e.stopPropagation(); timer.start(config.tempoEsercizio, es.nome); }}
-                      className="flex items-center gap-1 bg-pilates-green text-white px-2 py-1 rounded-lg text-xs font-bold hover:opacity-80"
-                    >
-                      <Timer size={12} /> AVVIA
-                    </button>
-                  )}
+                  <button
+                    onClick={e => { e.stopPropagation(); timer.start(config.tempoEsercizio, es.nome); }}
+                    className="flex items-center gap-1 bg-pilates-green text-white px-2 py-1 rounded-lg text-xs font-bold hover:opacity-80"
+                  >
+                    <Timer size={12} /> AVVIA
+                  </button>
                 </div>
               </div>
 
-              <div className="mt-2 bg-pilates-light dark:bg-accent p-3 rounded-lg border-l-4 border-primary">
+              {/* GIF preview */}
+              {es.gif && (
+                <img
+                  src={es.gif}
+                  alt={es.nome}
+                  className="w-full h-36 object-cover rounded-lg mt-2 bg-muted"
+                  onError={(ev) => { (ev.currentTarget as HTMLImageElement).style.display = 'none'; }}
+                />
+              )}
+
+              <div className="mt-2 bg-accent/50 p-3 rounded-lg border-l-4 border-primary">
                 <span className="text-xs font-bold text-primary uppercase">🎬 Azione:</span>
-                <p className="text-sm text-foreground mt-1">{es.spiegazione}</p>
+                <p className="text-sm text-foreground mt-1">{es.descrizione}</p>
               </div>
 
-              <div className="text-xs text-muted-foreground mt-2 font-bold">
-                🎯 FOCUS: {es.focus.toUpperCase()}
+              <div className="flex items-center gap-2 mt-2 flex-wrap">
+                <Dumbbell size={12} className="text-muted-foreground" />
+                {es.muscoli.map(m => (
+                  <span key={m} className="text-[10px] px-2 py-0.5 rounded-full bg-primary/10 text-primary font-medium">
+                    {m}
+                  </span>
+                ))}
+                <span className="text-[10px] px-2 py-0.5 rounded-full bg-secondary/20 text-secondary-foreground font-medium ml-auto">
+                  {es.tipo.toUpperCase()}
+                </span>
               </div>
             </div>
           );
@@ -169,7 +185,7 @@ export function WorkoutView({ giorno, attrezzo, esercizi, livello, roundCorrenti
           </button>
         )}
         {isCompleted && (
-          <div className="space-y-4 bg-pilates-light dark:bg-accent p-6 rounded-2xl border-2 border-primary">
+          <div className="space-y-4 bg-accent/30 p-6 rounded-2xl border-2 border-primary">
             <h3 className="text-xl font-bold text-primary">🌊 Defaticamento Rigenerante</h3>
             <p className="text-sm text-muted-foreground">Espira profondamente e rilassa i muscoli.</p>
 
