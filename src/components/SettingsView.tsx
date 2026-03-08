@@ -20,6 +20,7 @@ import {
   Droplets,
   Baby,
   Volume2,
+  Download,
 } from "lucide-react";
 
 interface SettingsViewProps {
