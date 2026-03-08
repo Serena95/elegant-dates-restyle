@@ -22,6 +22,8 @@ import {
   Baby,
   Volume2,
   Download,
+  Bell,
+  Clock,
 } from "lucide-react";
 
 interface SettingsViewProps {
