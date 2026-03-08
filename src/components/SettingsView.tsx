@@ -238,6 +238,9 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
         )}
       </Section>
 
+      {/* Health Integration */}
+      <HealthIntegration />
+
       {/* Privacy */}
       <Section title="Privacy">
         <SettingsRow icon={Trash2} label="Elimina Account" onClick={() => setShowDelete(true)} danger />
