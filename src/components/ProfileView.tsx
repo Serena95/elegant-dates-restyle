@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef, useEffect, forwardRef } from "react";
 import { Camera, User, Dumbbell, BarChart3, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
@@ -19,7 +19,7 @@ interface ProfileViewProps {
   totalWorkouts?: number;
 }
 
-export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], livello, attrezzi = [], totalWorkouts = 0 }: ProfileViewProps) {
+export const ProfileView = forwardRef<HTMLDivElement, ProfileViewProps>(function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], livello, attrezzi = [], totalWorkouts = 0 }, ref) {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState(profile.display_name || "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
@@ -183,4 +183,4 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], liv
       </button>
     </div>
   );
-}
+});
