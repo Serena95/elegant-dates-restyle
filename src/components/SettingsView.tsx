@@ -24,6 +24,7 @@ import {
   Download,
   Bell,
   Clock,
+  Crown,
 } from "lucide-react";
 
 interface SettingsViewProps {
