@@ -70,14 +70,52 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     return "Buonasera";
   };
 
+  // Load XP data
+  const { user } = useAuth();
+  const [xpData, setXpData] = useState<{ xp: number; level: number } | null>(null);
+
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("xp, level").eq("user_id", user.id).single().then(({ data }) => {
+      if (data) setXpData({ xp: data.xp ?? 0, level: data.level ?? 1 });
+    });
+  }, [user, storicoCal]); // re-fetch when storicoCal changes (after workout)
+
+  const levelInfo = xpData ? getLevelInfo(xpData.xp) : null;
+
   return (
     <div className="space-y-5">
-      {/* Greeting */}
+      {/* Greeting + Level */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <h2 className="text-2xl font-black text-foreground">
-          {greeting()}{userName ? `, ${userName}` : ""} 👋
-        </h2>
-        <p className="text-sm text-muted-foreground mt-0.5">Pronta per allenarti oggi?</p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h2 className="text-2xl font-black text-foreground">
+              {greeting()}{userName ? `, ${userName}` : ""} 👋
+            </h2>
+            <p className="text-sm text-muted-foreground mt-0.5">Pronta per allenarti oggi?</p>
+          </div>
+          {levelInfo && (
+            <div className="text-center">
+              <span className="text-2xl">{levelInfo.current.icon}</span>
+              <p className="text-[10px] font-bold text-muted-foreground">Lv.{levelInfo.current.level}</p>
+            </div>
+          )}
+        </div>
+        {/* XP Bar */}
+        {levelInfo && (
+          <div className="mt-3 space-y-1">
+            <div className="flex items-center justify-between text-[10px]">
+              <span className="font-semibold flex items-center gap-1 text-foreground">
+                <Zap size={10} className="text-amber-500" />
+                {levelInfo.current.name}
+              </span>
+              <span className="text-muted-foreground">
+                {xpData!.xp} / {levelInfo.next?.minXp || "MAX"} XP
+              </span>
+            </div>
+            <Progress value={levelInfo.progressToNext * 100} className="h-1.5" />
+          </div>
+        )}
       </motion.div>
 
       {/* AI Coach Card */}

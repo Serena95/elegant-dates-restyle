@@ -26,7 +26,16 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], liv
   const [newEmail, setNewEmail] = useState(user?.email || "");
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [xpData, setXpData] = useState<{ xp: number; level: number } | null>(null);
 
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("xp, level").eq("user_id", user.id).single().then(({ data }) => {
+      if (data) setXpData({ xp: data.xp ?? 0, level: data.level ?? 1 });
+    });
+  }, [user]);
+
+  const levelInfo = xpData ? getLevelInfo(xpData.xp) : null;
   const isGoogleAvatar = avatarUrl?.startsWith("http");
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "AVANZATO" ? "bg-pilates-red" : "bg-primary";
 
