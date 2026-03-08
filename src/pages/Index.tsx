@@ -26,6 +26,7 @@ import { LeaderboardView } from "@/components/LeaderboardView";
 import { PublicProfileView } from "@/components/PublicProfileView";
 import { CommunityNotifications } from "@/components/CommunityNotifications";
 import { addWorkoutXP } from "@/services/xpService";
+import { calculateStreak } from "@/services/streakService";
 import { updateLeaderboard } from "@/services/supabase/leaderboardService";
 import { syncBadges } from "@/services/supabase/badgeService";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
