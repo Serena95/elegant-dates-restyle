@@ -25,6 +25,12 @@ export interface AICoachContext {
   totalWorkouts?: number;
   lastWorkoutType?: string;
   recentIntensity?: string;
+  // Today's plan context
+  todayEquipment?: string;
+  todayFocus?: string;
+  todayFocusIcon?: string;
+  isRestDay?: boolean;
+  isAlreadyCompleted?: boolean;
 }
 
 export interface CompleteCoachResponse {
@@ -41,7 +47,7 @@ const sessionCache = new Map<string, { data: CompleteCoachResponse; timestamp: n
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
 function getCacheKey(context: AICoachContext): string {
-  return `${context.level}-${(context.equipment || []).sort().join(",")}-${context.streak}-${context.cyclePhase || ""}-${context.pregnancyMode || false}`;
+  return `${context.level}-${(context.equipment || []).sort().join(",")}-${context.streak}-${context.cyclePhase || ""}-${context.pregnancyMode || false}-${context.todayEquipment || "rest"}-${context.todayFocus || ""}-${context.isRestDay}-${context.isAlreadyCompleted}`;
 }
 
 export async function generateCompleteCoachData(context: AICoachContext, forceRefresh = false): Promise<CompleteCoachResponse> {
