@@ -74,6 +74,18 @@ const Index = () => {
     return { completed, total, streak };
   }, [cloud.storicoCal]);
 
+  // Compute focus for each day based on cached exercises
+  const focusMap = useMemo<Record<string, FocusInfo>>(() => {
+    const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
+    const map: Record<string, FocusInfo> = {};
+    for (const giorno of Object.keys(cloud.piano)) {
+      const cached = allenamentiEsercizi[giorno];
+      if (cached && cached.length > 0 && (cached[0] as any).categoria) {
+        map[giorno] = detectFocus(cached);
+      }
+    }
+    return map;
+  }, [cloud.piano, cloud.allenamentiData.esercizi]);
   const effectiveView: string = cloud.loading
     ? "loading"
     : cloud.attrezzi.length === 0 && view === "dashboard"
