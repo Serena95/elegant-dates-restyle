@@ -20,6 +20,10 @@ import { WorkoutReminder } from "@/components/WorkoutReminder";
 import { useNotifications } from "@/hooks/useNotifications";
 import { LegalPage } from "@/components/LegalPage";
 import { PremiumView } from "@/components/PremiumView";
+import { ChallengesView } from "@/components/ChallengesView";
+import { CommunityView } from "@/components/CommunityView";
+import { addWorkoutXP } from "@/services/xpService";
+import { calculateStreak } from "@/services/streakService";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -28,6 +32,7 @@ import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVE
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
+import { supabase } from "@/integrations/supabase/client";
 
 function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): string | undefined {
   if (!entries || entries.length === 0) return undefined;
@@ -55,7 +60,7 @@ function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): stri
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
-  const [view, setView] = useState<AppView | "cycle" | "pregnancy" | "privacy" | "terms" | "premium">("dashboard");
+  const [view, setView] = useState<AppView | "cycle" | "pregnancy" | "privacy" | "terms" | "premium" | "challenges" | "community">("dashboard");
   const [giornoSelezionato, setGiornoSelezionato] = useState<string | null>(null);
   const [eserciziCorrenti, setEserciziCorrenti] = useState<Exercise[]>([]);
   const [roundCorrenti, setRoundCorrenti] = useState(0);
@@ -64,6 +69,7 @@ const Index = () => {
   const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [aiGenerated, setAiGenerated] = useState(false);
+  const [xpResult, setXpResult] = useState<{ xpGained: number; newXp: number; leveledUp: boolean } | null>(null);
   const [voiceEnabled, setVoiceEnabled] = useLocalStorage("voice_trainer_enabled", true);
   const prevBadgeCountRef = useRef(0);
   const lastGeneratedKey = useRef("");
@@ -231,6 +237,14 @@ const Index = () => {
       const focus = detectFocus(eserciziCorrenti);
       cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true, focus });
 
+      // Add XP
+      if (user) {
+        const streakData = calculateStreak(cloud.storicoCal, cloud.giorniAllenamento);
+        addWorkoutXP(user.id, streakData.currentStreak).then(result => {
+          setXpResult({ xpGained: result.xpGained, newXp: result.newXp, leveledUp: result.leveledUp });
+        }).catch(console.error);
+      }
+
       const prevCount = prevBadgeCountRef.current;
       setTimeout(() => {
         const nb = checkNewBadges(prevCount);
@@ -310,9 +324,25 @@ const Index = () => {
             tempoTotale={Math.floor((Date.now() - workoutStartTime) / 1000)}
             attrezzo={attrezzo}
             newBadges={newBadges}
+            xpGained={xpResult?.xpGained}
+            newXp={xpResult?.newXp}
+            leveledUp={xpResult?.leveledUp}
+            onShare={async () => {
+              if (!user) return;
+              const minuti = Math.floor((Date.now() - workoutStartTime) / 60000);
+              const focus = detectFocus(eserciziCorrenti);
+              await supabase.from("community_posts").insert({
+                user_id: user.id,
+                text: `Ho completato il mio allenamento ${attrezzo}! 💪`,
+                workout_type: attrezzo,
+                workout_focus: focus.label,
+                workout_duration_min: minuti,
+              });
+            }}
             onClose={() => {
               setShowComplete(false);
               setNewBadges([]);
+              setXpResult(null);
               navigate("dashboard");
             }}
           />
@@ -448,6 +478,10 @@ const Index = () => {
         return <LegalPage type="terms" onBack={() => setView("settings" as any)} />;
       case "premium" as any:
         return <PremiumView onNavigate={(v) => navigate(v as AppView)} />;
+      case "challenges" as any:
+        return <ChallengesView onBack={() => navigate("more")} />;
+      case "community" as any:
+        return <CommunityView onBack={() => navigate("more")} />;
       default:
         return null;
     }

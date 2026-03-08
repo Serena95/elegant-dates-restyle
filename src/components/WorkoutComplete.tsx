@@ -1,20 +1,29 @@
 import { useEffect, useState } from "react";
-import { Trophy, Clock, Dumbbell, Flame, Star } from "lucide-react";
+import { Trophy, Clock, Dumbbell, Flame, Star, Share2, Zap } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge, BADGE_DEFINITIONS } from "@/hooks/useBadges";
+import { Button } from "@/components/ui/button";
+import { getLevelInfo, LEVELS } from "@/services/xpService";
+import { toast } from "sonner";
 
 interface WorkoutCompleteProps {
   esercizi: number;
-  tempoTotale: number; // seconds
+  tempoTotale: number;
   attrezzo: string;
   newBadges: Badge[];
   onClose: () => void;
+  xpGained?: number;
+  newXp?: number;
+  leveledUp?: boolean;
+  onShare?: () => void;
 }
 
-export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, onClose }: WorkoutCompleteProps) {
+export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, onClose, xpGained, newXp, leveledUp, onShare }: WorkoutCompleteProps) {
   const [showBadges, setShowBadges] = useState(false);
+  const [showXp, setShowXp] = useState(false);
   const calorie = Math.round(esercizi * 12 + tempoTotale * 0.08);
   const minuti = Math.floor(tempoTotale / 60);
+  const levelInfo = newXp ? getLevelInfo(newXp) : null;
 
   useEffect(() => {
     if (newBadges.length > 0) {
@@ -22,6 +31,24 @@ export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, on
       return () => clearTimeout(t);
     }
   }, [newBadges]);
+
+  useEffect(() => {
+    if (xpGained) {
+      const t = setTimeout(() => setShowXp(true), 800);
+      return () => clearTimeout(t);
+    }
+  }, [xpGained]);
+
+  const handleShare = () => {
+    const text = `Ho completato il mio allenamento ${attrezzo} oggi! 💪 ${minuti} minuti, ${esercizi} esercizi, ~${calorie} kcal bruciati!`;
+    if (navigator.share) {
+      navigator.share({ title: "Allenamento Completato!", text }).catch(() => {});
+    } else {
+      navigator.clipboard.writeText(text);
+      toast.success("Testo copiato! Condividilo dove vuoi 📋");
+    }
+    onShare?.();
+  };
 
   return (
     <motion.div
@@ -67,6 +94,48 @@ export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, on
           </div>
         </div>
 
+        {/* XP Gained */}
+        <AnimatePresence>
+          {showXp && xpGained && levelInfo && (
+            <motion.div
+              initial={{ height: 0, opacity: 0 }}
+              animate={{ height: "auto", opacity: 1 }}
+              className="space-y-2 overflow-hidden"
+            >
+              <div className="flex items-center justify-center gap-2">
+                <Zap size={16} className="text-amber-500" />
+                <p className="text-sm font-bold text-amber-600 dark:text-amber-400">+{xpGained} XP</p>
+              </div>
+              <div className="bg-muted/50 rounded-xl px-4 py-2">
+                <div className="flex items-center justify-between text-xs mb-1">
+                  <span>{levelInfo.current.icon} Lv.{levelInfo.current.level} {levelInfo.current.name}</span>
+                  {levelInfo.next && <span className="text-muted-foreground">{levelInfo.next.icon} Lv.{levelInfo.next.level}</span>}
+                </div>
+                <div className="w-full h-2 bg-muted rounded-full overflow-hidden">
+                  <motion.div
+                    initial={{ width: 0 }}
+                    animate={{ width: `${levelInfo.progressToNext * 100}%` }}
+                    transition={{ delay: 0.3, duration: 0.8, ease: "easeOut" }}
+                    className="h-full bg-amber-500 rounded-full"
+                  />
+                </div>
+                <p className="text-[10px] text-muted-foreground mt-1">
+                  {newXp} / {levelInfo.next?.minXp || "MAX"} XP
+                </p>
+              </div>
+              {leveledUp && (
+                <motion.p
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  className="text-sm font-bold text-primary"
+                >
+                  🎉 Level Up! Sei ora {levelInfo.current.icon} {levelInfo.current.name}!
+                </motion.p>
+              )}
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* New Badges */}
         <AnimatePresence>
           {showBadges && newBadges.length > 0 && (
@@ -101,12 +170,14 @@ export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, on
           )}
         </AnimatePresence>
 
-        <button
-          onClick={onClose}
-          className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg hover:opacity-90 transition"
-        >
-          Torna alla Dashboard
-        </button>
+        <div className="flex gap-2">
+          <Button variant="outline" className="flex-1" onClick={handleShare}>
+            <Share2 className="w-4 h-4 mr-1" /> Condividi
+          </Button>
+          <Button className="flex-1" onClick={onClose}>
+            Dashboard
+          </Button>
+        </div>
       </motion.div>
     </motion.div>
   );

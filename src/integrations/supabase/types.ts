@@ -32,6 +32,39 @@ export type Database = {
         }
         Relationships: []
       }
+      challenge_participations: {
+        Row: {
+          challenge_id: string
+          completed: boolean
+          completed_days: number
+          created_at: string
+          id: string
+          last_completed_date: string | null
+          start_date: string
+          user_id: string
+        }
+        Insert: {
+          challenge_id: string
+          completed?: boolean
+          completed_days?: number
+          created_at?: string
+          id?: string
+          last_completed_date?: string | null
+          start_date: string
+          user_id: string
+        }
+        Update: {
+          challenge_id?: string
+          completed?: boolean
+          completed_days?: number
+          created_at?: string
+          id?: string
+          last_completed_date?: string | null
+          start_date?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       challenges: {
         Row: {
           created_at: string
@@ -59,6 +92,100 @@ export type Database = {
           ultima_data?: string | null
           updated_at?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      community_comments: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          text: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          text: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          text?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_comments_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_likes: {
+        Row: {
+          created_at: string
+          id: string
+          post_id: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          post_id: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          post_id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_likes_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      community_posts: {
+        Row: {
+          created_at: string
+          id: string
+          likes_count: number
+          text: string
+          user_id: string
+          workout_duration_min: number | null
+          workout_focus: string | null
+          workout_type: string | null
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          likes_count?: number
+          text?: string
+          user_id: string
+          workout_duration_min?: number | null
+          workout_focus?: string | null
+          workout_type?: string | null
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          likes_count?: number
+          text?: string
+          user_id?: string
+          workout_duration_min?: number | null
+          workout_focus?: string | null
+          workout_type?: string | null
         }
         Relationships: []
       }
@@ -161,33 +288,39 @@ export type Database = {
           created_at: string
           display_name: string | null
           id: string
+          level: number
           premium: boolean
           premium_expires: string | null
           stripe_customer_id: string | null
           updated_at: string
           user_id: string
+          xp: number
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          level?: number
           premium?: boolean
           premium_expires?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
           user_id: string
+          xp?: number
         }
         Update: {
           avatar_url?: string | null
           created_at?: string
           display_name?: string | null
           id?: string
+          level?: number
           premium?: boolean
           premium_expires?: string | null
           stripe_customer_id?: string | null
           updated_at?: string
           user_id?: string
+          xp?: number
         }
         Relationships: []
       }
