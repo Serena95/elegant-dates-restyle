@@ -115,7 +115,7 @@ export function ProgramsView({ userAttrezzi, onStartProgram, activeProgram }: Pr
                     <span className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-bold">ATTIVO</span>
                   )}
                 </div>
-                <p className="text-xs text-muted-foreground mt-0.5 truncate">{program.descrizione}</p>
+                <p className="text-xs text-muted-foreground mt-0.5 line-clamp-2">{program.descrizione}</p>
                 <div className="flex gap-3 mt-1.5">
                   <span className="text-[10px] text-muted-foreground font-bold">{program.durata} sett.</span>
                   <span className="text-[10px] text-muted-foreground font-bold">{program.livello}</span>
