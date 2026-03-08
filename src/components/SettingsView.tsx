@@ -193,11 +193,31 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
 
       {/* Supporto */}
       <Section title="Supporto">
+        {!isStandalone && (installPrompt || isIOS) && (
+          <SettingsRow icon={Download} label="Installa App" onClick={handleInstallApp} />
+        )}
         <SettingsRow icon={HelpCircle} label="Guida all'uso" onClick={() => onNavigate("guide")} />
         <SettingsRow icon={MessageCircle} label="Contatta il supporto" onClick={() => window.open("mailto:support@mypilatesplan.app")} />
         <SettingsRow icon={Shield} label="Privacy Policy" onClick={() => {}} />
         <SettingsRow icon={FileText} label="Termini di servizio" onClick={() => {}} />
       </Section>
+
+      {/* iOS Install Guide Modal */}
+      {showIOSGuide && (
+        <div className="fixed inset-0 bg-foreground/40 flex items-end justify-center z-50 p-4" onClick={() => setShowIOSGuide(false)}>
+          <div className="bg-card rounded-3xl border border-border shadow-2xl p-6 max-w-sm w-full space-y-3 mb-4" onClick={e => e.stopPropagation()}>
+            <h3 className="font-bold text-foreground text-center">📱 Installa su iPhone/iPad</h3>
+            <ol className="text-sm text-muted-foreground space-y-2">
+              <li>1. Tocca il pulsante <strong>Condividi</strong> ⬆️ in basso</li>
+              <li>2. Scorri e seleziona <strong>"Aggiungi a Home"</strong></li>
+              <li>3. Tocca <strong>"Aggiungi"</strong> in alto a destra</li>
+            </ol>
+            <button onClick={() => setShowIOSGuide(false)} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold">
+              Ho capito!
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* Logout */}
       <button
