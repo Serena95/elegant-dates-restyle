@@ -369,8 +369,8 @@ export function useCloudData() {
     if (updates.settimana_gestazionale !== undefined) dbUpdates.settimana_gestazionale = updates.settimana_gestazionale;
     if (updates.durata_ciclo !== undefined) dbUpdates.durata_ciclo = updates.durata_ciclo;
     if (updates.durata_mestruazione !== undefined) dbUpdates.durata_mestruazione = updates.durata_mestruazione;
-    await supabase.from("user_settings").update(dbUpdates).eq("user_id", user.id);
-  }, [user]);
+    await upsertUserSettings(dbUpdates);
+  }, [user, upsertUserSettings]);
 
   return {
     loading,
