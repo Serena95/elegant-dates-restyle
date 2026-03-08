@@ -446,6 +446,8 @@ const Index = () => {
         return <LegalPage type="privacy" onBack={() => setView("settings" as any)} />;
       case "terms" as any:
         return <LegalPage type="terms" onBack={() => setView("settings" as any)} />;
+      case "premium" as any:
+        return <PremiumView onNavigate={(v) => navigate(v as AppView)} />;
       default:
         return null;
     }
