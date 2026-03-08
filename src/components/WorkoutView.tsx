@@ -174,8 +174,8 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
             <h2 className="text-xl font-bold text-foreground">
               {temaIcon} {giorno} <span className="text-primary">({temaLabel})</span>
             </h2>
-            <div className="flex items-center gap-2 text-sm text-muted-foreground flex-wrap">
-              <span>⏱️ {config.tempoEsercizio}s esercizio • {config.pausa}s pausa • {maxRound} round</span>
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
+              <span className="whitespace-nowrap">⏱️ {config.tempoEsercizio}s esercizio • {config.pausa}s pausa • {maxRound} round</span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/50 text-foreground text-xs font-bold">
                 {focus.icon} {focus.label}
               </span>
