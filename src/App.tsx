@@ -35,9 +35,15 @@ function PublicRoute({ children }: { children: React.ReactNode }) {
   return session ? <Navigate to="/" replace /> : <>{children}</>;
 }
 
+function DarkModeInitializer() {
+  useDarkMode();
+  return null;
+}
+
 const App = () => (
   <QueryClientProvider client={queryClient}>
     <TooltipProvider>
+      <DarkModeInitializer />
       <Toaster />
       <Sonner />
       <BrowserRouter>
