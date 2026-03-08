@@ -2,3 +2,9 @@ project_id = "zkrjfzivmkpxsznhcraz"
 
 [functions.ai-workout]
 verify_jwt = false
+
+[functions.generate-vapid]
+verify_jwt = false
+
+[functions.send-notifications]
+verify_jwt = false
