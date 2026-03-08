@@ -138,7 +138,9 @@ const Index = () => {
     } else {
       const attrezzo = dati.attrezzo || "Corpo Libero";
       const storici = Object.values(allenamentiStorico).flat();
-      esercizi = generaEserciziGiorno(attrezzo, cloud.livello, storici);
+      const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
+      ctx.recentExerciseIds = storici;
+      esercizi = generaEserciziGiorno(attrezzo, cloud.livello, storici, undefined, ctx);
       const nuovoStorico = [...storici, ...esercizi.map(e => e.id)];
       const newAllenamenti = {
         esercizi: { ...allenamentiEsercizi, [giorno]: esercizi },
