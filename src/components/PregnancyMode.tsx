@@ -7,6 +7,7 @@ interface PregnancyModeProps {
   settimanaGestazionale: number;
   onToggle: (active: boolean) => void;
   onUpdateWeek: (week: number) => void;
+  onBack?: () => void;
 }
 
 const TRIMESTER_INFO = [
