@@ -19,6 +19,7 @@ import { MoreView } from "@/components/MoreView";
 import { WorkoutReminder } from "@/components/WorkoutReminder";
 import { useNotifications } from "@/hooks/useNotifications";
 import { LegalPage } from "@/components/LegalPage";
+import { PremiumView } from "@/components/PremiumView";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
