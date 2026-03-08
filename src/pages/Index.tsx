@@ -32,6 +32,7 @@ import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVE
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
+import { supabase } from "@/integrations/supabase/client";
 
 function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): string | undefined {
   if (!entries || entries.length === 0) return undefined;
