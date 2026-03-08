@@ -24,7 +24,7 @@ import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVE
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
-  const [view, setView] = useState<AppView>("dashboard");
+  const [view, setView] = useState<AppView | "cycle" | "pregnancy">("dashboard");
   const [giornoSelezionato, setGiornoSelezionato] = useState<string | null>(null);
   const [eserciziCorrenti, setEserciziCorrenti] = useState<Exercise[]>([]);
   const [roundCorrenti, setRoundCorrenti] = useState(0);
