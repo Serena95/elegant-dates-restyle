@@ -19,7 +19,7 @@ import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
-import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, FOCUS_LABELS, DayFocus, computeProgressionContext, isPianoCurrentWeek } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, FOCUS_LABELS, DayFocus, computeProgressionContext, isPianoCurrentWeek, getWeekDates } from "@/data/exercises";
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 
@@ -37,7 +37,7 @@ const Index = () => {
   const [aiGenerated, setAiGenerated] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useLocalStorage("voice_trainer_enabled", true);
   const prevBadgeCountRef = useRef(0);
-  const autoGenRef = useRef(false);
+  const lastGeneratedKey = useRef("");
 
   const { unlockedBadges, checkNewBadges } = useBadges(cloud.storicoCal);
   prevBadgeCountRef.current = unlockedBadges.length;
@@ -46,12 +46,18 @@ const Index = () => {
 
   // Auto-generate weekly plan when needed
   useEffect(() => {
-    if (cloud.loading || cloud.attrezzi.length === 0 || autoGenRef.current) return;
+    if (cloud.loading || cloud.attrezzi.length === 0) return;
+    
+    // Create a key that represents the expected plan
+    const expectedKey = getWeekDates(cloud.giorniAllenamento).sort().join(",");
+    
+    // Skip if we already generated for this exact configuration
+    if (lastGeneratedKey.current === expectedKey) return;
     
     const needsGeneration = !isPianoCurrentWeek(cloud.piano, cloud.giorniAllenamento);
     
     if (needsGeneration) {
-      autoGenRef.current = true;
+      lastGeneratedKey.current = expectedKey;
       const result = generaSettimanaIntelligente(
         cloud.attrezzi,
         cloud.livello,
@@ -63,6 +69,9 @@ const Index = () => {
       cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
       const usedEquipment = Object.values(result.piano).map(d => d.attrezzo);
       cloud.setUltimiAttrezzi(usedEquipment);
+    } else {
+      // Piano matches, record the key so we don't re-check
+      lastGeneratedKey.current = expectedKey;
     }
   }, [cloud.loading, cloud.attrezzi, cloud.piano, cloud.giorniAllenamento]);
 
@@ -213,8 +222,8 @@ const Index = () => {
 
   const handleChangeTrainingDays = useCallback((days: number[]) => {
     cloud.setGiorniAllenamento(days);
-    // Force regeneration on next render
-    autoGenRef.current = false;
+    // Reset generation key to force regeneration
+    lastGeneratedKey.current = "";
   }, [cloud.setGiorniAllenamento]);
 
   if (effectiveView === "loading") {

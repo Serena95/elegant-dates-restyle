@@ -122,14 +122,15 @@ export function formatDateLabel(dateKey: string): string {
 }
 
 /**
- * Check if a piano's keys belong to the current week for the given training days.
+ * Check if a piano's keys exactly match the current week's expected dates.
  */
 export function isPianoCurrentWeek(piano: Record<string, any>, giorniSettimana: number[]): boolean {
   const expectedDates = getWeekDates(giorniSettimana);
-  const pianoKeys = Object.keys(piano);
+  const pianoKeys = Object.keys(piano).sort();
   if (pianoKeys.length === 0) return false;
-  // Check if at least one expected date is in the piano
-  return expectedDates.some(d => pianoKeys.includes(d));
+  if (pianoKeys.length !== expectedDates.length) return false;
+  const sortedExpected = [...expectedDates].sort();
+  return sortedExpected.every((d, i) => d === pianoKeys[i]);
 }
 
 // ============================================================
