@@ -61,14 +61,13 @@ export async function deletePost(postId: string) {
   return supabase.from("community_posts").delete().eq("id", postId);
 }
 
-export async function toggleLike(postId: string, userId: string, currentlyLiked: boolean, currentCount: number) {
-  if (currentlyLiked) {
-    await supabase.from("community_likes").delete().eq("post_id", postId).eq("user_id", userId);
-    await supabase.from("community_posts").update({ likes_count: Math.max(0, currentCount - 1) }).eq("id", postId);
-  } else {
-    await supabase.from("community_likes").insert({ post_id: postId, user_id: userId });
-    await supabase.from("community_posts").update({ likes_count: currentCount + 1 }).eq("id", postId);
-  }
+export async function toggleLike(postId: string, userId: string, currentlyLiked: boolean, _currentCount: number) {
+  const { data, error } = await supabase.rpc("toggle_post_like", {
+    p_post_id: postId,
+    p_user_id: userId,
+  });
+  if (error) console.error("toggleLike error:", error);
+  return data; // true = liked, false = unliked
 }
 
 export async function fetchComments(postId: string) {
