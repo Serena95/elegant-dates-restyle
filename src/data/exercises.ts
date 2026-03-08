@@ -85,6 +85,16 @@ const DAY_NAMES: Record<number, string> = {
 const MONTH_NAMES = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
 
 /**
+ * Local date key formatter to avoid timezone shifts from toISOString.
+ */
+export function getLocalDateKey(date: Date): string {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, "0");
+  const d = String(date.getDate()).padStart(2, "0");
+  return `${y}-${m}-${d}`;
+}
+
+/**
  * Get the Monday of the current week.
  */
 export function getMondayOfWeek(date: Date = new Date()): Date {
@@ -106,7 +116,7 @@ export function getWeekDates(giorniSettimana: number[], refDate: Date = new Date
     const d = new Date(monday);
     const offset = dayNum === 0 ? 6 : dayNum - 1; // Mon=0 offset, Tue=1, ..., Sun=6
     d.setDate(d.getDate() + offset);
-    return d.toISOString().split("T")[0];
+    return getLocalDateKey(d);
   });
 }
 
