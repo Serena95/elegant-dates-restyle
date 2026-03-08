@@ -28,7 +28,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
-  const [view, setView] = useState<AppView | "cycle" | "pregnancy">("dashboard");
+  const [view, setView] = useState<AppView | "cycle" | "pregnancy" | "privacy" | "terms">("dashboard");
   const [giornoSelezionato, setGiornoSelezionato] = useState<string | null>(null);
   const [eserciziCorrenti, setEserciziCorrenti] = useState<Exercise[]>([]);
   const [roundCorrenti, setRoundCorrenti] = useState(0);
