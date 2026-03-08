@@ -22,8 +22,13 @@ import { LegalPage } from "@/components/LegalPage";
 import { PremiumView } from "@/components/PremiumView";
 import { ChallengesView } from "@/components/ChallengesView";
 import { CommunityView } from "@/components/CommunityView";
+import { LeaderboardView } from "@/components/LeaderboardView";
+import { PublicProfileView } from "@/components/PublicProfileView";
+import { CommunityNotifications } from "@/components/CommunityNotifications";
 import { addWorkoutXP } from "@/services/xpService";
 import { calculateStreak } from "@/services/streakService";
+import { updateLeaderboard } from "@/services/supabase/leaderboardService";
+import { syncBadges } from "@/services/supabase/badgeService";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -60,7 +65,8 @@ function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): stri
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
-  const [view, setView] = useState<AppView | "cycle" | "pregnancy" | "privacy" | "terms" | "premium" | "challenges" | "community">("dashboard");
+  const [view, setView] = useState<AppView | "cycle" | "pregnancy" | "privacy" | "terms" | "premium" | "challenges" | "community" | "leaderboard" | "notifications" | "public-profile">("dashboard");
+  const [publicProfileUserId, setPublicProfileUserId] = useState<string | null>(null);
   const [giornoSelezionato, setGiornoSelezionato] = useState<string | null>(null);
   const [eserciziCorrenti, setEserciziCorrenti] = useState<Exercise[]>([]);
   const [roundCorrenti, setRoundCorrenti] = useState(0);
@@ -242,7 +248,12 @@ const Index = () => {
         const streakData = calculateStreak(cloud.storicoCal, cloud.giorniAllenamento);
         addWorkoutXP(user.id, streakData.currentStreak).then(result => {
           setXpResult({ xpGained: result.xpGained, newXp: result.newXp, leveledUp: result.leveledUp });
+          // Update leaderboard
+          updateLeaderboard(user.id, result.xpGained).catch(console.error);
         }).catch(console.error);
+        // Sync badges to DB
+        const badgeIds = unlockedBadges.map(b => b.id);
+        syncBadges(user.id, badgeIds).catch(console.error);
       }
 
       const prevCount = prevBadgeCountRef.current;
@@ -481,7 +492,26 @@ const Index = () => {
       case "challenges" as any:
         return <ChallengesView onBack={() => navigate("more")} />;
       case "community" as any:
-        return <CommunityView onBack={() => navigate("more")} />;
+        return (
+          <CommunityView
+            onViewProfile={(userId) => { setPublicProfileUserId(userId); setView("public-profile" as any); }}
+            onViewLeaderboard={() => setView("leaderboard" as any)}
+            onViewNotifications={() => setView("notifications" as any)}
+          />
+        );
+      case "leaderboard" as any:
+        return (
+          <LeaderboardView
+            onBack={() => setView("community" as any)}
+            onViewProfile={(userId) => { setPublicProfileUserId(userId); setView("public-profile" as any); }}
+          />
+        );
+      case "notifications" as any:
+        return <CommunityNotifications onBack={() => setView("community" as any)} />;
+      case "public-profile" as any:
+        return publicProfileUserId ? (
+          <PublicProfileView userId={publicProfileUserId} onBack={() => setView("community" as any)} />
+        ) : null;
       default:
         return null;
     }

@@ -32,6 +32,30 @@ export type Database = {
         }
         Relationships: []
       }
+      badges: {
+        Row: {
+          created_at: string
+          description: string
+          icon: string
+          id: string
+          name: string
+        }
+        Insert: {
+          created_at?: string
+          description: string
+          icon: string
+          id: string
+          name: string
+        }
+        Update: {
+          created_at?: string
+          description?: string
+          icon?: string
+          id?: string
+          name?: string
+        }
+        Relationships: []
+      }
       challenge_participations: {
         Row: {
           challenge_id: string
@@ -156,6 +180,44 @@ export type Database = {
           },
         ]
       }
+      community_notifications: {
+        Row: {
+          created_at: string
+          from_user_id: string
+          id: string
+          post_id: string | null
+          read: boolean
+          type: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          from_user_id: string
+          id?: string
+          post_id?: string | null
+          read?: boolean
+          type: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          from_user_id?: string
+          id?: string
+          post_id?: string | null
+          read?: boolean
+          type?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "community_notifications_post_id_fkey"
+            columns: ["post_id"]
+            isOneToOne: false
+            referencedRelation: "community_posts"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       community_posts: {
         Row: {
           created_at: string
@@ -246,6 +308,36 @@ export type Database = {
           mood?: string
           tipo?: string
           user_id?: string
+        }
+        Relationships: []
+      }
+      leaderboard: {
+        Row: {
+          created_at: string
+          id: string
+          rank: number
+          user_id: string
+          week_start: string
+          workouts_week: number
+          xp_week: number
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          rank?: number
+          user_id: string
+          week_start: string
+          workouts_week?: number
+          xp_week?: number
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          rank?: number
+          user_id?: string
+          week_start?: string
+          workouts_week?: number
+          xp_week?: number
         }
         Relationships: []
       }
@@ -350,6 +442,35 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_badges: {
+        Row: {
+          badge_id: string
+          created_at: string
+          id: string
+          user_id: string
+        }
+        Insert: {
+          badge_id: string
+          created_at?: string
+          id?: string
+          user_id: string
+        }
+        Update: {
+          badge_id?: string
+          created_at?: string
+          id?: string
+          user_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_badges_badge_id_fkey"
+            columns: ["badge_id"]
+            isOneToOne: false
+            referencedRelation: "badges"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       user_roles: {
         Row: {

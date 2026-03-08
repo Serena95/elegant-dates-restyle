@@ -9,6 +9,7 @@ import {
   Settings,
   ClipboardList,
   MoreHorizontal,
+  Users,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProfileData } from "@/hooks/useCloudData";
@@ -24,7 +25,8 @@ export type AppView =
   | "programs"
   | "profile"
   | "settings"
-  | "more";
+  | "more"
+  | "community";
 
 interface AppLayoutProps {
   currentView: AppView;
@@ -35,21 +37,23 @@ interface AppLayoutProps {
 }
 
 const NAV_ITEMS: { view: AppView; label: string; icon: React.ElementType }[] = [
-  { view: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-  { view: "progress", label: "Progressi", icon: BarChart3 },
+  { view: "dashboard", label: "Home", icon: LayoutDashboard },
+  { view: "programs", label: "Allenamenti", icon: ClipboardList },
   { view: "calendar", label: "Calendario", icon: CalendarDays },
-  { view: "programs", label: "Programmi", icon: ClipboardList },
+  { view: "community", label: "Community", icon: Users },
+  { view: "profile", label: "Profilo", icon: UserCircle },
+  { view: "progress", label: "Progressi", icon: BarChart3 },
   { view: "food", label: "Alimentazione", icon: Apple },
   { view: "library", label: "Libreria", icon: BookOpen },
-  { view: "profile", label: "Profilo", icon: UserCircle },
   { view: "settings", label: "Impostazioni", icon: Settings },
 ];
 
-const MOBILE_NAV_ITEMS = NAV_ITEMS.slice(0, 5);
-const MORE_ITEMS = [
-  { view: "library" as AppView, label: "Libreria", icon: BookOpen },
-  { view: "profile" as AppView, label: "Profilo", icon: UserCircle },
-  { view: "settings" as AppView, label: "Impostazioni", icon: Settings },
+const MOBILE_NAV_ITEMS: { view: AppView; label: string; icon: React.ElementType }[] = [
+  { view: "dashboard", label: "Home", icon: LayoutDashboard },
+  { view: "programs", label: "Allenamenti", icon: ClipboardList },
+  { view: "calendar", label: "Calendario", icon: CalendarDays },
+  { view: "community", label: "Community", icon: Users },
+  { view: "profile", label: "Profilo", icon: UserCircle },
 ];
 
 function ProfileAvatar({ profile, size = 36, onClick }: { profile: ProfileData; size?: number; onClick?: () => void }) {
@@ -166,15 +170,6 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
                 </button>
               );
             })}
-            <button
-              onClick={() => onNavigate("more")}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
-                ["more", "settings", "profile", "library"].includes(currentView) ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              <MoreHorizontal size={20} />
-              <span className="text-[10px] font-semibold">Altro</span>
-            </button>
           </div>
         </nav>
       )}
