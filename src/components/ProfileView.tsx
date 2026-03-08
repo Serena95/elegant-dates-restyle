@@ -20,7 +20,7 @@ interface ProfileViewProps {
 }
 
 export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], livello, attrezzi = [], totalWorkouts = 0 }: ProfileViewProps) {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [displayName, setDisplayName] = useState(profile.display_name || "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
   const [newEmail, setNewEmail] = useState(user?.email || "");
