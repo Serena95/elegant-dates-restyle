@@ -47,6 +47,26 @@ const FEATURES = [
     iconColor: "text-sky-500",
     borderColor: "border-sky-500/20",
   },
+  {
+    icon: Trophy,
+    label: "Challenge Fitness",
+    desc: "Sfide da 7, 14 e 30 giorni per metterti alla prova",
+    view: "challenges",
+    gradient: "from-orange-500/20 to-red-400/10",
+    iconBg: "bg-orange-500/15",
+    iconColor: "text-orange-500",
+    borderColor: "border-orange-500/20",
+  },
+  {
+    icon: Users,
+    label: "Community",
+    desc: "Condividi allenamenti e connettiti con altri utenti",
+    view: "community",
+    gradient: "from-emerald-500/20 to-green-400/10",
+    iconBg: "bg-emerald-500/15",
+    iconColor: "text-emerald-500",
+    borderColor: "border-emerald-500/20",
+  },
 ];
 
 export function MoreView({ onNavigate }: MoreViewProps) {
