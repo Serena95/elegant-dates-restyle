@@ -41,6 +41,22 @@ export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, on
     }
   }, [xpGained]);
 
+  // Auto-sync workout to Google Fit / Apple Health
+  useEffect(() => {
+    if (healthService.isAvailable() && healthService.isConnected() && minuti > 0) {
+      healthService.writeWorkout(minuti, calorie).then((success) => {
+        setHealthSynced(success);
+        if (success) {
+          toast.success(
+            healthService.getPlatform() === "ios"
+              ? "Allenamento salvato su Apple Health! 🍎"
+              : "Allenamento salvato su Google Fit! 💚"
+          );
+        }
+      });
+    }
+  }, []);
+
   const handleShare = () => {
     const text = `Ho completato il mio allenamento ${attrezzo} oggi! 💪 ${minuti} minuti, ${esercizi} esercizi, ~${calorie} kcal bruciati!`;
     if (navigator.share) {
