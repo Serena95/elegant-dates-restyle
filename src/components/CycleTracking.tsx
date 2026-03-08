@@ -17,6 +17,7 @@ interface CycleTrackingProps {
   durataCiclo: number;
   durataMestruazione: number;
   onUpdateSettings: (settings: { durata_ciclo?: number; durata_mestruazione?: number }) => void;
+  onBack?: () => void;
 }
 
 const SINTOMI_OPTIONS = [
