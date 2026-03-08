@@ -115,6 +115,40 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], liv
         </div>
       </div>
 
+      {/* XP & Level */}
+      {levelInfo && (
+        <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-3xl">{levelInfo.current.icon}</span>
+              <div>
+                <p className="font-bold text-foreground">Lv.{levelInfo.current.level} {levelInfo.current.name}</p>
+                <p className="text-xs text-muted-foreground">{xpData!.xp} XP totali</p>
+              </div>
+            </div>
+            <Zap size={20} className="text-amber-500" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>Progresso</span>
+              <span>{levelInfo.next ? `${xpData!.xp} / ${levelInfo.next.minXp} XP` : "MAX"}</span>
+            </div>
+            <Progress value={levelInfo.progressToNext * 100} className="h-2" />
+          </div>
+          <div className="flex gap-1.5 justify-center">
+            {LEVELS.map(l => (
+              <div
+                key={l.level}
+                className={`text-center px-2 py-1 rounded-lg text-[10px] ${l.level <= levelInfo.current.level ? "bg-primary/10 font-bold" : "bg-muted/50 text-muted-foreground"}`}
+              >
+                <span className="text-sm">{l.icon}</span>
+                <p>{l.name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* Equipment list */}
       {attrezzi.length > 0 && (
         <div className="space-y-2">
