@@ -52,7 +52,7 @@ const TRIMESTER_INFO = [
   },
 ];
 
-export function PregnancyMode({ isActive, settimanaGestazionale, onToggle, onUpdateWeek }: PregnancyModeProps) {
+export function PregnancyMode({ isActive, settimanaGestazionale, onToggle, onUpdateWeek, onBack }: PregnancyModeProps) {
   const [showConfirm, setShowConfirm] = useState(false);
 
   const currentTrimester = TRIMESTER_INFO.find(
@@ -63,8 +63,13 @@ export function PregnancyMode({ isActive, settimanaGestazionale, onToggle, onUpd
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
+      <div className="flex items-center gap-2">
+        {onBack && (
+          <button onClick={onBack} className="text-primary">
+            <ChevronLeft size={24} />
+          </button>
+        )}
+        <h2 className="text-xl font-bold text-foreground flex items-center gap-2 flex-1">
           <Baby size={22} className="text-pink-400" /> Modalità Gravidanza
         </h2>
       </div>
