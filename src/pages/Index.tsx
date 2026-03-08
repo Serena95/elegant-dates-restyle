@@ -1,4 +1,5 @@
 import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout, AppView } from "@/components/AppLayout";
 import { Dashboard } from "@/components/Dashboard";
 import { EquipmentSelection } from "@/components/EquipmentSelection";
