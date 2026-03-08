@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, X, Droplets, Calendar, TrendingUp } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { ChevronLeft, ChevronRight, X, Droplets, Calendar, TrendingUp, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface CycleEntry {
