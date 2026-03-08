@@ -124,10 +124,27 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
                 className="space-y-3"
               >
                 {loading ? (
-                  <div className="flex items-center justify-center py-6">
+                  <div className="flex flex-col items-center justify-center py-6 gap-2">
                     <div className="animate-spin w-6 h-6 border-2 border-primary border-t-transparent rounded-full" />
+                    <p className="text-xs text-muted-foreground">Il coach sta pensando...</p>
                   </div>
-                ) : suggestion ? (
+                ) : error || !suggestion ? (
+                  <div className="flex flex-col items-center text-center py-5 gap-3">
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center">
+                      <CloudOff size={20} className="text-muted-foreground" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-foreground">Coach momentaneamente offline</p>
+                      <p className="text-xs text-muted-foreground mt-1">Nessun problema! Puoi iniziare un allenamento libero oppure riprovare tra poco.</p>
+                    </div>
+                    <button
+                      onClick={() => loadSuggestions(true)}
+                      className="px-4 py-2 rounded-xl bg-primary/10 text-primary font-bold text-xs hover:bg-primary/20 transition flex items-center gap-1.5"
+                    >
+                      <RefreshCw size={14} /> Riprova
+                    </button>
+                  </div>
+                ) : (
                   <>
                     <div>
                       <div className="flex items-center gap-2 mb-1">
@@ -156,7 +173,7 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
                       </button>
                     </div>
                   </>
-                ) : null}
+                )}
               </motion.div>
             )}
 
