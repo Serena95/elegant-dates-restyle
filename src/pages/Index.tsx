@@ -37,7 +37,7 @@ const Index = () => {
   const [aiGenerated, setAiGenerated] = useState(false);
   const [voiceEnabled, setVoiceEnabled] = useLocalStorage("voice_trainer_enabled", true);
   const prevBadgeCountRef = useRef(0);
-  const autoGenRef = useRef(false);
+  const lastGeneratedKey = useRef("");
 
   const { unlockedBadges, checkNewBadges } = useBadges(cloud.storicoCal);
   prevBadgeCountRef.current = unlockedBadges.length;
