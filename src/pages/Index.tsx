@@ -182,6 +182,7 @@ const Index = () => {
     setView(v);
     setGiornoSelezionato(null);
     setShowGuide(false);
+    setShowNativeGuide(false);
   }, []);
 
   const avviaAllenamento = useCallback(async (giorno: string) => {
