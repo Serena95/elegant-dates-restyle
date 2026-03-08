@@ -1,4 +1,5 @@
 import { User } from "lucide-react";
+import { motion } from "framer-motion";
 import {
   LayoutDashboard,
   BarChart3,
@@ -92,14 +93,21 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
                 <button
                   key={item.view}
                   onClick={() => onNavigate(item.view)}
-                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all ${
+                  className={`w-full flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all relative ${
                     active
                       ? "bg-primary/10 text-primary"
                       : "text-muted-foreground hover:bg-muted hover:text-foreground"
                   }`}
                 >
-                  <Icon size={20} />
-                  <span>{item.label}</span>
+                  {active && (
+                    <motion.div
+                      layoutId="sidebar-active"
+                      className="absolute inset-0 rounded-xl bg-primary/10"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
+                  <Icon size={20} className="relative z-10" />
+                  <span className="relative z-10">{item.label}</span>
                 </button>
               );
             })}
@@ -161,10 +169,17 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
                 <button
                   key={item.view}
                   onClick={() => onNavigate(item.view)}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
+                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 relative ${
                     active ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
+                  {active && (
+                    <motion.div
+                      layoutId="mobile-nav-active"
+                      className="absolute -top-1 w-8 h-1 rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
                   <Icon size={20} />
                   <span className="text-[10px] font-semibold truncate">{item.label}</span>
                 </button>
