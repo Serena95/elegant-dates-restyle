@@ -1,12 +1,13 @@
 import { motion } from "framer-motion";
 import { ChevronRight, Check } from "lucide-react";
-import { DayPlan, CONFIG_LIVELLI, ATTREZZO_ICONS } from "@/data/exercises";
+import { DayPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo } from "@/data/exercises";
 
 interface DayCardProps {
   giorno: string;
   dati: DayPlan;
   livello: string;
   index: number;
+  focus?: FocusInfo;
   onClick: () => void;
 }
 
