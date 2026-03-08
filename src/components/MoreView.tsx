@@ -150,7 +150,7 @@ export function MoreView({ onNavigate }: MoreViewProps) {
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.4 }}
-          onClick={handleInstallApp}
+          onClick={() => onNavigate("install-app")}
           className="w-full flex items-center gap-4 p-4 rounded-2xl bg-gradient-to-r from-primary/15 to-primary/5 border border-primary/20 text-left transition-all active:scale-[0.98]"
         >
           <div className="w-12 h-12 rounded-2xl bg-primary/15 flex items-center justify-center flex-shrink-0">
@@ -160,7 +160,7 @@ export function MoreView({ onNavigate }: MoreViewProps) {
             <p className="text-sm font-bold text-foreground">Installa App</p>
             <p className="text-xs text-muted-foreground mt-0.5">Aggiungi alla schermata Home</p>
           </div>
-          <span className="text-xs font-bold text-primary bg-primary/10 px-2.5 py-1 rounded-full flex-shrink-0">Installa</span>
+          <ChevronRight size={18} className="text-primary flex-shrink-0" />
         </motion.button>
       )}
 

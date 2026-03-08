@@ -12,6 +12,7 @@ import { ProfileView } from "@/components/ProfileView";
 import { SettingsView } from "@/components/SettingsView";
 import { WorkoutComplete } from "@/components/WorkoutComplete";
 import { InstallBanner } from "@/components/InstallBanner";
+import { InstallAppView } from "@/components/InstallAppView";
 import { ProgramsView } from "@/components/ProgramsView";
 import { CycleTracking } from "@/components/CycleTracking";
 import { PregnancyMode } from "@/components/PregnancyMode";
@@ -491,6 +492,8 @@ const Index = () => {
         return <PremiumView onNavigate={(v) => navigate(v as AppView)} />;
       case "challenges" as any:
         return <ChallengesView onBack={() => navigate("more")} />;
+      case "install-app" as any:
+        return <InstallAppView />;
       case "community" as any:
         return (
           <CommunityView
