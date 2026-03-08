@@ -6,7 +6,7 @@ interface BadgeDisplayProps {
   unlockedBadges: Badge[];
 }
 
-export const BadgeDisplay = forwardRef<HTMLDivElement, BadgeDisplayProps>(function BadgeDisplay({ unlockedBadges }, ref) {
+export function BadgeDisplay({ unlockedBadges }: BadgeDisplayProps) {
   const unlockedIds = new Set(unlockedBadges.map(b => b.id));
 
   return (
