@@ -24,7 +24,8 @@ export type AppView =
   | "programs"
   | "profile"
   | "settings"
-  | "more";
+  | "more"
+  | "community";
 
 interface AppLayoutProps {
   currentView: AppView;
