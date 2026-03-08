@@ -3,6 +3,7 @@ import { Exercise, CONFIG_LIVELLI, ATTREZZO_ICONS, TEMA_CONFIG, detectFocus } fr
 import { useTimer } from "@/hooks/useTimer";
 import { useVoiceTrainer } from "@/hooks/useVoiceTrainer";
 import { TimerOverlay } from "./TimerOverlay";
+import { ExerciseImage } from "./ExerciseImage";
 import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, SkipForward, X, Volume2, VolumeX, Sparkles } from "lucide-react";
 
 interface WorkoutViewProps {
