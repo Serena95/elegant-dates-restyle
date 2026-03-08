@@ -1,3 +1,4 @@
+import React from "react";
 import { DayCard } from "./DayCard";
 import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
 import { CalendarDays, BarChart3, Flame, Dumbbell, Target } from "lucide-react";
