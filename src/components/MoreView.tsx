@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BookOpen, UserCircle, Settings, Download, ChevronRight } from "lucide-react";
+import { BookOpen, Settings, Download, ChevronRight, Droplets, Baby } from "lucide-react";
 
 interface MoreViewProps {
   onNavigate: (view: string) => void;
@@ -29,6 +29,8 @@ export function MoreView({ onNavigate }: MoreViewProps) {
 
   const items = [
     { icon: BookOpen, label: "Libreria Esercizi", desc: "Scopri tutti gli esercizi disponibili", view: "library" },
+    { icon: Droplets, label: "Monitoraggio Ciclo", desc: "Tieni traccia del tuo ciclo mestruale", view: "cycle" },
+    { icon: Baby, label: "Modalità Gravidanza", desc: "Allenamenti adattati alla gravidanza", view: "pregnancy" },
     { icon: Settings, label: "Impostazioni", desc: "Preferenze, account e supporto", view: "settings" },
   ];
 
