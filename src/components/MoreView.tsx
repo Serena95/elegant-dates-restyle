@@ -138,11 +138,23 @@ export function MoreView({ onNavigate }: MoreViewProps) {
       {showIOSGuide && (
         <div className="fixed inset-0 bg-foreground/40 flex items-end justify-center z-50 p-4" onClick={() => setShowIOSGuide(false)}>
           <div className="bg-card rounded-3xl border border-border shadow-2xl p-6 max-w-sm w-full space-y-3 mb-4" onClick={e => e.stopPropagation()}>
-            <h3 className="font-bold text-foreground text-center">📱 Installa su iPhone/iPad</h3>
+            <h3 className="font-bold text-foreground text-center">
+              {isIOS ? "📱 Installa su iPhone/iPad" : "📱 Installa l'app dal browser"}
+            </h3>
             <ol className="text-sm text-muted-foreground space-y-2">
-              <li>1. Tocca il pulsante <strong>Condividi</strong> ⬆️ in basso</li>
-              <li>2. Scorri e seleziona <strong>"Aggiungi a Home"</strong></li>
-              <li>3. Tocca <strong>"Aggiungi"</strong> in alto a destra</li>
+              {isIOS ? (
+                <>
+                  <li>1. Tocca il pulsante <strong>Condividi</strong> ⬆️ in basso</li>
+                  <li>2. Scorri e seleziona <strong>"Aggiungi a Home"</strong></li>
+                  <li>3. Tocca <strong>"Aggiungi"</strong> in alto a destra</li>
+                </>
+              ) : (
+                <>
+                  <li>1. Apri il menu del browser (⋮ o ⋯)</li>
+                  <li>2. Tocca <strong>"Installa app"</strong> o <strong>"Aggiungi a schermata Home"</strong></li>
+                  <li>3. Conferma l'installazione</li>
+                </>
+              )}
             </ol>
             <button onClick={() => setShowIOSGuide(false)} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold">
               Ho capito!
