@@ -492,6 +492,8 @@ const Index = () => {
         return <PremiumView onNavigate={(v) => navigate(v as AppView)} />;
       case "challenges" as any:
         return <ChallengesView onBack={() => navigate("more")} />;
+      case "install-app" as any:
+        return <InstallAppView />;
       case "community" as any:
         return (
           <CommunityView
