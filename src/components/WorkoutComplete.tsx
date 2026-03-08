@@ -22,6 +22,7 @@ interface WorkoutCompleteProps {
 export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, onClose, xpGained, newXp, leveledUp, onShare }: WorkoutCompleteProps) {
   const [showBadges, setShowBadges] = useState(false);
   const [showXp, setShowXp] = useState(false);
+  const [healthSynced, setHealthSynced] = useState<boolean | null>(null);
   const calorie = Math.round(esercizi * 12 + tempoTotale * 0.08);
   const minuti = Math.floor(tempoTotale / 60);
   const levelInfo = newXp ? getLevelInfo(newXp) : null;
