@@ -150,68 +150,35 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
 
       {/* Mobile Bottom Nav */}
       {isMobile && (
-        <>
-          {/* More submenu popover */}
-          {showMore && (
-            <div className="fixed bottom-0 left-0 right-0 z-50" onClick={() => setShowMore(false)}>
-              <div className="fixed inset-0" />
-              <div className="relative bg-card border-t border-x border-border rounded-t-2xl shadow-lg mx-2 mb-0 pb-[env(safe-area-inset-bottom)]">
-                <div className="flex items-center justify-around py-3 px-2">
-                  {MORE_ITEMS.map(item => {
-                    const Icon = item.icon;
-                    const active = currentView === item.view;
-                    return (
-                      <button
-                        key={item.view}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onNavigate(item.view);
-                          setShowMore(false);
-                        }}
-                        className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
-                          active ? "text-primary bg-primary/10" : "text-muted-foreground"
-                        }`}
-                      >
-                        <Icon size={22} />
-                        <span className="text-xs font-semibold">{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-            </div>
-          )}
-
-          <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border z-40 px-2 pb-[env(safe-area-inset-bottom)]">
-            <div className="flex items-center justify-around py-2">
-              {MOBILE_NAV_ITEMS.map(item => {
-                const Icon = item.icon;
-                const active = currentView === item.view;
-                return (
-                  <button
-                    key={item.view}
-                    onClick={() => { setShowMore(false); onNavigate(item.view); }}
-                    className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
-                      active ? "text-primary" : "text-muted-foreground"
-                    }`}
-                  >
-                    <Icon size={20} />
-                    <span className="text-[10px] font-semibold truncate">{item.label}</span>
-                  </button>
-                );
-              })}
-              <button
-                onClick={() => setShowMore(prev => !prev)}
-                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
-                  showMore || ["settings", "profile", "library"].includes(currentView) ? "text-primary" : "text-muted-foreground"
-                }`}
-              >
-                <MoreHorizontal size={20} />
-                <span className="text-[10px] font-semibold">Altro</span>
-              </button>
-            </div>
-          </nav>
-        </>
+        <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border z-40 px-2 pb-[env(safe-area-inset-bottom)]">
+          <div className="flex items-center justify-around py-2">
+            {MOBILE_NAV_ITEMS.map(item => {
+              const Icon = item.icon;
+              const active = currentView === item.view;
+              return (
+                <button
+                  key={item.view}
+                  onClick={() => onNavigate(item.view)}
+                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
+                    active ? "text-primary" : "text-muted-foreground"
+                  }`}
+                >
+                  <Icon size={20} />
+                  <span className="text-[10px] font-semibold truncate">{item.label}</span>
+                </button>
+              );
+            })}
+            <button
+              onClick={() => onNavigate("more")}
+              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
+                ["more", "settings", "profile", "library"].includes(currentView) ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              <MoreHorizontal size={20} />
+              <span className="text-[10px] font-semibold">Altro</span>
+            </button>
+          </div>
+        </nav>
       )}
     </div>
   );
