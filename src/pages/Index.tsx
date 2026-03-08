@@ -46,20 +46,24 @@ const Index = () => {
 
   // Auto-generate weekly plan when needed
   useEffect(() => {
-    if (cloud.loading || cloud.attrezzi.length === 0) return;
-    
+    const equipmentPool = cloud.attrezzi.length > 0
+      ? cloud.attrezzi
+      : Array.from(new Set(Object.values(cloud.piano).map((d) => d?.attrezzo).filter(Boolean) as string[]));
+
+    if (cloud.loading || equipmentPool.length === 0) return;
+
     // Create a key that represents the expected plan
     const expectedKey = getWeekDates(cloud.giorniAllenamento).sort().join(",");
-    
+
     // Skip if we already generated for this exact configuration
     if (lastGeneratedKey.current === expectedKey) return;
-    
+
     const needsGeneration = !isPianoCurrentWeek(cloud.piano, cloud.giorniAllenamento);
-    
+
     if (needsGeneration) {
       lastGeneratedKey.current = expectedKey;
       const result = generaSettimanaIntelligente(
-        cloud.attrezzi,
+        equipmentPool,
         cloud.livello,
         cloud.allenamentiData.storico || {},
         cloud.storicoCal,
@@ -124,7 +128,7 @@ const Index = () => {
 
   const effectiveView: string = cloud.loading
     ? "loading"
-    : cloud.attrezzi.length === 0 && view === "dashboard"
+    : cloud.attrezzi.length === 0 && Object.keys(cloud.piano).length === 0 && view === "dashboard"
       ? "equipment-init"
       : view;
 

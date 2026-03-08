@@ -111,13 +111,27 @@ export function getMondayOfWeek(date: Date = new Date()): Date {
  * @param giorniSettimana Array of day numbers (0=Sun, 1=Mon, ..., 6=Sat)
  */
 export function getWeekDates(giorniSettimana: number[], refDate: Date = new Date()): string[] {
+  const buildWeekDates = (monday: Date) =>
+    giorniSettimana.map(dayNum => {
+      const d = new Date(monday);
+      const offset = dayNum === 0 ? 6 : dayNum - 1; // Mon=0 offset, Tue=1, ..., Sun=6
+      d.setDate(d.getDate() + offset);
+      return getLocalDateKey(d);
+    });
+
   const monday = getMondayOfWeek(refDate);
-  return giorniSettimana.map(dayNum => {
-    const d = new Date(monday);
-    const offset = dayNum === 0 ? 6 : dayNum - 1; // Mon=0 offset, Tue=1, ..., Sun=6
-    d.setDate(d.getDate() + offset);
-    return getLocalDateKey(d);
-  });
+  const currentWeekDates = buildWeekDates(monday);
+  const todayKey = getLocalDateKey(refDate);
+
+  // If all selected training days for this week are in the past,
+  // prepare the upcoming week so the dashboard stays aligned with "next session".
+  if (currentWeekDates.every((dateKey) => dateKey < todayKey)) {
+    const nextMonday = new Date(monday);
+    nextMonday.setDate(nextMonday.getDate() + 7);
+    return buildWeekDates(nextMonday);
+  }
+
+  return currentWeekDates;
 }
 
 /**
