@@ -84,6 +84,9 @@ export function CalendarView({ livello, storicoCal, onBack }: CalendarViewProps)
               <span className="text-4xl">{ATTREZZO_ICONS[selectedWorkout.attrezzo] || "🏋️"}</span>
               <div><p className="text-sm text-muted-foreground">Data</p><p className="font-bold text-foreground">{selectedDay}</p></div>
               <div><p className="text-sm text-muted-foreground">Attrezzo</p><p className="font-bold text-primary text-lg">{selectedWorkout.attrezzo}</p></div>
+              {selectedWorkout.focus && (
+                <div><p className="text-sm text-muted-foreground">Focus</p><p className="font-bold text-foreground text-lg">{selectedWorkout.focus.icon} {selectedWorkout.focus.label}</p></div>
+              )}
               <div><p className="text-sm text-muted-foreground">Round completati</p><p className="font-bold text-foreground text-lg">{selectedWorkout.round}</p></div>
               {selectedWorkout.completato && (
                 <div className="bg-pilates-green/20 text-pilates-green text-sm font-bold p-3 rounded-xl">✅ Sessione completata con successo!</div>
