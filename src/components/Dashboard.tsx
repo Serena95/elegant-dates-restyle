@@ -1,8 +1,12 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { DayCard } from "./DayCard";
+import { AICoachCard } from "./AICoachCard";
 import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
 import { CalendarDays, BarChart3, Flame, Dumbbell, Target } from "lucide-react";
 import { motion } from "framer-motion";
+import { calculateStreak } from "@/services/streakService";
+import { computeProgress } from "@/services/progressEngine";
+import { AICoachContext } from "@/services/aiCoach";
 
 interface DashboardProps {
   piano: WeekPlan;
@@ -13,6 +17,12 @@ interface DashboardProps {
   weeklyStats?: { completed: number; total: number; streak: number };
   onNavigate?: (view: string) => void;
   focusMap?: Record<string, FocusInfo>;
+  storicoCal?: Record<string, any>;
+  giorniAllenamento?: number[];
+  attrezzi?: string[];
+  cyclePhase?: string;
+  pregnancyMode?: boolean;
+  pregnancyWeek?: number;
 }
 
 export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(function Dashboard({
