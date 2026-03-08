@@ -115,7 +115,7 @@ export function MoreView({ onNavigate }: MoreViewProps) {
       </motion.button>
 
       {/* Install App */}
-      {!isStandalone && (installPrompt || isIOS) && (
+      {!isStandalone && (
         <motion.button
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}

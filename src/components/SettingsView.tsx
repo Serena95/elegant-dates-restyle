@@ -201,7 +201,7 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
 
       {/* Supporto */}
       <Section title="Supporto">
-        {!isStandalone && (installPrompt || isIOS) && (
+        {!isStandalone && (
           <SettingsRow icon={Download} label="Installa App" onClick={handleInstallApp} />
         )}
         <SettingsRow icon={HelpCircle} label="Guida all'uso" onClick={() => onNavigate("guide")} />

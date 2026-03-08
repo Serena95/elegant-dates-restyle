@@ -25,14 +25,19 @@ export function InstallBanner() {
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
 
-  if (dismissed || (!deferredPrompt && !isIOS)) return null;
+  const isStandalone = typeof window !== "undefined" && (window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone);
+
+  if (dismissed || isStandalone) return null;
 
   const handleInstall = async () => {
     if (isIOS) {
       setShowIOSGuide(true);
       return;
     }
-    if (!deferredPrompt) return;
+    if (!deferredPrompt) {
+      setShowIOSGuide(true);
+      return;
+    }
     await deferredPrompt.prompt();
     const { outcome } = await deferredPrompt.userChoice;
     if (outcome === "accepted") setDeferredPrompt(null);
