@@ -87,7 +87,7 @@ const Index = () => {
     for (let i = 0; i < 7; i++) {
       const d = new Date(startOfWeek);
       d.setDate(d.getDate() + i);
-      const key = d.toISOString().split("T")[0];
+      const key = getLocalDateKey(d);
       if (cloud.storicoCal[key]?.completato) completed++;
     }
 
