@@ -320,6 +320,12 @@ const Index = () => {
             weeklyStats={weeklyStats}
             onNavigate={navigate}
             focusMap={focusMap}
+            storicoCal={cloud.storicoCal}
+            giorniAllenamento={cloud.giorniAllenamento}
+            attrezzi={cloud.attrezzi}
+            cyclePhase={cloud.pregnancySettings.modalita_gravidanza ? undefined : getCyclePhase(cloud.cycleEntries, cloud.pregnancySettings)}
+            pregnancyMode={cloud.pregnancySettings.modalita_gravidanza}
+            pregnancyWeek={cloud.pregnancySettings.settimana_gestazionale}
           />
         );
       case "progress":

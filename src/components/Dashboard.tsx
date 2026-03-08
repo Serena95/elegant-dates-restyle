@@ -76,6 +76,14 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
         <p className="text-sm text-muted-foreground mt-0.5">Pronta per allenarti oggi?</p>
       </motion.div>
 
+      {/* AI Coach Card */}
+      <AICoachCard
+        context={aiContext}
+        streak={streakData}
+        progress={progressData}
+        onStartSuggested={todayWorkout ? () => onAvviaAllenamento(todayWorkout.key) : undefined}
+      />
+
       {/* Today's workout card */}
       {todayWorkout && todayWorkout.round < (CONFIG_LIVELLI[livello]?.round || 3) && (
         <motion.div
