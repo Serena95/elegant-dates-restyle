@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
-import { Bot, Sparkles, Heart, RefreshCw, Dumbbell, Wind } from "lucide-react";
+import { Bot, Sparkles, Heart, RefreshCw, Dumbbell, Wind, CloudOff } from "lucide-react";
 import { WorkoutSuggestion, RecoveryAdvice, generateCompleteCoachData, AICoachContext } from "@/services/aiCoach";
 import { StreakData, getStreakLevel } from "@/services/streakService";
 import { ProgressData } from "@/services/progressEngine";
