@@ -58,6 +58,12 @@ export function Dashboard({
               <p className="text-lg font-black text-foreground mt-1">
                 {ATTREZZO_ICONS[todayWorkout.attrezzo] || "🏋️"} {todayWorkout.attrezzo}
               </p>
+              {focusMap?.[todayWorkout.giorno] && (
+                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                  <Target size={12} className="text-primary" />
+                  Focus: <span className="font-semibold text-foreground">{focusMap[todayWorkout.giorno].icon} {focusMap[todayWorkout.giorno].label}</span>
+                </p>
+              )}
             </div>
             <div className="text-right">
               <span className={`${badgeColor} text-primary-foreground px-3 py-1 rounded-full text-xs font-bold`}>
