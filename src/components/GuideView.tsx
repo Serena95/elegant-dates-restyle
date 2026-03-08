@@ -103,12 +103,18 @@ const sections: { title: string; emoji: string; color: string; faqs: FaqItem[] }
 ];
 
 const infoCards = [
-  { emoji: "🏋️‍♀️", title: "Allenamento Smart", desc: "Ogni settimana l'app sceglie 3 attrezzi diversi. Ogni sessione ha 13 esercizi per round, bilanciati su tutto il corpo." },
-  { emoji: "📱", title: "Home + Altro", desc: "Home, Allenamenti, Calendario e Community nella barra. Profilo, Progressi, Alimentazione, Libreria, Challenge e Impostazioni in 'Altro'." },
-  { emoji: "⭐", title: "XP & Livelli", desc: "Completa allenamenti per guadagnare XP, salire di livello e sbloccare badge. Competi nella classifica settimanale!" },
-  { emoji: "🤖", title: "AI Coach", desc: "Un assistente intelligente che ti dà consigli personalizzati e può generare allenamenti su misura per te." },
-  { emoji: "🌙", title: "Dark Mode", desc: "Attiva la modalità scura dalle Impostazioni. La preferenza viene salvata e applicata automaticamente." },
-  { emoji: "📈", title: "Misurazioni", desc: "Inserisci le misure una volta a settimana, al mattino a digiuno, per dati confrontabili nel tempo." },
+  { emoji: "📱", title: "Navigazione", desc: "In basso: Home, Allenamenti, Calendario, Community e Altro. In 'Altro' trovi Profilo, Progressi, Alimentazione, Libreria, Challenge, Ciclo, Gravidanza, Premium e Impostazioni." },
+  { emoji: "🏋️‍♀️", title: "Allenamento Smart", desc: "Ogni settimana l'app sceglie 3 attrezzi diversi. Ogni sessione ha 13 esercizi per round, bilanciati su tutto il corpo. Puoi anche seguire programmi strutturati." },
+  { emoji: "🤖", title: "AI Coach", desc: "Un assistente intelligente nella Dashboard che ti dà consigli personalizzati su allenamento, alimentazione e recupero. Può anche generare workout su misura." },
+  { emoji: "👥", title: "Community & Classifica", desc: "Condividi allenamenti, commenta e metti like ai post degli altri. Competi nella classifica settimanale basata su XP e allenamenti completati." },
+  { emoji: "⭐", title: "XP, Livelli & Badge", desc: "Guadagni XP completando allenamenti e mantenendo streak. Sali di livello e sblocca badge speciali visibili nel tuo Profilo." },
+  { emoji: "🏆", title: "Challenge Fitness", desc: "Sfide da 7, 14 e 30 giorni per metterti alla prova. Scegli una challenge, partecipa e segna i progressi giorno per giorno." },
+  { emoji: "🍎", title: "Alimentazione & Acqua", desc: "Diario alimentare con consigli dinamici basati sull'allenamento del giorno. Traccia anche i bicchieri d'acqua per monitorare l'idratazione." },
+  { emoji: "📊", title: "Progressi & Misurazioni", desc: "Grafici, storico allenamenti e streak. Inserisci le misure una volta a settimana al mattino per dati confrontabili nel tempo." },
+  { emoji: "🌸", title: "Ciclo & Gravidanza", desc: "Monitora il ciclo con previsioni automatiche. In gravidanza, attiva allenamenti sicuri adattati settimana per settimana." },
+  { emoji: "👑", title: "Premium", desc: "Sblocca AI Coach avanzato, generazione allenamenti personalizzati e funzionalità esclusive. Vai in Altro → Premium." },
+  { emoji: "🔔", title: "Notifiche & Promemoria", desc: "Attiva le notifiche push nelle Impostazioni per ricevere promemoria giornalieri per l'allenamento all'orario che preferisci." },
+  { emoji: "🌙", title: "Dark Mode", desc: "Attiva la modalità scura dalle Impostazioni. La preferenza viene salvata e applicata automaticamente ad ogni apertura." },
 ];
 
 export function GuideView({ onBack }: GuideViewProps) {
