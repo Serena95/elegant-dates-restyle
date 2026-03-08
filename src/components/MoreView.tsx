@@ -29,7 +29,6 @@ export function MoreView({ onNavigate }: MoreViewProps) {
 
   const items = [
     { icon: BookOpen, label: "Libreria Esercizi", desc: "Scopri tutti gli esercizi disponibili", view: "library" },
-    { icon: UserCircle, label: "Profilo", desc: "I tuoi dati e le misurazioni", view: "profile" },
     { icon: Settings, label: "Impostazioni", desc: "Preferenze, account e supporto", view: "settings" },
   ];
 
