@@ -17,6 +17,9 @@ export const InstallBanner = React.forwardRef<HTMLDivElement, {}>(function Insta
     (window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone);
 
   useEffect(() => {
+    type InstallWindow = Window & { __deferredInstallPrompt?: Event };
+    const installWindow = window as InstallWindow;
+
     // Check if already dismissed this session
     try {
       if (sessionStorage.getItem("install_banner_dismissed")) {
@@ -31,13 +34,27 @@ export const InstallBanner = React.forwardRef<HTMLDivElement, {}>(function Insta
       setPlatform("android");
     }
 
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    if (installWindow.__deferredInstallPrompt) {
+      setDeferredPrompt(installWindow.__deferredInstallPrompt as BeforeInstallPromptEvent);
+    }
+
+    const onPromptReady = () => {
+      if (installWindow.__deferredInstallPrompt) {
+        setDeferredPrompt(installWindow.__deferredInstallPrompt as BeforeInstallPromptEvent);
+      }
     };
-    window.addEventListener("beforeinstallprompt", handler);
-    window.addEventListener("appinstalled", () => setDismissed(true));
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+
+    const onInstalled = () => setDismissed(true);
+
+    window.addEventListener("lovable-install-prompt-ready", onPromptReady);
+    window.addEventListener("appinstalled", onInstalled);
+    window.addEventListener("lovable-app-installed", onInstalled);
+
+    return () => {
+      window.removeEventListener("lovable-install-prompt-ready", onPromptReady);
+      window.removeEventListener("appinstalled", onInstalled);
+      window.removeEventListener("lovable-app-installed", onInstalled);
+    };
   }, []);
 
   if (dismissed || isStandalone) return null;
