@@ -15,10 +15,10 @@ interface DashboardProps {
   focusMap?: Record<string, FocusInfo>;
 }
 
-export function Dashboard({
+export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(function Dashboard({
   piano, livello, onAvviaAllenamento, onChangeLivello,
   userName, weeklyStats, onNavigate, focusMap,
-}: DashboardProps) {
+}, ref) {
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "MEDIO" ? "bg-primary" : "bg-pilates-red";
   
   // Sort piano keys by date
