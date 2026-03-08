@@ -71,10 +71,7 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     isAlreadyCompleted,
   }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, pregnancyMode, pregnancyWeek, todayWorkout, todayFocusInfo, isRestDay, isAlreadyCompleted]);
   
-  // Find today's workout
-  const oggi = getLocalDateKey(new Date());
-  const todayKey = sortedDays.find(k => k === oggi);
-  const todayWorkout = todayKey && piano[todayKey] ? { key: todayKey, ...piano[todayKey] } : null;
+  // todayWorkout already computed above
 
   const greeting = () => {
     const h = new Date().getHours();

@@ -25,6 +25,12 @@ export interface AICoachContext {
   totalWorkouts?: number;
   lastWorkoutType?: string;
   recentIntensity?: string;
+  // Today's plan context
+  todayEquipment?: string;
+  todayFocus?: string;
+  todayFocusIcon?: string;
+  isRestDay?: boolean;
+  isAlreadyCompleted?: boolean;
 }
 
 export interface CompleteCoachResponse {
