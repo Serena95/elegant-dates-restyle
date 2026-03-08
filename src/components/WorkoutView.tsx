@@ -248,7 +248,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                     {config.tempoEsercizio}s
                   </span>
                   <button
-                    onClick={e => { e.stopPropagation(); timer.start(config.tempoEsercizio, es.nome); }}
+                    onClick={e => { e.stopPropagation(); timer.start(config.tempoEsercizio, es.nome); if (voiceActive) voice.announceExercise(es.nome); }}
                     className="flex items-center gap-1 bg-pilates-green text-white px-2 py-1 rounded-lg text-xs font-bold hover:opacity-80"
                   >
                     <Timer size={12} /> AVVIA
