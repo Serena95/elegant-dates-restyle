@@ -148,6 +148,8 @@ export function SettingsView({ onNavigate, onModificaAttrezzi }: SettingsViewPro
           </button>
         </div>
         <SettingsRow icon={Wrench} label="Modifica Attrezzi" onClick={onModificaAttrezzi} />
+        <SettingsRow icon={Droplets} label="Monitoraggio Ciclo" onClick={() => onNavigate("cycle")} />
+        <SettingsRow icon={Baby} label="Modalità Gravidanza" onClick={() => onNavigate("pregnancy")} />
       </Section>
 
       {/* Privacy */}
