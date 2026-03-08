@@ -83,24 +83,37 @@ export function generaEserciziGiorno(
   let pool = disponibili.filter(e => !storici.includes(e.id));
   if (pool.length < 6) pool = disponibili;
 
-  const categorie: string[] = ["core", "gambe", "glutei", "schiena", "stabilità", "mobilità", "braccia", "cardio"];
-  return pickBalanced(pool, categorie, Math.min(6, pool.length));
+  // Priorità di bilanciamento: 1 core, 1 gambe/glutei, 1 stabilità, 1 mobilità, 1 forza (braccia/schiena)
+  const prioritySlots: string[][] = [
+    ["core"],
+    ["gambe", "glutei"],
+    ["stabilità"],
+    ["mobilità"],
+    ["braccia", "schiena"],
+  ];
+  return pickBalanced(pool, prioritySlots, Math.min(6, pool.length));
 }
 
-function pickBalanced(pool: Exercise[], categorie: string[], count: number): Exercise[] {
+function pickBalanced(pool: Exercise[], prioritySlots: string[][], count: number): Exercise[] {
   const byCat: Record<string, Exercise[]> = {};
-  categorie.forEach(c => { byCat[c] = []; });
-  pool.forEach(e => { if (byCat[e.categoria]) byCat[e.categoria].push(e); });
+  pool.forEach(e => {
+    if (!byCat[e.categoria]) byCat[e.categoria] = [];
+    byCat[e.categoria].push(e);
+  });
   Object.keys(byCat).forEach(k => { byCat[k] = shuffle(byCat[k]); });
 
   const result: Exercise[] = [];
-  const catKeys = shuffle(Object.keys(byCat).filter(k => byCat[k].length > 0));
 
-  for (const cat of catKeys) {
+  // First pass: pick one from each priority slot
+  for (const slot of prioritySlots) {
     if (result.length >= count) break;
-    if (byCat[cat].length > 0) result.push(byCat[cat].shift()!);
+    const availableCats = shuffle(slot.filter(c => byCat[c] && byCat[c].length > 0));
+    if (availableCats.length > 0) {
+      result.push(byCat[availableCats[0]].shift()!);
+    }
   }
 
+  // Fill remaining from any category
   if (result.length < count) {
     const remaining = shuffle(pool.filter(e => !result.find(r => r.id === e.id)));
     for (const e of remaining) {
