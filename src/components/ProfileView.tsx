@@ -1,5 +1,5 @@
-import { useState, useRef } from "react";
-import { Camera, User, Dumbbell, BarChart3 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { Camera, User, Dumbbell, BarChart3, Zap } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -7,6 +7,8 @@ import { ProfileData } from "@/hooks/useCloudData";
 import { BadgeDisplay } from "./BadgeDisplay";
 import { Badge } from "@/hooks/useBadges";
 import { ATTREZZO_ICONS } from "@/data/exercises";
+import { getLevelInfo, LEVELS } from "@/services/xpService";
+import { Progress } from "@/components/ui/progress";
 
 interface ProfileViewProps {
   profile: ProfileData;
@@ -24,7 +26,16 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], liv
   const [newEmail, setNewEmail] = useState(user?.email || "");
   const [saving, setSaving] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [xpData, setXpData] = useState<{ xp: number; level: number } | null>(null);
 
+  useEffect(() => {
+    if (!user) return;
+    supabase.from("profiles").select("xp, level").eq("user_id", user.id).single().then(({ data }) => {
+      if (data) setXpData({ xp: data.xp ?? 0, level: data.level ?? 1 });
+    });
+  }, [user]);
+
+  const levelInfo = xpData ? getLevelInfo(xpData.xp) : null;
   const isGoogleAvatar = avatarUrl?.startsWith("http");
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "AVANZATO" ? "bg-pilates-red" : "bg-primary";
 
@@ -103,6 +114,40 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], liv
           <p className="text-[10px] text-muted-foreground font-bold uppercase">Attrezzi</p>
         </div>
       </div>
+
+      {/* XP & Level */}
+      {levelInfo && (
+        <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <span className="text-3xl">{levelInfo.current.icon}</span>
+              <div>
+                <p className="font-bold text-foreground">Lv.{levelInfo.current.level} {levelInfo.current.name}</p>
+                <p className="text-xs text-muted-foreground">{xpData!.xp} XP totali</p>
+              </div>
+            </div>
+            <Zap size={20} className="text-amber-500" />
+          </div>
+          <div className="space-y-1">
+            <div className="flex justify-between text-[10px] text-muted-foreground">
+              <span>Progresso</span>
+              <span>{levelInfo.next ? `${xpData!.xp} / ${levelInfo.next.minXp} XP` : "MAX"}</span>
+            </div>
+            <Progress value={levelInfo.progressToNext * 100} className="h-2" />
+          </div>
+          <div className="flex gap-1.5 justify-center">
+            {LEVELS.map(l => (
+              <div
+                key={l.level}
+                className={`text-center px-2 py-1 rounded-lg text-[10px] ${l.level <= levelInfo.current.level ? "bg-primary/10 font-bold" : "bg-muted/50 text-muted-foreground"}`}
+              >
+                <span className="text-sm">{l.icon}</span>
+                <p>{l.name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Equipment list */}
       {attrezzi.length > 0 && (
