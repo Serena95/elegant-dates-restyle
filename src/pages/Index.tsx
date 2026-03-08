@@ -270,7 +270,7 @@ const Index = () => {
             userName={userName}
             weeklyStats={weeklyStats}
             onNavigate={navigate}
-          />
+            focusMap={focusMap}
         );
       case "progress":
         return <ProgressView misure={cloud.misure} onAddMisura={cloud.addMisura} onDeleteMisura={cloud.deleteMisura} onBack={() => navigate("dashboard")} />;
