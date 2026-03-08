@@ -17,6 +17,9 @@ export function InstallAppView() {
     (window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone);
 
   useEffect(() => {
+    type InstallWindow = Window & { __deferredInstallPrompt?: Event };
+    const installWindow = window as InstallWindow;
+
     const ua = navigator.userAgent;
     if (/iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream) {
       setPlatform("ios");
@@ -26,15 +29,27 @@ export function InstallAppView() {
       setPlatform("desktop");
     }
 
-    const handler = (e: Event) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    if (installWindow.__deferredInstallPrompt) {
+      setDeferredPrompt(installWindow.__deferredInstallPrompt as BeforeInstallPromptEvent);
+    }
+
+    const onPromptReady = () => {
+      if (installWindow.__deferredInstallPrompt) {
+        setDeferredPrompt(installWindow.__deferredInstallPrompt as BeforeInstallPromptEvent);
+      }
     };
-    window.addEventListener("beforeinstallprompt", handler);
 
-    window.addEventListener("appinstalled", () => setInstalled(true));
+    const onInstalled = () => setInstalled(true);
 
-    return () => window.removeEventListener("beforeinstallprompt", handler);
+    window.addEventListener("lovable-install-prompt-ready", onPromptReady);
+    window.addEventListener("appinstalled", onInstalled);
+    window.addEventListener("lovable-app-installed", onInstalled);
+
+    return () => {
+      window.removeEventListener("lovable-install-prompt-ready", onPromptReady);
+      window.removeEventListener("appinstalled", onInstalled);
+      window.removeEventListener("lovable-app-installed", onInstalled);
+    };
   }, []);
 
   const handleInstall = async () => {
