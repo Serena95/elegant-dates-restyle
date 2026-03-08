@@ -37,6 +37,21 @@ export interface ProfileData {
   avatar_url: string | null;
 }
 
+export interface CycleEntry {
+  id?: string;
+  data: string;
+  tipo: string;
+  sintomi: string[];
+  note: string;
+}
+
+export interface PregnancySettings {
+  modalita_gravidanza: boolean;
+  settimana_gestazionale: number;
+  durata_ciclo: number;
+  durata_mestruazione: number;
+}
+
 export function useCloudData() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -52,6 +67,13 @@ export function useCloudData() {
   const [sfida, setSfidaState] = useState<Sfida | null>(null);
   const [ultimiAttrezzi, setUltimiAttrezziState] = useState<string[]>([]);
   const [profile, setProfileState] = useState<ProfileData>({ display_name: null, avatar_url: null });
+  const [cycleEntries, setCycleEntriesState] = useState<CycleEntry[]>([]);
+  const [pregnancySettings, setPregnancySettingsState] = useState<PregnancySettings>({
+    modalita_gravidanza: false,
+    settimana_gestazionale: 0,
+    durata_ciclo: 28,
+    durata_mestruazione: 5,
+  });
   const sfidaRef = useRef<Sfida | null>(null);
 
   useEffect(() => {
@@ -66,7 +88,7 @@ export function useCloudData() {
     if (!user) return;
     setLoading(true);
 
-    const [settingsRes, plansRes, historyRes, measRes, foodRes, waterRes, challengeRes, profileRes] = await Promise.all([
+    const [settingsRes, plansRes, historyRes, measRes, foodRes, waterRes, challengeRes, profileRes, cycleRes] = await Promise.all([
       supabase.from("user_settings").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("workout_plans").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("workout_history").select("*").eq("user_id", user.id),
@@ -75,12 +97,19 @@ export function useCloudData() {
       supabase.from("water_tracking").select("*").eq("user_id", user.id).eq("data", new Date().toISOString().split("T")[0]).maybeSingle(),
       supabase.from("challenges").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
       supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
+      supabase.from("cycle_tracking").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
 
     if (settingsRes.data) {
       setAttrezziState(settingsRes.data.attrezzi_selezionati || []);
       setLivelloState(settingsRes.data.livello || "MEDIO");
       setUltimiAttrezziState(settingsRes.data.ultimi_attrezzi || []);
+      setPregnancySettingsState({
+        modalita_gravidanza: (settingsRes.data as any).modalita_gravidanza || false,
+        settimana_gestazionale: (settingsRes.data as any).settimana_gestazionale || 0,
+        durata_ciclo: (settingsRes.data as any).durata_ciclo || 28,
+        durata_mestruazione: (settingsRes.data as any).durata_mestruazione || 5,
+      });
     }
 
     if (plansRes.data) {
@@ -122,6 +151,12 @@ export function useCloudData() {
 
     if (profileRes.data) {
       setProfileState({ display_name: profileRes.data.display_name, avatar_url: profileRes.data.avatar_url });
+    }
+
+    if (cycleRes.data) {
+      setCycleEntriesState(cycleRes.data.map((c: any) => ({
+        id: c.id, data: c.data, tipo: c.tipo, sintomi: c.sintomi || [], note: c.note || "",
+      })));
     }
 
     setLoading(false);
@@ -256,6 +291,33 @@ export function useCloudData() {
     setStoricoCalState({});
   }, [user]);
 
+  // Cycle tracking
+  const addCycleEntry = useCallback(async (entry: Omit<CycleEntry, "id">) => {
+    if (!user) return;
+    const { data } = await supabase.from("cycle_tracking").insert({
+      user_id: user.id, data: entry.data, tipo: entry.tipo, sintomi: entry.sintomi, note: entry.note,
+    }).select().single();
+    if (data) setCycleEntriesState(prev => [{ id: data.id, ...entry }, ...prev]);
+  }, [user]);
+
+  const deleteCycleEntry = useCallback(async (id: string) => {
+    if (!user) return;
+    await supabase.from("cycle_tracking").delete().eq("id", id);
+    setCycleEntriesState(prev => prev.filter(e => e.id !== id));
+  }, [user]);
+
+  // Pregnancy / cycle settings
+  const updatePregnancySettings = useCallback(async (updates: Partial<PregnancySettings>) => {
+    if (!user) return;
+    setPregnancySettingsState(prev => ({ ...prev, ...updates }));
+    const dbUpdates: any = {};
+    if (updates.modalita_gravidanza !== undefined) dbUpdates.modalita_gravidanza = updates.modalita_gravidanza;
+    if (updates.settimana_gestazionale !== undefined) dbUpdates.settimana_gestazionale = updates.settimana_gestazionale;
+    if (updates.durata_ciclo !== undefined) dbUpdates.durata_ciclo = updates.durata_ciclo;
+    if (updates.durata_mestruazione !== undefined) dbUpdates.durata_mestruazione = updates.durata_mestruazione;
+    await supabase.from("user_settings").update(dbUpdates).eq("user_id", user.id);
+  }, [user]);
+
   return {
     loading,
     attrezzi, setAttrezzi,
@@ -270,5 +332,7 @@ export function useCloudData() {
     ultimiAttrezzi, setUltimiAttrezzi,
     profile, updateProfile,
     resetWorkoutData,
+    cycleEntries, addCycleEntry, deleteCycleEntry,
+    pregnancySettings, updatePregnancySettings,
   };
 }

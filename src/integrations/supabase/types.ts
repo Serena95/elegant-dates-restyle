@@ -44,6 +44,36 @@ export type Database = {
         }
         Relationships: []
       }
+      cycle_tracking: {
+        Row: {
+          created_at: string
+          data: string
+          id: string
+          note: string | null
+          sintomi: string[] | null
+          tipo: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          data: string
+          id?: string
+          note?: string | null
+          sintomi?: string[] | null
+          tipo?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          data?: string
+          id?: string
+          note?: string | null
+          sintomi?: string[] | null
+          tipo?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
       food_diary: {
         Row: {
           created_at: string
@@ -156,8 +186,12 @@ export type Database = {
         Row: {
           attrezzi_selezionati: string[] | null
           created_at: string
+          durata_ciclo: number | null
+          durata_mestruazione: number | null
           id: string
           livello: string | null
+          modalita_gravidanza: boolean | null
+          settimana_gestazionale: number | null
           ultimi_attrezzi: string[] | null
           updated_at: string
           user_id: string
@@ -165,8 +199,12 @@ export type Database = {
         Insert: {
           attrezzi_selezionati?: string[] | null
           created_at?: string
+          durata_ciclo?: number | null
+          durata_mestruazione?: number | null
           id?: string
           livello?: string | null
+          modalita_gravidanza?: boolean | null
+          settimana_gestazionale?: number | null
           ultimi_attrezzi?: string[] | null
           updated_at?: string
           user_id: string
@@ -174,8 +212,12 @@ export type Database = {
         Update: {
           attrezzi_selezionati?: string[] | null
           created_at?: string
+          durata_ciclo?: number | null
+          durata_mestruazione?: number | null
           id?: string
           livello?: string | null
+          modalita_gravidanza?: boolean | null
+          settimana_gestazionale?: number | null
           ultimi_attrezzi?: string[] | null
           updated_at?: string
           user_id?: string

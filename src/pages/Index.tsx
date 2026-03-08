@@ -13,6 +13,8 @@ import { SettingsView } from "@/components/SettingsView";
 import { WorkoutComplete } from "@/components/WorkoutComplete";
 import { InstallBanner } from "@/components/InstallBanner";
 import { ProgramsView } from "@/components/ProgramsView";
+import { CycleTracking } from "@/components/CycleTracking";
+import { PregnancyMode } from "@/components/PregnancyMode";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -22,7 +24,7 @@ import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVE
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
-  const [view, setView] = useState<AppView>("dashboard");
+  const [view, setView] = useState<AppView | "cycle" | "pregnancy">("dashboard");
   const [giornoSelezionato, setGiornoSelezionato] = useState<string | null>(null);
   const [eserciziCorrenti, setEserciziCorrenti] = useState<Exercise[]>([]);
   const [roundCorrenti, setRoundCorrenti] = useState(0);
@@ -72,7 +74,7 @@ const Index = () => {
     return { completed, total, streak };
   }, [cloud.storicoCal]);
 
-  const effectiveView: AppView | "loading" | "equipment-init" = cloud.loading
+  const effectiveView: string = cloud.loading
     ? "loading"
     : cloud.attrezzi.length === 0 && view === "dashboard"
       ? "equipment-init"
@@ -309,9 +311,30 @@ const Index = () => {
           <SettingsView
             onNavigate={(v) => {
               if (v === "guide") setShowGuide(true);
+              else if (v === "cycle" || v === "pregnancy") setView(v);
               else navigate(v as AppView);
             }}
             onModificaAttrezzi={() => navigate("equipment")}
+          />
+        );
+      case "cycle" as any:
+        return (
+          <CycleTracking
+            entries={cloud.cycleEntries}
+            onAddEntry={cloud.addCycleEntry}
+            onDeleteEntry={cloud.deleteCycleEntry}
+            durataCiclo={cloud.pregnancySettings.durata_ciclo}
+            durataMestruazione={cloud.pregnancySettings.durata_mestruazione}
+            onUpdateSettings={(s) => cloud.updatePregnancySettings(s)}
+          />
+        );
+      case "pregnancy" as any:
+        return (
+          <PregnancyMode
+            isActive={cloud.pregnancySettings.modalita_gravidanza}
+            settimanaGestazionale={cloud.pregnancySettings.settimana_gestazionale}
+            onToggle={(active) => cloud.updatePregnancySettings({ modalita_gravidanza: active, settimana_gestazionale: active ? Math.max(1, cloud.pregnancySettings.settimana_gestazionale) : 0 })}
+            onUpdateWeek={(week) => cloud.updatePregnancySettings({ settimana_gestazionale: week })}
           />
         );
       default:
@@ -320,7 +343,7 @@ const Index = () => {
   };
 
   return (
-    <AppLayout currentView={view} onNavigate={navigate} profile={cloud.profile} userName={userName}>
+    <AppLayout currentView={view as AppView} onNavigate={navigate} profile={cloud.profile} userName={userName}>
       {renderContent()}
       <InstallBanner />
     </AppLayout>
