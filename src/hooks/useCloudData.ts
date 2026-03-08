@@ -37,6 +37,21 @@ export interface ProfileData {
   avatar_url: string | null;
 }
 
+export interface CycleEntry {
+  id?: string;
+  data: string;
+  tipo: string;
+  sintomi: string[];
+  note: string;
+}
+
+export interface PregnancySettings {
+  modalita_gravidanza: boolean;
+  settimana_gestazionale: number;
+  durata_ciclo: number;
+  durata_mestruazione: number;
+}
+
 export function useCloudData() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
