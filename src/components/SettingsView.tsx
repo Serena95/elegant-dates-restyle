@@ -24,6 +24,7 @@ import {
   Download,
   Bell,
   Clock,
+  Crown,
 } from "lucide-react";
 
 interface SettingsViewProps {
@@ -40,7 +41,7 @@ interface SettingsViewProps {
 }
 
 export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice, giorniAllenamento = [1, 3, 5], onChangeGiorniAllenamento, notificheAbilitate = false, notificaOrario = "09:00", onToggleNotifiche, onChangeOrarioNotifica }: SettingsViewProps) {
-  const { user, signOut } = useAuth();
+  const { user, signOut, isAdmin } = useAuth();
   const { isDark, toggle } = useDarkMode();
   const [showDelete, setShowDelete] = useState(false);
   const [deleting, setDeleting] = useState(false);
@@ -167,6 +168,7 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
 
       {/* Account */}
       <Section title="Account">
+        <SettingsRow icon={Crown} label="Abbonamento" value={isAdmin ? "Premium Lifetime" : "Gestisci"} onClick={() => onNavigate("premium")} />
         <SettingsRow icon={Mail} label="Cambia Email" value={user?.email || ""} onClick={() => setShowChangeEmail(true)} />
         <SettingsRow icon={Lock} label="Cambia Password" onClick={() => setShowChangePassword(true)} />
       </Section>
