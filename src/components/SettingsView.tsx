@@ -5,6 +5,7 @@ import { useDarkMode } from "@/hooks/useDarkMode";
 import { toast } from "sonner";
 import { TrainingDaysPicker } from "./TrainingDaysPicker";
 import { HealthIntegration } from "./HealthIntegration";
+import { Smartphone } from "lucide-react";
 import {
   LogOut,
   Moon,
