@@ -33,7 +33,7 @@ interface SettingsViewProps {
   onChangeGiorniAllenamento?: (days: number[]) => void;
 }
 
-export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice }: SettingsViewProps) {
+export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice, giorniAllenamento = [1, 3, 5], onChangeGiorniAllenamento }: SettingsViewProps) {
   const { user, signOut } = useAuth();
   const { isDark, toggle } = useDarkMode();
   const [showDelete, setShowDelete] = useState(false);
