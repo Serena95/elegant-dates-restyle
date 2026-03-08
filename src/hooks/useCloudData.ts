@@ -104,6 +104,12 @@ export function useCloudData() {
       setAttrezziState(settingsRes.data.attrezzi_selezionati || []);
       setLivelloState(settingsRes.data.livello || "MEDIO");
       setUltimiAttrezziState(settingsRes.data.ultimi_attrezzi || []);
+      setPregnancySettingsState({
+        modalita_gravidanza: (settingsRes.data as any).modalita_gravidanza || false,
+        settimana_gestazionale: (settingsRes.data as any).settimana_gestazionale || 0,
+        durata_ciclo: (settingsRes.data as any).durata_ciclo || 28,
+        durata_mestruazione: (settingsRes.data as any).durata_mestruazione || 5,
+      });
     }
 
     if (plansRes.data) {
@@ -145,6 +151,12 @@ export function useCloudData() {
 
     if (profileRes.data) {
       setProfileState({ display_name: profileRes.data.display_name, avatar_url: profileRes.data.avatar_url });
+    }
+
+    if (cycleRes.data) {
+      setCycleEntriesState(cycleRes.data.map((c: any) => ({
+        id: c.id, data: c.data, tipo: c.tipo, sintomi: c.sintomi || [], note: c.note || "",
+      })));
     }
 
     setLoading(false);
