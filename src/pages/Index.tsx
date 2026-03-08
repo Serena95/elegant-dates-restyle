@@ -128,7 +128,7 @@ const Index = () => {
 
   const effectiveView: string = cloud.loading
     ? "loading"
-    : cloud.attrezzi.length === 0 && view === "dashboard"
+    : cloud.attrezzi.length === 0 && Object.keys(cloud.piano).length === 0 && view === "dashboard"
       ? "equipment-init"
       : view;
 
