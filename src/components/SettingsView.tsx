@@ -168,6 +168,7 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
 
       {/* Account */}
       <Section title="Account">
+        <SettingsRow icon={Crown} label="Abbonamento" value={isAdmin ? "Premium Lifetime" : "Gestisci"} onClick={() => onNavigate("premium")} />
         <SettingsRow icon={Mail} label="Cambia Email" value={user?.email || ""} onClick={() => setShowChangeEmail(true)} />
         <SettingsRow icon={Lock} label="Cambia Password" onClick={() => setShowChangePassword(true)} />
       </Section>
