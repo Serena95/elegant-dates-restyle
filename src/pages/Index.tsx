@@ -126,9 +126,10 @@ const Index = () => {
     alert("✅ Nuovo piano generato con progressione!");
   }, [cloud.attrezzi, cloud.allenamentiData.storico, cloud.savePiano, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.livello, cloud.setUltimiAttrezzi]);
 
-  const avviaAllenamento = useCallback((giorno: string) => {
+  const avviaAllenamento = useCallback(async (giorno: string) => {
     setGiornoSelezionato(giorno);
     setWorkoutStartTime(Date.now());
+    setAiGenerated(false);
     const dati = cloud.piano[giorno];
     if (!dati) return;
 
@@ -144,7 +145,19 @@ const Index = () => {
       const storici = Object.values(allenamentiStorico).flat();
       const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
       ctx.recentExerciseIds = storici;
-      esercizi = generaEserciziGiorno(attrezzo, cloud.livello, storici, undefined, ctx);
+
+      // Try AI generation, fallback to local
+      const result = await generateAIWorkout({
+        attrezzo,
+        livello: cloud.livello,
+        storici,
+        targetCount: 7,
+        progressionCtx: ctx,
+      });
+
+      esercizi = result.exercises;
+      setAiGenerated(result.aiGenerated);
+
       const nuovoStorico = [...storici, ...esercizi.map(e => e.id)];
       const newAllenamenti = {
         esercizi: { ...allenamentiEsercizi, [giorno]: esercizi },
@@ -156,7 +169,7 @@ const Index = () => {
     setEserciziCorrenti(esercizi);
     setRoundCorrenti(dati.round || 0);
     setView("workout");
-  }, [cloud.piano, cloud.allenamentiData, cloud.savePiano, cloud.attrezzi, cloud.livello]);
+  }, [cloud.piano, cloud.allenamentiData, cloud.savePiano, cloud.attrezzi, cloud.livello, cloud.storicoCal, cloud.ultimiAttrezzi]);
 
   const segnaRound = useCallback(() => {
     if (!giornoSelezionato) return;
