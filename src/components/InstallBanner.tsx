@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect } from "react";
 import { Download, X } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
@@ -6,7 +6,7 @@ interface BeforeInstallPromptEvent extends Event {
   userChoice: Promise<{ outcome: "accepted" | "dismissed" }>;
 }
 
-export function InstallBanner() {
+export const InstallBanner = React.forwardRef<HTMLDivElement, {}>(function InstallBanner(_props, ref) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
   const [isIOS, setIsIOS] = useState(false);
@@ -91,4 +91,4 @@ export function InstallBanner() {
       </button>
     </div>
   );
-}
+});

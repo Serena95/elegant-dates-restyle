@@ -1,3 +1,4 @@
+import React from "react";
 import { DayCard } from "./DayCard";
 import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
 import { CalendarDays, BarChart3, Flame, Dumbbell, Target } from "lucide-react";
@@ -14,10 +15,10 @@ interface DashboardProps {
   focusMap?: Record<string, FocusInfo>;
 }
 
-export function Dashboard({
+export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(function Dashboard({
   piano, livello, onAvviaAllenamento, onChangeLivello,
   userName, weeklyStats, onNavigate, focusMap,
-}: DashboardProps) {
+}, ref) {
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "MEDIO" ? "bg-primary" : "bg-pilates-red";
   
   // Sort piano keys by date
@@ -152,4 +153,4 @@ export function Dashboard({
       </div>
     </div>
   );
-}
+});

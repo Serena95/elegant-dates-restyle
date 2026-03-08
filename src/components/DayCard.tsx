@@ -1,3 +1,4 @@
+import React from "react";
 import { motion } from "framer-motion";
 import { ChevronRight, Check } from "lucide-react";
 import { DayPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo } from "@/data/exercises";
@@ -16,7 +17,7 @@ interface DayCardProps {
 const DEFAULT_GRADIENT = { from: "from-blue-500/10", to: "to-indigo-500/10", border: "border-blue-200 dark:border-blue-800", accent: "bg-blue-500" };
 const TODAY_GRADIENT = { from: "from-primary/15", to: "to-secondary/15", border: "border-primary/30", accent: "bg-primary" };
 
-export function DayCard({ giorno, label, dati, livello, index, focus, isToday, onClick }: DayCardProps) {
+export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function DayCard({ giorno, label, dati, livello, index, focus, isToday, onClick }, ref) {
   const maxRound = CONFIG_LIVELLI[livello].round;
   const roundFatti = dati.round || 0;
   const isCompleted = roundFatti >= maxRound;
@@ -31,6 +32,7 @@ export function DayCard({ giorno, label, dati, livello, index, focus, isToday, o
 
   return (
     <motion.div
+      ref={ref}
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.4 }}
@@ -109,4 +111,4 @@ export function DayCard({ giorno, label, dati, livello, index, focus, isToday, o
       <div className="absolute -bottom-4 -right-4 w-20 h-20 rounded-full bg-primary/5 group-hover:bg-primary/10 transition-colors" />
     </motion.div>
   );
-}
+});
