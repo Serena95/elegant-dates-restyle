@@ -88,8 +88,11 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const handleSegnaRound = () => {
     onSegnaRound();
     setCompletati(new Set());
+    if (voiceActive) voice.announceRoundComplete(roundCorrenti + 1, maxRound);
     if (roundCorrenti + 1 < maxRound) {
       timer.start(config.pausa, `PAUSA ROUND ${roundCorrenti + 1}`);
+    } else if (voiceActive) {
+      voice.announceAllComplete();
     }
   };
 
