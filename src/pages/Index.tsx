@@ -192,7 +192,7 @@ const Index = () => {
     cloud.savePiano(updatedPiano);
 
     if (nuoviRound >= config.round) {
-      const dataKey = new Date().toISOString().split("T")[0];
+      const dataKey = getLocalDateKey(new Date());
       const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
       const focus = detectFocus(eserciziCorrenti);
       cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true, focus });
