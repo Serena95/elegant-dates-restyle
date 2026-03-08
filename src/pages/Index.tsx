@@ -402,6 +402,10 @@ const Index = () => {
             onUpdateWeek={(week) => cloud.updatePregnancySettings({ settimana_gestazionale: week })}
           />
         );
+      case "privacy" as any:
+        return <LegalPage type="privacy" onBack={() => navigate("more")} />;
+      case "terms" as any:
+        return <LegalPage type="terms" onBack={() => navigate("more")} />;
       default:
         return null;
     }
