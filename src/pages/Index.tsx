@@ -12,7 +12,7 @@ import { ProfileView } from "@/components/ProfileView";
 import { SettingsView } from "@/components/SettingsView";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
-import { Exercise, pescaEsercizi, CONFIG_LIVELLI } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, CONFIG_LIVELLI, TEMA_CONFIG } from "@/data/exercises";
 
 const Index = () => {
   const cloud = useCloudData();
@@ -37,39 +37,22 @@ const Index = () => {
     setShowGuide(false);
   }, []);
 
-  const generaNuovaSettimana = useCallback((overrideAttrezzi?: string[]) => {
-    const salvati = overrideAttrezzi || cloud.attrezzi;
-    if (salvati.length === 0) {
+  const generaNuovaSettimana = useCallback(() => {
+    if (cloud.attrezzi.length === 0) {
       alert("⚠️ Non hai selezionato nessun attrezzo!");
       setView("equipment");
       return;
     }
 
-    const ultimi = cloud.ultimiAttrezzi;
-    let scelti: string[] = [];
-
-    if (salvati.length === 1) {
-      scelti = [salvati[0], salvati[0], salvati[0]];
-    } else if (salvati.length === 2) {
-      scelti = [salvati[0], salvati[1], salvati[0]];
-    } else {
-      let disponibili = salvati.filter(a => !ultimi.includes(a));
-      if (disponibili.length < 3) disponibili = [...salvati];
-      disponibili.sort(() => 0.5 - Math.random());
-      scelti = disponibili.slice(0, 3);
-    }
-    while (scelti.length < 3) scelti.push(salvati[0]);
-
     const nuovoPiano = {
-      "Lunedì": { attrezzo: scelti[0], round: 0 },
-      "Mercoledì": { attrezzo: scelti[1], round: 0 },
-      "Venerdì": { attrezzo: scelti[2], round: 0 },
+      "Lunedì": { tema: "core_mobilita", round: 0 },
+      "Mercoledì": { tema: "gambe_glutei", round: 0 },
+      "Venerdì": { tema: "full_body_cardio", round: 0 },
     };
 
     cloud.savePiano(nuovoPiano, { esercizi: {}, storico: cloud.allenamentiData.storico || {} });
-    cloud.setUltimiAttrezzi(scelti);
     alert("✅ Nuovo piano generato con successo!");
-  }, [cloud.attrezzi, cloud.ultimiAttrezzi, cloud.allenamentiData.storico, cloud.savePiano, cloud.setUltimiAttrezzi]);
+  }, [cloud.attrezzi, cloud.allenamentiData.storico, cloud.savePiano]);
 
   const avviaAllenamento = useCallback((giorno: string) => {
     setGiornoSelezionato(giorno);
@@ -80,16 +63,22 @@ const Index = () => {
     const allenamentiStorico = cloud.allenamentiData.storico || {};
 
     let esercizi: Exercise[];
-    if (allenamentiEsercizi[giorno]) {
-      esercizi = allenamentiEsercizi[giorno];
-    } else {
-      const storici = allenamentiStorico[dati.attrezzo] || [];
-      esercizi = pescaEsercizi(dati.attrezzo, storici);
+    const cached = allenamentiEsercizi[giorno];
 
-      const nuovoStorico = [...storici, ...esercizi.map(e => e.nome)];
+    // Check if cached exercises have new format (tipo field)
+    if (cached && cached.length > 0 && (cached[0] as any).tipo) {
+      esercizi = cached;
+    } else {
+      // Generate new exercises using tema
+      const tema = dati.tema || "full_body_cardio";
+      const storici = Object.values(allenamentiStorico).flat();
+      esercizi = generaEserciziGiorno(tema, cloud.attrezzi, cloud.livello, storici);
+
+      // Update storico with new exercise IDs
+      const nuovoStorico = [...storici, ...esercizi.map(e => e.id)];
       const newAllenamenti = {
         esercizi: { ...allenamentiEsercizi, [giorno]: esercizi },
-        storico: { ...allenamentiStorico, [dati.attrezzo]: nuovoStorico }
+        storico: { ...allenamentiStorico, [tema]: nuovoStorico }
       };
       cloud.savePiano(cloud.piano, newAllenamenti);
     }
@@ -97,7 +86,7 @@ const Index = () => {
     setEserciziCorrenti(esercizi);
     setRoundCorrenti(dati.round || 0);
     setView("workout");
-  }, [cloud.piano, cloud.allenamentiData, cloud.savePiano]);
+  }, [cloud.piano, cloud.allenamentiData, cloud.savePiano, cloud.attrezzi, cloud.livello]);
 
   const segnaRound = useCallback(() => {
     if (!giornoSelezionato) return;
@@ -115,8 +104,8 @@ const Index = () => {
 
     if (nuoviRound >= config.round) {
       const dataKey = new Date().toISOString().split("T")[0];
-      const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "";
-      cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true });
+      const tema = cloud.piano[giornoSelezionato]?.tema || "allenamento";
+      cloud.saveStoricoCal(dataKey, { attrezzo: tema, round: nuoviRound, completato: true });
     }
   }, [giornoSelezionato, roundCorrenti, cloud.livello, cloud.piano, cloud.savePiano, cloud.saveStoricoCal]);
 
@@ -152,7 +141,13 @@ const Index = () => {
             onComplete={(selected) => {
               cloud.setAttrezzi(selected);
               setView("dashboard");
-              generaNuovaSettimana(selected);
+              // Generate plan after equipment selection
+              const nuovoPiano = {
+                "Lunedì": { tema: "core_mobilita", round: 0 },
+                "Mercoledì": { tema: "gambe_glutei", round: 0 },
+                "Venerdì": { tema: "full_body_cardio", round: 0 },
+              };
+              cloud.savePiano(nuovoPiano, { esercizi: {}, storico: {} });
             }}
           />
         </div>
@@ -162,12 +157,13 @@ const Index = () => {
 
   // Workout view is full-screen without nav
   if (view === "workout" && giornoSelezionato) {
+    const tema = cloud.piano[giornoSelezionato]?.tema || "full_body_cardio";
     return (
       <div className="min-h-screen bg-background p-4">
         <div className="max-w-4xl mx-auto">
           <WorkoutView
             giorno={giornoSelezionato}
-            attrezzo={cloud.piano[giornoSelezionato]?.attrezzo || ""}
+            tema={tema}
             esercizi={eserciziCorrenti}
             livello={cloud.livello}
             roundCorrenti={roundCorrenti}
@@ -205,7 +201,7 @@ const Index = () => {
           <Dashboard
             piano={cloud.piano}
             livello={cloud.livello}
-            onGeneraNuova={() => generaNuovaSettimana()}
+            onGeneraNuova={generaNuovaSettimana}
             onAvviaAllenamento={avviaAllenamento}
             onChangeLivello={changeLivello}
           />

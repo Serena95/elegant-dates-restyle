@@ -1,6 +1,6 @@
 import { motion } from "framer-motion";
-import { ChevronRight, Check, Dumbbell } from "lucide-react";
-import { DayPlan, CONFIG_LIVELLI, ATTREZZO_ICONS } from "@/data/exercises";
+import { ChevronRight, Check } from "lucide-react";
+import { DayPlan, CONFIG_LIVELLI, TEMA_CONFIG } from "@/data/exercises";
 
 interface DayCardProps {
   giorno: string;
@@ -10,27 +10,26 @@ interface DayCardProps {
   onClick: () => void;
 }
 
-const FOCUS_LABELS: Record<number, string> = {
-  0: "Total Body",
-  1: "Total Body",
-  2: "Total Body",
+const TEMA_GRADIENTS: Record<string, { from: string; to: string; border: string; accent: string }> = {
+  "core_mobilita": { from: "from-sky-500/10", to: "to-cyan-500/10", border: "border-sky-200 dark:border-sky-800", accent: "bg-sky-500" },
+  "gambe_glutei": { from: "from-teal-500/10", to: "to-emerald-500/10", border: "border-teal-200 dark:border-teal-800", accent: "bg-teal-500" },
+  "full_body_cardio": { from: "from-orange-500/10", to: "to-red-500/10", border: "border-orange-200 dark:border-orange-800", accent: "bg-orange-500" },
 };
 
-const GRADIENT_PAIRS = [
-  { from: "from-sky-500/10", to: "to-cyan-500/10", border: "border-sky-200 dark:border-sky-800", accent: "bg-sky-500" },
-  { from: "from-teal-500/10", to: "to-emerald-500/10", border: "border-teal-200 dark:border-teal-800", accent: "bg-teal-500" },
-  { from: "from-blue-500/10", to: "to-indigo-500/10", border: "border-blue-200 dark:border-blue-800", accent: "bg-blue-500" },
-];
+const DEFAULT_GRADIENT = { from: "from-blue-500/10", to: "to-indigo-500/10", border: "border-blue-200 dark:border-blue-800", accent: "bg-blue-500" };
 
 export function DayCard({ giorno, dati, livello, index, onClick }: DayCardProps) {
   const maxRound = CONFIG_LIVELLI[livello].round;
   const roundFatti = dati.round || 0;
   const isCompleted = roundFatti >= maxRound;
   const progress = maxRound > 0 ? (roundFatti / maxRound) * 100 : 0;
-  const gradient = GRADIENT_PAIRS[index % GRADIENT_PAIRS.length];
-  const icon = ATTREZZO_ICONS[dati.attrezzo] || "🏋️";
 
-  // Day number mapping
+  const tema = dati.tema || "core_mobilita";
+  const temaConfig = TEMA_CONFIG[tema];
+  const temaLabel = temaConfig?.label || dati.attrezzo || "Allenamento";
+  const temaIcon = temaConfig?.icon || "🏋️";
+  const gradient = TEMA_GRADIENTS[tema] || DEFAULT_GRADIENT;
+
   const dayNumbers: Record<string, string> = {
     "Lunedì": "01",
     "Mercoledì": "02",
@@ -58,7 +57,7 @@ export function DayCard({ giorno, dati, livello, index, onClick }: DayCardProps)
       </div>
 
       <div className="flex items-center gap-4">
-        {/* Large Day Number Circle */}
+        {/* Day Number Circle */}
         <div className="relative flex-shrink-0">
           <div className={`w-16 h-16 rounded-2xl ${gradient.accent} flex items-center justify-center shadow-lg`}>
             <span className="text-2xl font-black text-white">{dayNumbers[giorno] || "0" + (index + 1)}</span>
@@ -81,19 +80,15 @@ export function DayCard({ giorno, dati, livello, index, onClick }: DayCardProps)
           </div>
 
           <div className="flex items-center gap-2 mb-2">
-            <span className="text-xl">{icon}</span>
+            <span className="text-xl">{temaIcon}</span>
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wide">
-              <Dumbbell size={12} />
-              {dati.attrezzo}
+              {temaLabel}
             </span>
           </div>
 
           <div className="flex items-center gap-3">
             <span className={`text-sm font-bold ${isCompleted ? "text-pilates-green" : "text-muted-foreground"}`}>
               {roundFatti}/{maxRound} Round
-            </span>
-            <span className="text-xs text-muted-foreground">
-              {FOCUS_LABELS[index] || "Total Body"}
             </span>
           </div>
         </div>
