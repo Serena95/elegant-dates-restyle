@@ -112,6 +112,20 @@ export function WorkoutComplete({ esercizi, tempoTotale, attrezzo, newBadges, on
           </div>
         </div>
 
+        {/* Health Sync indicator */}
+        {healthSynced && (
+          <motion.div
+            initial={{ opacity: 0, y: 4 }}
+            animate={{ opacity: 1, y: 0 }}
+            className="flex items-center justify-center gap-2 py-2 px-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20"
+          >
+            <Activity size={14} className="text-emerald-500" />
+            <p className="text-xs font-bold text-emerald-600 dark:text-emerald-400">
+              {healthService.getPlatform() === "ios" ? "Salvato su Apple Health" : "Salvato su Google Fit"}
+            </p>
+          </motion.div>
+        )}
+
         {/* XP Gained */}
         <AnimatePresence>
           {showXp && xpGained && levelInfo && (
