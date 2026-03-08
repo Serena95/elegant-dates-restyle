@@ -73,7 +73,10 @@ export async function generateRecoveryAdvice(context: AICoachContext): Promise<R
     const { data, error } = await supabase.functions.invoke("ai-coach", {
       body: { type: "recovery", context },
     });
-    if (error) throw error;
+    if (error) {
+      handleAIError(error);
+      throw error;
+    }
 
     const raw = data?.result || "";
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
@@ -83,6 +86,22 @@ export async function generateRecoveryAdvice(context: AICoachContext): Promise<R
     return { consiglio: "Concediti qualche minuto di stretching per recuperare.", tipo: "stretch" };
   } catch {
     return { consiglio: "Fai qualche esercizio di mobilità per recuperare.", tipo: "mobilità" };
+  }
+}
+
+let lastRateLimitToast = 0;
+function handleAIError(error: any) {
+  const msg = typeof error === "object" && error?.message ? error.message : String(error);
+  const now = Date.now();
+  // Show toast max once every 30s to avoid spam
+  if (now - lastRateLimitToast < 30000) return;
+  
+  if (msg.includes("429") || msg.toLowerCase().includes("rate limit")) {
+    lastRateLimitToast = now;
+    toast.error("AI Coach temporaneamente non disponibile. Riprova tra qualche secondo.");
+  } else if (msg.includes("402")) {
+    lastRateLimitToast = now;
+    toast.error("Crediti AI esauriti. Contatta il supporto.");
   }
 }
 
