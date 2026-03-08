@@ -27,7 +27,7 @@ export function ExerciseLibrary({ onBack }: ExerciseLibraryProps) {
     .map(([attrezzo, esercizi]) => {
       const filtered = esercizi.filter(e =>
         e.nome.toLowerCase().includes(search.toLowerCase()) ||
-        e.tipo.toLowerCase().includes(search.toLowerCase()) ||
+        e.categoria.toLowerCase().includes(search.toLowerCase()) ||
         e.muscoli.some(m => m.toLowerCase().includes(search.toLowerCase()))
       );
       return { attrezzo, esercizi: filtered };
