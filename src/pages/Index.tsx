@@ -68,6 +68,7 @@ const Index = () => {
   const [workoutStartTime, setWorkoutStartTime] = useState<number>(0);
   const [newBadges, setNewBadges] = useState<Badge[]>([]);
   const [aiGenerated, setAiGenerated] = useState(false);
+  const [xpResult, setXpResult] = useState<{ xpGained: number; newXp: number; leveledUp: boolean } | null>(null);
   const [voiceEnabled, setVoiceEnabled] = useLocalStorage("voice_trainer_enabled", true);
   const prevBadgeCountRef = useRef(0);
   const lastGeneratedKey = useRef("");
