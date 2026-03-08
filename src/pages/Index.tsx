@@ -104,13 +104,23 @@ const Index = () => {
       setView("equipment");
       return;
     }
-    const attrezziSettimana = selezionaAttrezziSettimana(cloud.attrezzi);
-    const giorni = ["Lunedì", "Mercoledì", "Venerdì"];
-    const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
-    giorni.forEach((g, i) => { nuovoPiano[g] = { attrezzo: attrezziSettimana[i], round: 0 }; });
-    cloud.savePiano(nuovoPiano, { esercizi: {}, storico: cloud.allenamentiData.storico || {} });
-    alert("✅ Nuovo piano generato con successo!");
-  }, [cloud.attrezzi, cloud.allenamentiData.storico, cloud.savePiano]);
+
+    const result = generaSettimanaIntelligente(
+      cloud.attrezzi,
+      cloud.livello,
+      cloud.allenamentiData.storico || {},
+      cloud.storicoCal,
+      cloud.ultimiAttrezzi
+    );
+
+    cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
+
+    // Save equipment used this week for next rotation
+    const usedEquipment = Object.values(result.piano).map(d => d.attrezzo);
+    cloud.setUltimiAttrezzi(usedEquipment);
+
+    alert("✅ Nuovo piano generato con progressione!");
+  }, [cloud.attrezzi, cloud.allenamentiData.storico, cloud.savePiano, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.livello, cloud.setUltimiAttrezzi]);
 
   const avviaAllenamento = useCallback((giorno: string) => {
     setGiornoSelezionato(giorno);
