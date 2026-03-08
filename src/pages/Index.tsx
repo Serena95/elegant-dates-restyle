@@ -383,6 +383,10 @@ const Index = () => {
             onToggleVoice={setVoiceEnabled}
             giorniAllenamento={cloud.giorniAllenamento}
             onChangeGiorniAllenamento={handleChangeTrainingDays}
+            notificheAbilitate={notifications.settings.notifiche_abilitate}
+            notificaOrario={notifications.settings.notifica_orario}
+            onToggleNotifiche={notifications.toggleNotifications}
+            onChangeOrarioNotifica={(orario) => notifications.updateSettings({ notifica_orario: orario })}
           />
         );
       case "cycle" as any:
