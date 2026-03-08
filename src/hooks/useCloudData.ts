@@ -190,6 +190,20 @@ export function useCloudData() {
 
     if (profileRes.data) {
       setProfileState({ display_name: profileRes.data.display_name, avatar_url: profileRes.data.avatar_url });
+    } else if (user) {
+      // Fallback: use Google metadata if profile row is missing (trigger may not have fired)
+      const meta = user.user_metadata;
+      const fallbackProfile: ProfileData = {
+        display_name: meta?.full_name || meta?.name || user.email?.split("@")[0] || null,
+        avatar_url: meta?.avatar_url || meta?.picture || null,
+      };
+      setProfileState(fallbackProfile);
+      // Try to create the missing profile row
+      supabase.from("profiles").insert({
+        user_id: user.id,
+        display_name: fallbackProfile.display_name,
+        avatar_url: fallbackProfile.avatar_url,
+      }).then(() => {});
     }
 
     if (cycleRes.data) {
