@@ -16,6 +16,7 @@ import { ProgramsView } from "@/components/ProgramsView";
 import { CycleTracking } from "@/components/CycleTracking";
 import { PregnancyMode } from "@/components/PregnancyMode";
 import { MoreView } from "@/components/MoreView";
+import { LegalPage } from "@/components/LegalPage";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -27,7 +28,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
-  const [view, setView] = useState<AppView | "cycle" | "pregnancy">("dashboard");
+  const [view, setView] = useState<AppView | "cycle" | "pregnancy" | "privacy" | "terms">("dashboard");
   const [giornoSelezionato, setGiornoSelezionato] = useState<string | null>(null);
   const [eserciziCorrenti, setEserciziCorrenti] = useState<Exercise[]>([]);
   const [roundCorrenti, setRoundCorrenti] = useState(0);
@@ -401,6 +402,10 @@ const Index = () => {
             onUpdateWeek={(week) => cloud.updatePregnancySettings({ settimana_gestazionale: week })}
           />
         );
+      case "privacy" as any:
+        return <LegalPage type="privacy" onBack={() => navigate("more")} />;
+      case "terms" as any:
+        return <LegalPage type="terms" onBack={() => navigate("more")} />;
       default:
         return null;
     }

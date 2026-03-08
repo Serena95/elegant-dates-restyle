@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles } from "lucide-react";
+import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles, Shield, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface MoreViewProps {
@@ -113,6 +113,29 @@ export function MoreView({ onNavigate }: MoreViewProps) {
         </div>
         <ChevronRight size={18} className="text-muted-foreground flex-shrink-0" />
       </motion.button>
+
+      {/* Legal links */}
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        transition={{ delay: 0.35 }}
+        className="flex gap-3"
+      >
+        <button
+          onClick={() => onNavigate("privacy")}
+          className="flex-1 flex items-center gap-3 p-3.5 rounded-2xl bg-card border border-border text-left transition-all hover:bg-muted/50 active:scale-[0.98]"
+        >
+          <Shield size={18} className="text-muted-foreground flex-shrink-0" />
+          <span className="text-xs font-semibold text-muted-foreground">Privacy Policy</span>
+        </button>
+        <button
+          onClick={() => onNavigate("terms")}
+          className="flex-1 flex items-center gap-3 p-3.5 rounded-2xl bg-card border border-border text-left transition-all hover:bg-muted/50 active:scale-[0.98]"
+        >
+          <FileText size={18} className="text-muted-foreground flex-shrink-0" />
+          <span className="text-xs font-semibold text-muted-foreground">Termini di Servizio</span>
+        </button>
+      </motion.div>
 
       {/* Install App */}
       {!isStandalone && (installPrompt || isIOS) && (
