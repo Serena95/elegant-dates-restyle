@@ -12,7 +12,7 @@ import { ProfileView } from "@/components/ProfileView";
 import { SettingsView } from "@/components/SettingsView";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
-import { Exercise, generaEserciziGiorno, CONFIG_LIVELLI, TEMA_CONFIG } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS } from "@/data/exercises";
 
 const Index = () => {
   const cloud = useCloudData();
@@ -44,11 +44,12 @@ const Index = () => {
       return;
     }
 
-    const nuovoPiano = {
-      "Lunedì": { tema: "core_mobilita", round: 0 },
-      "Mercoledì": { tema: "gambe_glutei", round: 0 },
-      "Venerdì": { tema: "full_body_cardio", round: 0 },
-    };
+    const attrezziSettimana = selezionaAttrezziSettimana(cloud.attrezzi);
+    const giorni = ["Lunedì", "Mercoledì", "Venerdì"];
+    const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
+    giorni.forEach((g, i) => {
+      nuovoPiano[g] = { attrezzo: attrezziSettimana[i], round: 0 };
+    });
 
     cloud.savePiano(nuovoPiano, { esercizi: {}, storico: cloud.allenamentiData.storico || {} });
     alert("✅ Nuovo piano generato con successo!");
@@ -65,20 +66,17 @@ const Index = () => {
     let esercizi: Exercise[];
     const cached = allenamentiEsercizi[giorno];
 
-    // Check if cached exercises have new format (tipo field)
-    if (cached && cached.length > 0 && (cached[0] as any).tipo) {
+    if (cached && cached.length > 0 && (cached[0] as any).categoria) {
       esercizi = cached;
     } else {
-      // Generate new exercises using tema
-      const tema = dati.tema || "full_body_cardio";
+      const attrezzo = dati.attrezzo || "Corpo Libero";
       const storici = Object.values(allenamentiStorico).flat();
-      esercizi = generaEserciziGiorno(tema, cloud.attrezzi, cloud.livello, storici);
+      esercizi = generaEserciziGiorno(attrezzo, cloud.livello, storici);
 
-      // Update storico with new exercise IDs
       const nuovoStorico = [...storici, ...esercizi.map(e => e.id)];
       const newAllenamenti = {
         esercizi: { ...allenamentiEsercizi, [giorno]: esercizi },
-        storico: { ...allenamentiStorico, [tema]: nuovoStorico }
+        storico: { ...allenamentiStorico, [attrezzo]: nuovoStorico }
       };
       cloud.savePiano(cloud.piano, newAllenamenti);
     }
@@ -104,8 +102,8 @@ const Index = () => {
 
     if (nuoviRound >= config.round) {
       const dataKey = new Date().toISOString().split("T")[0];
-      const tema = cloud.piano[giornoSelezionato]?.tema || "allenamento";
-      cloud.saveStoricoCal(dataKey, { attrezzo: tema, round: nuoviRound, completato: true });
+      const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
+      cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true });
     }
   }, [giornoSelezionato, roundCorrenti, cloud.livello, cloud.piano, cloud.savePiano, cloud.saveStoricoCal]);
 
@@ -141,12 +139,12 @@ const Index = () => {
             onComplete={(selected) => {
               cloud.setAttrezzi(selected);
               setView("dashboard");
-              // Generate plan after equipment selection
-              const nuovoPiano = {
-                "Lunedì": { tema: "core_mobilita", round: 0 },
-                "Mercoledì": { tema: "gambe_glutei", round: 0 },
-                "Venerdì": { tema: "full_body_cardio", round: 0 },
-              };
+              const attrezziSettimana = selezionaAttrezziSettimana(selected);
+              const giorni = ["Lunedì", "Mercoledì", "Venerdì"];
+              const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
+              giorni.forEach((g, i) => {
+                nuovoPiano[g] = { attrezzo: attrezziSettimana[i], round: 0 };
+              });
               cloud.savePiano(nuovoPiano, { esercizi: {}, storico: {} });
             }}
           />
@@ -155,15 +153,14 @@ const Index = () => {
     );
   }
 
-  // Workout view is full-screen without nav
   if (view === "workout" && giornoSelezionato) {
-    const tema = cloud.piano[giornoSelezionato]?.tema || "full_body_cardio";
+    const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "Corpo Libero";
     return (
       <div className="min-h-screen bg-background p-4">
         <div className="max-w-4xl mx-auto">
           <WorkoutView
             giorno={giornoSelezionato}
-            tema={tema}
+            tema={attrezzo}
             esercizi={eserciziCorrenti}
             livello={cloud.livello}
             roundCorrenti={roundCorrenti}
@@ -175,7 +172,6 @@ const Index = () => {
     );
   }
 
-  // Equipment editing
   if (view === "equipment") {
     return (
       <AppLayout currentView={view} onNavigate={navigate} profile={cloud.profile} userName={userName}>
@@ -191,9 +187,7 @@ const Index = () => {
   }
 
   const renderContent = () => {
-    if (showGuide) {
-      return <GuideView onBack={() => setShowGuide(false)} />;
-    }
+    if (showGuide) return <GuideView onBack={() => setShowGuide(false)} />;
 
     switch (view) {
       case "dashboard":

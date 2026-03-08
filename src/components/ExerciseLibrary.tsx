@@ -27,7 +27,7 @@ export function ExerciseLibrary({ onBack }: ExerciseLibraryProps) {
     .map(([attrezzo, esercizi]) => {
       const filtered = esercizi.filter(e =>
         e.nome.toLowerCase().includes(search.toLowerCase()) ||
-        e.tipo.toLowerCase().includes(search.toLowerCase()) ||
+        e.categoria.toLowerCase().includes(search.toLowerCase()) ||
         e.muscoli.some(m => m.toLowerCase().includes(search.toLowerCase()))
       );
       return { attrezzo, esercizi: filtered };
@@ -62,7 +62,7 @@ export function ExerciseLibrary({ onBack }: ExerciseLibraryProps) {
             {/* Group by tipo within attrezzo */}
             {Object.entries(
               esercizi.reduce((acc, e) => {
-                (acc[e.tipo] = acc[e.tipo] || []).push(e);
+                (acc[e.categoria] = acc[e.categoria] || []).push(e);
                 return acc;
               }, {} as Record<string, typeof esercizi>)
             ).map(([tipo, items]) => (
