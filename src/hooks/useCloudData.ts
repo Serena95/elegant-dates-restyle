@@ -67,6 +67,13 @@ export function useCloudData() {
   const [sfida, setSfidaState] = useState<Sfida | null>(null);
   const [ultimiAttrezzi, setUltimiAttrezziState] = useState<string[]>([]);
   const [profile, setProfileState] = useState<ProfileData>({ display_name: null, avatar_url: null });
+  const [cycleEntries, setCycleEntriesState] = useState<CycleEntry[]>([]);
+  const [pregnancySettings, setPregnancySettingsState] = useState<PregnancySettings>({
+    modalita_gravidanza: false,
+    settimana_gestazionale: 0,
+    durata_ciclo: 28,
+    durata_mestruazione: 5,
+  });
   const sfidaRef = useRef<Sfida | null>(null);
 
   useEffect(() => {
