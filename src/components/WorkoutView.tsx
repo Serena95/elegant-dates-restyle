@@ -37,6 +37,42 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const lastTimerRef = useRef<string | null>(null);
   const isCompleted = roundCorrenti >= maxRound;
 
+  // Voice cues synced with timer
+  useEffect(() => {
+    if (!voiceActive || !timer.isActive) return;
+    const remaining = timer.timeLeft;
+    const label = timer.label;
+    
+    // Only fire cues when timer label changes (new exercise started)
+    if (label !== lastTimerRef.current) {
+      lastTimerRef.current = label;
+      // Don't announce on first tick - the start button handler does it
+    }
+
+    // Mid-exercise cue
+    if (remaining === Math.floor(config.tempoEsercizio / 2) && config.tempoEsercizio >= 20) {
+      voice.announceMidExercise();
+    }
+    // Almost done
+    if (remaining === 10 && config.tempoEsercizio >= 20) {
+      voice.announceAlmostDone();
+    }
+    // Countdown
+    if (remaining <= 5 && remaining > 0) {
+      voice.announceCountdown(remaining);
+    }
+    // End
+    if (remaining === 0 && lastTimerRef.current) {
+      voice.announceEndExercise();
+      lastTimerRef.current = null;
+    }
+  }, [timer.timeLeft, timer.isActive, timer.label, voiceActive, voice, config.tempoEsercizio]);
+
+  // Cleanup voice on unmount
+  useEffect(() => {
+    return () => voice.stop();
+  }, [voice]);
+
   const temaConfig = TEMA_CONFIG[tema];
   const temaLabel = temaConfig?.label || tema;
   const temaIcon = temaConfig?.icon || "🏋️";
