@@ -1,4 +1,3 @@
-import { forwardRef } from "react";
 import { BADGE_DEFINITIONS, Badge } from "@/hooks/useBadges";
 import { motion } from "framer-motion";
 
@@ -6,11 +5,11 @@ interface BadgeDisplayProps {
   unlockedBadges: Badge[];
 }
 
-export const BadgeDisplay = forwardRef<HTMLDivElement, BadgeDisplayProps>(function BadgeDisplay({ unlockedBadges }, ref) {
+export function BadgeDisplay({ unlockedBadges }: BadgeDisplayProps) {
   const unlockedIds = new Set(unlockedBadges.map(b => b.id));
 
   return (
-    <div ref={ref} className="space-y-3">
+    <div className="space-y-3">
       <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wide">🏅 I tuoi Badge</h3>
       <div className="grid grid-cols-3 gap-3">
         {BADGE_DEFINITIONS.map((def, i) => {
@@ -36,4 +35,4 @@ export const BadgeDisplay = forwardRef<HTMLDivElement, BadgeDisplayProps>(functi
       </div>
     </div>
   );
-});
+}
