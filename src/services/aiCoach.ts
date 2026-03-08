@@ -58,7 +58,10 @@ export async function generateMotivationMessage(context: Pick<AICoachContext, "s
     const { data, error } = await supabase.functions.invoke("ai-coach", {
       body: { type: "motivation", context },
     });
-    if (error) throw error;
+    if (error) {
+      handleAIError(error);
+      throw error;
+    }
     return data?.result?.replace(/^["']|["']$/g, "").trim() || getDefaultMotivation(context.streak);
   } catch {
     return getDefaultMotivation(context.streak);
