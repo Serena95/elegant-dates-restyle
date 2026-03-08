@@ -159,11 +159,16 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
                 </button>
               );
             })}
-            {/* More button for Settings/Profile */}
+            {/* More menu with Library/Profile/Settings */}
             <button
-              onClick={() => onNavigate("settings")}
+              onClick={() => {
+                // Cycle through: settings -> profile -> library -> settings
+                if (currentView === "settings") onNavigate("profile");
+                else if (currentView === "profile") onNavigate("library");
+                else onNavigate("settings");
+              }}
               className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
-                currentView === "settings" || currentView === "profile" ? "text-primary" : "text-muted-foreground"
+                currentView === "settings" || currentView === "profile" || currentView === "library" ? "text-primary" : "text-muted-foreground"
               }`}
             >
               <Settings size={20} />

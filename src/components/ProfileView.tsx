@@ -1,19 +1,23 @@
 import { useState, useRef } from "react";
-import { Camera, User } from "lucide-react";
+import { Camera, User, Dumbbell, BarChart3 } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ProfileData } from "@/hooks/useCloudData";
 import { BadgeDisplay } from "./BadgeDisplay";
 import { Badge } from "@/hooks/useBadges";
+import { ATTREZZO_ICONS } from "@/data/exercises";
 
 interface ProfileViewProps {
   profile: ProfileData;
   onUpdateProfile: (updates: Partial<ProfileData>) => Promise<void>;
   unlockedBadges?: Badge[];
+  livello?: string;
+  attrezzi?: string[];
+  totalWorkouts?: number;
 }
 
-export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [] }: ProfileViewProps) {
+export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], livello, attrezzi = [], totalWorkouts = 0 }: ProfileViewProps) {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState(profile.display_name || "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
@@ -22,6 +26,7 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [] }: P
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const isGoogleAvatar = avatarUrl?.startsWith("http");
+  const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "AVANZATO" ? "bg-pilates-red" : "bg-primary";
 
   const handleSave = async () => {
     setSaving(true);
@@ -78,6 +83,40 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [] }: P
         </div>
         {isGoogleAvatar && <p className="text-xs text-muted-foreground">Foto da Google • Clicca 📷 per cambiarla</p>}
       </div>
+
+      {/* Quick stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="bg-card rounded-2xl border border-border p-3 text-center">
+          <BarChart3 size={18} className="text-primary mx-auto mb-1" />
+          <p className="text-lg font-black text-foreground">{totalWorkouts}</p>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase">Allenamenti</p>
+        </div>
+        <div className="bg-card rounded-2xl border border-border p-3 text-center">
+          <span className={`inline-block ${badgeColor} text-primary-foreground px-2 py-0.5 rounded-full text-[10px] font-bold`}>
+            {livello || "MEDIO"}
+          </span>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase mt-1">Livello</p>
+        </div>
+        <div className="bg-card rounded-2xl border border-border p-3 text-center">
+          <Dumbbell size={18} className="text-primary mx-auto mb-1" />
+          <p className="text-lg font-black text-foreground">{attrezzi.length}</p>
+          <p className="text-[10px] text-muted-foreground font-bold uppercase">Attrezzi</p>
+        </div>
+      </div>
+
+      {/* Equipment list */}
+      {attrezzi.length > 0 && (
+        <div className="space-y-2">
+          <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wide">🏋️ I tuoi Attrezzi</h3>
+          <div className="flex flex-wrap gap-2">
+            {attrezzi.map(a => (
+              <span key={a} className="bg-primary/10 text-primary text-xs font-bold px-3 py-1.5 rounded-full flex items-center gap-1">
+                {ATTREZZO_ICONS[a] || "🏋️"} {a}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Badges */}
       <BadgeDisplay unlockedBadges={unlockedBadges} />
