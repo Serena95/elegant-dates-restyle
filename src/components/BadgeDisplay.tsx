@@ -36,4 +36,4 @@ export function BadgeDisplay({ unlockedBadges }: BadgeDisplayProps) {
       </div>
     </div>
   );
-});
+}
