@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { Download, X } from "lucide-react";
+import { Download, X, Share, MoreVertical, Plus } from "lucide-react";
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -9,64 +9,111 @@ interface BeforeInstallPromptEvent extends Event {
 export const InstallBanner = React.forwardRef<HTMLDivElement, {}>(function InstallBanner(_props, ref) {
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const [dismissed, setDismissed] = useState(false);
-  const [isIOS, setIsIOS] = useState(false);
-  const [showIOSGuide, setShowIOSGuide] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+  const [platform, setPlatform] = useState<"ios" | "android" | "desktop">("desktop");
+
+  const isStandalone = typeof window !== "undefined" && 
+    (window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone);
 
   useEffect(() => {
-    const isIOSDevice = /iPad|iPhone|iPod/.test(navigator.userAgent) && !(window as any).MSStream;
-    const isStandalone = window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone;
-    setIsIOS(isIOSDevice && !isStandalone);
+    const ua = navigator.userAgent;
+    if (/iPad|iPhone|iPod/.test(ua) && !(window as any).MSStream) {
+      setPlatform("ios");
+    } else if (/Android/.test(ua)) {
+      setPlatform("android");
+    }
 
     const handler = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e as BeforeInstallPromptEvent);
     };
     window.addEventListener("beforeinstallprompt", handler);
+    window.addEventListener("appinstalled", () => setDismissed(true));
     return () => window.removeEventListener("beforeinstallprompt", handler);
   }, []);
-
-  const isStandalone = typeof window !== "undefined" && (window.matchMedia("(display-mode: standalone)").matches || (navigator as any).standalone);
 
   if (dismissed || isStandalone) return null;
 
   const handleInstall = async () => {
-    if (isIOS) {
-      setShowIOSGuide(true);
-      return;
+    if (deferredPrompt) {
+      await deferredPrompt.prompt();
+      const { outcome } = await deferredPrompt.userChoice;
+      if (outcome === "accepted") setDeferredPrompt(null);
+      setDismissed(true);
+    } else {
+      setShowGuide(true);
     }
-    if (!deferredPrompt) {
-      setShowIOSGuide(true);
-      return;
-    }
-    await deferredPrompt.prompt();
-    const { outcome } = await deferredPrompt.userChoice;
-    if (outcome === "accepted") setDeferredPrompt(null);
-    setDismissed(true);
   };
 
-  if (showIOSGuide) {
+  if (showGuide) {
     return (
-      <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4" onClick={() => setShowIOSGuide(false)}>
-        <div className="bg-card rounded-2xl border border-border shadow-2xl p-6 max-w-sm w-full space-y-3 mb-4" onClick={e => e.stopPropagation()}>
-          <h3 className="font-bold text-foreground text-center">
-            {isIOS ? "📱 Installa su iPhone/iPad" : "📱 Installa l'app dal browser"}
+      <div className="fixed inset-0 bg-black/50 z-50 flex items-end justify-center p-4" onClick={() => setShowGuide(false)}>
+        <div className="bg-card rounded-2xl border border-border shadow-2xl p-5 max-w-sm w-full space-y-4 mb-4" onClick={e => e.stopPropagation()}>
+          <h3 className="font-bold text-foreground text-center text-base">
+            📱 Installa My Pilates Plan
           </h3>
-          <ol className="text-sm text-muted-foreground space-y-2">
-            {isIOS ? (
-              <>
-                <li>1. Tocca il pulsante <strong>Condividi</strong> ⬆️ in basso</li>
-                <li>2. Scorri e seleziona <strong>"Aggiungi a Home"</strong></li>
-                <li>3. Tocca <strong>"Aggiungi"</strong> in alto a destra</li>
-              </>
-            ) : (
-              <>
-                <li>1. Apri il menu del browser (⋮ o ⋯)</li>
-                <li>2. Tocca <strong>"Installa app"</strong> o <strong>"Aggiungi a schermata Home"</strong></li>
-                <li>3. Conferma l'installazione</li>
-              </>
-            )}
-          </ol>
-          <button onClick={() => setShowIOSGuide(false)} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold">
+          
+          <p className="text-xs text-muted-foreground text-center">
+            L'installazione diretta non è disponibile qui. Segui questi passaggi:
+          </p>
+
+          {platform === "ios" ? (
+            <ol className="text-sm text-foreground space-y-3">
+              <li className="flex items-start gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">1</span>
+                <span>Tocca <strong>Condividi</strong> <Share size={14} className="inline text-primary" /> in basso su Safari</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">2</span>
+                <span>Seleziona <strong>"Aggiungi alla schermata Home"</strong> <Plus size={14} className="inline text-primary" /></span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">3</span>
+                <span>Tocca <strong>"Aggiungi"</strong> in alto a destra</span>
+              </li>
+            </ol>
+          ) : platform === "android" ? (
+            <ol className="text-sm text-foreground space-y-3">
+              <li className="flex items-start gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">1</span>
+                <span>Tocca il menu <MoreVertical size={14} className="inline text-primary" /> in alto a destra</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">2</span>
+                <span>Seleziona <strong>"Installa app"</strong></span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">3</span>
+                <span>Conferma toccando <strong>"Installa"</strong></span>
+              </li>
+            </ol>
+          ) : (
+            <ol className="text-sm text-foreground space-y-3">
+              <li className="flex items-start gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">1</span>
+                <span>Apri l'app in <strong>Chrome</strong> o <strong>Edge</strong></span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">2</span>
+                <span>Clicca l'icona <strong>installa</strong> nella barra URL</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <span className="w-6 h-6 rounded-full bg-primary/15 flex items-center justify-center flex-shrink-0 text-xs font-bold text-primary">3</span>
+                <span>Conferma cliccando <strong>"Installa"</strong></span>
+              </li>
+            </ol>
+          )}
+
+          <div className="bg-muted/50 rounded-xl p-3">
+            <p className="text-[11px] text-muted-foreground text-center">
+              ⚠️ Se stai usando l'anteprima, apri prima l'app pubblicata nel browser:
+            </p>
+            <p className="text-[11px] text-primary font-mono text-center mt-1 break-all select-all">
+              elegant-dates-restyle.lovable.app
+            </p>
+          </div>
+
+          <button onClick={() => setShowGuide(false)} className="w-full py-3 rounded-xl bg-primary text-primary-foreground font-bold text-sm">
             Ho capito!
           </button>
         </div>
