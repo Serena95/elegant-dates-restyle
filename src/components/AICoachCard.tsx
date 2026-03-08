@@ -22,17 +22,21 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
   const streakLevel = getStreakLevel(streak.currentStreak);
   const needsRecovery = streak.currentStreak >= 5 || progress.recentIntensity === "alta" || context.cyclePhase === "mestruale";
 
+  const delay = (ms: number) => new Promise(r => setTimeout(r, ms));
+
   const loadSuggestions = async () => {
     setLoading(true);
     try {
-      // Sequential calls to avoid rate limiting
       const sug = await generateWorkoutSuggestion(context);
       setSuggestion(sug);
+      
+      await delay(2000); // Wait 2s between calls to avoid rate limit
       
       const mot = await generateMotivationMessage({ streak: context.streak, totalWorkouts: progress.totalWorkouts });
       setMotivation(mot);
 
       if (needsRecovery) {
+        await delay(2000);
         const rec = await generateRecoveryAdvice(context);
         setRecovery(rec);
       }
