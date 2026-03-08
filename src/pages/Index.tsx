@@ -294,7 +294,16 @@ const Index = () => {
           />
         );
       case "profile":
-        return <ProfileView profile={cloud.profile} onUpdateProfile={cloud.updateProfile} unlockedBadges={unlockedBadges} />;
+        return (
+          <ProfileView
+            profile={cloud.profile}
+            onUpdateProfile={cloud.updateProfile}
+            unlockedBadges={unlockedBadges}
+            livello={cloud.livello}
+            attrezzi={cloud.attrezzi}
+            totalWorkouts={Object.values(cloud.storicoCal).filter((v: any) => v?.completato).length}
+          />
+        );
       case "settings":
         return (
           <SettingsView
