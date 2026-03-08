@@ -291,6 +291,33 @@ export function useCloudData() {
     setStoricoCalState({});
   }, [user]);
 
+  // Cycle tracking
+  const addCycleEntry = useCallback(async (entry: Omit<CycleEntry, "id">) => {
+    if (!user) return;
+    const { data } = await supabase.from("cycle_tracking").insert({
+      user_id: user.id, data: entry.data, tipo: entry.tipo, sintomi: entry.sintomi, note: entry.note,
+    }).select().single();
+    if (data) setCycleEntriesState(prev => [{ id: data.id, ...entry }, ...prev]);
+  }, [user]);
+
+  const deleteCycleEntry = useCallback(async (id: string) => {
+    if (!user) return;
+    await supabase.from("cycle_tracking").delete().eq("id", id);
+    setCycleEntriesState(prev => prev.filter(e => e.id !== id));
+  }, [user]);
+
+  // Pregnancy / cycle settings
+  const updatePregnancySettings = useCallback(async (updates: Partial<PregnancySettings>) => {
+    if (!user) return;
+    setPregnancySettingsState(prev => ({ ...prev, ...updates }));
+    const dbUpdates: any = {};
+    if (updates.modalita_gravidanza !== undefined) dbUpdates.modalita_gravidanza = updates.modalita_gravidanza;
+    if (updates.settimana_gestazionale !== undefined) dbUpdates.settimana_gestazionale = updates.settimana_gestazionale;
+    if (updates.durata_ciclo !== undefined) dbUpdates.durata_ciclo = updates.durata_ciclo;
+    if (updates.durata_mestruazione !== undefined) dbUpdates.durata_mestruazione = updates.durata_mestruazione;
+    await supabase.from("user_settings").update(dbUpdates).eq("user_id", user.id);
+  }, [user]);
+
   return {
     loading,
     attrezzi, setAttrezzi,
@@ -305,5 +332,7 @@ export function useCloudData() {
     ultimiAttrezzi, setUltimiAttrezzi,
     profile, updateProfile,
     resetWorkoutData,
+    cycleEntries, addCycleEntry, deleteCycleEntry,
+    pregnancySettings, updatePregnancySettings,
   };
 }
