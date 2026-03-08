@@ -134,7 +134,25 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         </button>
         <div className="flex gap-2">
           <button
-            onClick={() => setIsPaused(p => !p)}
+            onClick={() => {
+              setVoiceActive(v => {
+                if (v) voice.stop();
+                return !v;
+              });
+            }}
+            className={`w-9 h-9 rounded-full flex items-center justify-center transition ${voiceActive ? "bg-primary/15" : "bg-muted"}`}
+            title={voiceActive ? "Disattiva trainer vocale" : "Attiva trainer vocale"}
+          >
+            {voiceActive ? <Volume2 size={16} className="text-primary" /> : <VolumeX size={16} className="text-muted-foreground" />}
+          </button>
+          <button
+            onClick={() => {
+              setIsPaused(p => {
+                if (!p && voiceActive) voice.announcePause();
+                if (p && voiceActive) voice.announceResume();
+                return !p;
+              });
+            }}
             className="w-9 h-9 rounded-full bg-muted flex items-center justify-center hover:bg-muted/80 transition"
           >
             {isPaused ? <Play size={16} className="text-primary" /> : <Pause size={16} className="text-muted-foreground" />}
