@@ -36,7 +36,21 @@ export interface CompleteCoachResponse {
 /**
  * Single AI call that returns suggestion + motivation + recovery in one response.
  */
-export async function generateCompleteCoachData(context: AICoachContext): Promise<CompleteCoachResponse> {
+// Session cache for AI coach responses
+const sessionCache = new Map<string, { data: CompleteCoachResponse; timestamp: number }>();
+const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
+
+function getCacheKey(context: AICoachContext): string {
+  return `${context.level}-${(context.equipment || []).sort().join(",")}-${context.streak}-${context.cyclePhase || ""}-${context.pregnancyMode || false}`;
+}
+
+export async function generateCompleteCoachData(context: AICoachContext, forceRefresh = false): Promise<CompleteCoachResponse> {
+  const key = getCacheKey(context);
+  const cached = sessionCache.get(key);
+  if (!forceRefresh && cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
   try {
     const { data, error } = await supabase.functions.invoke("ai-coach", {
       body: { type: "complete", context },
@@ -50,11 +64,13 @@ export async function generateCompleteCoachData(context: AICoachContext): Promis
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (jsonMatch) {
       const parsed = JSON.parse(jsonMatch[0]);
-      return {
+      const result: CompleteCoachResponse = {
         suggestion: parsed.suggestion || getDefaultSuggestion(),
         motivation: parsed.motivation || getDefaultMotivation(context.streak),
         recovery: parsed.recovery || null,
       };
+      sessionCache.set(key, { data: result, timestamp: Date.now() });
+      return result;
     }
     return getDefaultResponse(context.streak);
   } catch (e) {
