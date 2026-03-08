@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { User } from "lucide-react";
 import {
   LayoutDashboard,
@@ -8,6 +9,7 @@ import {
   UserCircle,
   Settings,
   ClipboardList,
+  MoreHorizontal,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProfileData } from "@/hooks/useCloudData";
