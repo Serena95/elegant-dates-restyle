@@ -169,10 +169,17 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
                 <button
                   key={item.view}
                   onClick={() => onNavigate(item.view)}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
+                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 relative ${
                     active ? "text-primary" : "text-muted-foreground"
                   }`}
                 >
+                  {active && (
+                    <motion.div
+                      layoutId="mobile-nav-active"
+                      className="absolute -top-1 w-8 h-1 rounded-full bg-primary"
+                      transition={{ type: "spring", stiffness: 350, damping: 30 }}
+                    />
+                  )}
                   <Icon size={20} />
                   <span className="text-[10px] font-semibold truncate">{item.label}</span>
                 </button>
