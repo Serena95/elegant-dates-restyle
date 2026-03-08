@@ -19,7 +19,7 @@ interface ProfileViewProps {
   totalWorkouts?: number;
 }
 
-export const ProfileView = forwardRef<HTMLDivElement, ProfileViewProps>(function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], livello, attrezzi = [], totalWorkouts = 0 }, ref) {
+export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], livello, attrezzi = [], totalWorkouts = 0 }: ProfileViewProps) {
   const { user } = useAuth();
   const [displayName, setDisplayName] = useState(profile.display_name || "");
   const [avatarUrl, setAvatarUrl] = useState(profile.avatar_url || "");
