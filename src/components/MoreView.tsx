@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles } from "lucide-react";
+import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles, Crown } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface MoreViewProps {
@@ -7,6 +7,16 @@ interface MoreViewProps {
 }
 
 const FEATURES = [
+  {
+    icon: Crown,
+    label: "Premium",
+    desc: "Sblocca AI Coach avanzato e funzionalità premium",
+    view: "premium",
+    gradient: "from-amber-500/20 to-yellow-400/10",
+    iconBg: "bg-amber-500/15",
+    iconColor: "text-amber-500",
+    borderColor: "border-amber-500/20",
+  },
   {
     icon: Droplets,
     label: "Monitoraggio Ciclo",

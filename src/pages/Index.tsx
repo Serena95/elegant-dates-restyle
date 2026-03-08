@@ -19,6 +19,7 @@ import { MoreView } from "@/components/MoreView";
 import { WorkoutReminder } from "@/components/WorkoutReminder";
 import { useNotifications } from "@/hooks/useNotifications";
 import { LegalPage } from "@/components/LegalPage";
+import { PremiumView } from "@/components/PremiumView";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
@@ -54,7 +55,7 @@ function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): stri
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
-  const [view, setView] = useState<AppView | "cycle" | "pregnancy" | "privacy" | "terms">("dashboard");
+  const [view, setView] = useState<AppView | "cycle" | "pregnancy" | "privacy" | "terms" | "premium">("dashboard");
   const [giornoSelezionato, setGiornoSelezionato] = useState<string | null>(null);
   const [eserciziCorrenti, setEserciziCorrenti] = useState<Exercise[]>([]);
   const [roundCorrenti, setRoundCorrenti] = useState(0);
@@ -445,6 +446,8 @@ const Index = () => {
         return <LegalPage type="privacy" onBack={() => setView("settings" as any)} />;
       case "terms" as any:
         return <LegalPage type="terms" onBack={() => setView("settings" as any)} />;
+      case "premium" as any:
+        return <PremiumView onNavigate={(v) => navigate(v as AppView)} />;
       default:
         return null;
     }

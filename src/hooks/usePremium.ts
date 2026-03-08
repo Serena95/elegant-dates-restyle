@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 
@@ -6,6 +6,7 @@ export interface PremiumStatus {
   isPremium: boolean;
   premiumExpires: string | null;
   loading: boolean;
+  checkSubscription: () => Promise<void>;
 }
 
 export function usePremium(): PremiumStatus {
@@ -14,7 +15,7 @@ export function usePremium(): PremiumStatus {
   const [premiumExpires, setPremiumExpires] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
+  const checkSubscription = useCallback(async () => {
     if (!user) {
       setIsPremium(false);
       setPremiumExpires(null);
@@ -22,7 +23,15 @@ export function usePremium(): PremiumStatus {
       return;
     }
 
-    const fetchPremium = async () => {
+    try {
+      const { data, error } = await supabase.functions.invoke("check-subscription");
+      if (error) throw error;
+
+      setIsPremium(data?.subscribed === true);
+      setPremiumExpires(data?.subscription_end || null);
+    } catch (e) {
+      console.error("Error checking subscription:", e);
+      // Fallback to DB check
       const { data } = await supabase
         .from("profiles")
         .select("premium, premium_expires")
@@ -35,11 +44,21 @@ export function usePremium(): PremiumStatus {
         setIsPremium(data.premium === true && !expired);
         setPremiumExpires(data.premium_expires);
       }
+    } finally {
       setLoading(false);
-    };
-
-    fetchPremium();
+    }
   }, [user]);
 
-  return { isPremium, premiumExpires, loading };
+  useEffect(() => {
+    checkSubscription();
+  }, [checkSubscription]);
+
+  // Auto-refresh every 60 seconds
+  useEffect(() => {
+    if (!user) return;
+    const interval = setInterval(checkSubscription, 60000);
+    return () => clearInterval(interval);
+  }, [user, checkSubscription]);
+
+  return { isPremium, premiumExpires, loading, checkSubscription };
 }
