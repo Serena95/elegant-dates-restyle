@@ -1,5 +1,6 @@
-import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, X, Droplets, Calendar, TrendingUp } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { ChevronLeft, ChevronRight, X, Droplets, Calendar, TrendingUp, ExternalLink } from "lucide-react";
+import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
 interface CycleEntry {
@@ -121,6 +122,71 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
     return diff;
   }, [periodPredictions, todayKey]);
 
+  // Google Calendar sync
+  const handleSyncGoogleCalendar = useCallback(() => {
+    const allPeriods = [...periodPredictions].sort();
+    const allFertile = [...fertilePredictions].sort();
+    
+    if (allPeriods.length === 0 && allFertile.length === 0) {
+      toast.error("Nessuna previsione disponibile. Registra almeno una mestruazione.");
+      return;
+    }
+
+    // Group consecutive dates into events
+    const groupDates = (dates: string[]) => {
+      const groups: { start: string; end: string }[] = [];
+      let i = 0;
+      while (i < dates.length) {
+        const start = dates[i];
+        let end = dates[i];
+        while (i + 1 < dates.length) {
+          const curr = new Date(dates[i]);
+          const next = new Date(dates[i + 1]);
+          if ((next.getTime() - curr.getTime()) <= 86400000) {
+            end = dates[i + 1];
+            i++;
+          } else break;
+        }
+        groups.push({ start, end });
+        i++;
+      }
+      return groups;
+    };
+
+    const periodGroups = groupDates(allPeriods);
+    const fertileGroups = groupDates(allFertile);
+
+    // Open first period prediction in Google Calendar
+    const firstEvent = periodGroups[0] || fertileGroups[0];
+    if (!firstEvent) return;
+
+    const formatDate = (d: string) => d.replace(/-/g, "");
+    const endPlusOne = (d: string) => {
+      const date = new Date(d);
+      date.setDate(date.getDate() + 1);
+      return date.toISOString().split("T")[0].replace(/-/g, "");
+    };
+
+    // Build all events info for user
+    let eventCount = 0;
+    
+    // Open Google Calendar for each predicted period
+    periodGroups.forEach((group, idx) => {
+      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent("🔴 Ciclo mestruale (previsione)")}&dates=${formatDate(group.start)}/${endPlusOne(group.end)}&details=${encodeURIComponent("Previsione generata da MyPilatesPlan")}&sf=true`;
+      setTimeout(() => window.open(url, "_blank"), idx * 500);
+      eventCount++;
+    });
+
+    // Open Google Calendar for each fertile window
+    fertileGroups.forEach((group, idx) => {
+      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent("🟢 Finestra fertile (previsione)")}&dates=${formatDate(group.start)}/${endPlusOne(group.end)}&details=${encodeURIComponent("Previsione generata da MyPilatesPlan")}&sf=true`;
+      setTimeout(() => window.open(url, "_blank"), (periodGroups.length + idx) * 500);
+      eventCount++;
+    });
+
+    toast.success(`${eventCount} eventi aperti in Google Calendar! Conferma ogni evento.`);
+  }, [periodPredictions, fertilePredictions]);
+
   const cambiaMese = (d: number) => {
     let m = meseCorrente + d;
     let a = annoCorrente;
@@ -185,6 +251,24 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
           )}
         </div>
       </motion.div>
+
+      {/* Google Calendar Sync */}
+      <motion.button
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        onClick={handleSyncGoogleCalendar}
+        className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-blue-500/10 to-sky-500/5 border border-blue-500/15 text-left transition-all active:scale-[0.98] hover:from-blue-500/15"
+      >
+        <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+          <Calendar size={20} className="text-blue-500" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-foreground">Sincronizza con Google Calendar</p>
+          <p className="text-[10px] text-muted-foreground">Aggiungi previsioni ciclo e finestra fertile</p>
+        </div>
+        <ExternalLink size={16} className="text-blue-500 flex-shrink-0" />
+      </motion.button>
 
       {/* Settings */}
       <AnimatePresence>
