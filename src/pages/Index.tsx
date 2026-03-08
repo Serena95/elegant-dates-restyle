@@ -323,9 +323,25 @@ const Index = () => {
             tempoTotale={Math.floor((Date.now() - workoutStartTime) / 1000)}
             attrezzo={attrezzo}
             newBadges={newBadges}
+            xpGained={xpResult?.xpGained}
+            newXp={xpResult?.newXp}
+            leveledUp={xpResult?.leveledUp}
+            onShare={async () => {
+              if (!user) return;
+              const minuti = Math.floor((Date.now() - workoutStartTime) / 60000);
+              const focus = detectFocus(eserciziCorrenti);
+              await supabase.from("community_posts").insert({
+                user_id: user.id,
+                text: `Ho completato il mio allenamento ${attrezzo}! 💪`,
+                workout_type: attrezzo,
+                workout_focus: focus.label,
+                workout_duration_min: minuti,
+              });
+            }}
             onClose={() => {
               setShowComplete(false);
               setNewBadges([]);
+              setXpResult(null);
               navigate("dashboard");
             }}
           />
