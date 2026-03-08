@@ -68,6 +68,7 @@ export function useCloudData() {
   const [ultimiAttrezzi, setUltimiAttrezziState] = useState<string[]>([]);
   const [profile, setProfileState] = useState<ProfileData>({ display_name: null, avatar_url: null });
   const [cycleEntries, setCycleEntriesState] = useState<CycleEntry[]>([]);
+  const [giorniAllenamento, setGiorniAllenamentoState] = useState<number[]>([1, 3, 5]);
   const [pregnancySettings, setPregnancySettingsState] = useState<PregnancySettings>({
     modalita_gravidanza: false,
     settimana_gestazionale: 0,
@@ -104,6 +105,7 @@ export function useCloudData() {
       setAttrezziState(settingsRes.data.attrezzi_selezionati || []);
       setLivelloState(settingsRes.data.livello || "MEDIO");
       setUltimiAttrezziState(settingsRes.data.ultimi_attrezzi || []);
+      setGiorniAllenamentoState((settingsRes.data as any).giorni_allenamento || [1, 3, 5]);
       setPregnancySettingsState({
         modalita_gravidanza: (settingsRes.data as any).modalita_gravidanza || false,
         settimana_gestazionale: (settingsRes.data as any).settimana_gestazionale || 0,
@@ -180,6 +182,12 @@ export function useCloudData() {
     await supabase.from("user_settings").update({ ultimi_attrezzi: v }).eq("user_id", user.id);
   }, [user]);
 
+  const setGiorniAllenamento = useCallback(async (v: number[]) => {
+    if (!user) return;
+    setGiorniAllenamentoState(v);
+    await supabase.from("user_settings").update({ giorni_allenamento: v } as any).eq("user_id", user.id);
+  }, [user]);
+
   const savePiano = useCallback(async (newPiano: WeekPlan, newAllenamenti?: AllenamentiData) => {
     if (!user) return;
     setPianoState(newPiano);
@@ -200,7 +208,6 @@ export function useCloudData() {
     if (!user) return;
     setStoricoCalState(prev => ({ ...prev, [dataKey]: entry }));
 
-    // Strip non-DB fields before saving
     const { focus, ...dbEntry } = entry;
     const { data: existing } = await supabase.from("workout_history").select("id").eq("user_id", user.id).eq("data_key", dataKey).maybeSingle();
     if (existing) {
@@ -293,7 +300,6 @@ export function useCloudData() {
     setStoricoCalState({});
   }, [user]);
 
-  // Cycle tracking
   const addCycleEntry = useCallback(async (entry: Omit<CycleEntry, "id">) => {
     if (!user) return;
     const { data } = await supabase.from("cycle_tracking").insert({
@@ -308,7 +314,6 @@ export function useCloudData() {
     setCycleEntriesState(prev => prev.filter(e => e.id !== id));
   }, [user]);
 
-  // Pregnancy / cycle settings
   const updatePregnancySettings = useCallback(async (updates: Partial<PregnancySettings>) => {
     if (!user) return;
     setPregnancySettingsState(prev => ({ ...prev, ...updates }));
@@ -336,5 +341,6 @@ export function useCloudData() {
     resetWorkoutData,
     cycleEntries, addCycleEntry, deleteCycleEntry,
     pregnancySettings, updatePregnancySettings,
+    giorniAllenamento, setGiorniAllenamento,
   };
 }
