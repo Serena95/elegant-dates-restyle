@@ -8,6 +8,16 @@ interface MoreViewProps {
 
 const FEATURES = [
   {
+    icon: Crown,
+    label: "Premium",
+    desc: "Sblocca AI Coach avanzato e funzionalità premium",
+    view: "premium",
+    gradient: "from-amber-500/20 to-yellow-400/10",
+    iconBg: "bg-amber-500/15",
+    iconColor: "text-amber-500",
+    borderColor: "border-amber-500/20",
+  },
+  {
     icon: Droplets,
     label: "Monitoraggio Ciclo",
     desc: "Tieni traccia del ciclo, sintomi e previsioni",
