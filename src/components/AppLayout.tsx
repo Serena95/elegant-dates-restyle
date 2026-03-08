@@ -54,7 +54,7 @@ const MOBILE_NAV_ITEMS: { view: AppView; label: string; icon: React.ElementType 
   { view: "programs", label: "Allenamenti", icon: ClipboardList },
   { view: "calendar", label: "Calendario", icon: CalendarDays },
   { view: "community", label: "Community", icon: Users },
-  { view: "profile", label: "Profilo", icon: UserCircle },
+  { view: "more", label: "Altro", icon: MoreHorizontal },
 ];
 
 function ProfileAvatar({ profile, size = 36, onClick }: { profile: ProfileData; size?: number; onClick?: () => void }) {
