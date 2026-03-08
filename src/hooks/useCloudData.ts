@@ -196,15 +196,17 @@ export function useCloudData() {
     }
   }, [user]);
 
-  const saveStoricoCal = useCallback(async (dataKey: string, entry: { attrezzo: string; round: number; completato: boolean }) => {
+  const saveStoricoCal = useCallback(async (dataKey: string, entry: { attrezzo: string; round: number; completato: boolean; focus?: any }) => {
     if (!user) return;
     setStoricoCalState(prev => ({ ...prev, [dataKey]: entry }));
 
+    // Strip non-DB fields before saving
+    const { focus, ...dbEntry } = entry;
     const { data: existing } = await supabase.from("workout_history").select("id").eq("user_id", user.id).eq("data_key", dataKey).maybeSingle();
     if (existing) {
-      await supabase.from("workout_history").update(entry).eq("id", existing.id);
+      await supabase.from("workout_history").update(dbEntry).eq("id", existing.id);
     } else {
-      await supabase.from("workout_history").insert({ user_id: user.id, data_key: dataKey, ...entry });
+      await supabase.from("workout_history").insert({ user_id: user.id, data_key: dataKey, ...dbEntry });
     }
   }, [user]);
 
