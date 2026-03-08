@@ -372,7 +372,7 @@ const Index = () => {
           <SettingsView
             onNavigate={(v) => {
               if (v === "guide") setShowGuide(true);
-              else if (v === "cycle" || v === "pregnancy") setView(v);
+              else if (v === "cycle" || v === "pregnancy" || v === "privacy" || v === "terms") setView(v as any);
               else navigate(v as AppView);
             }}
             onModificaAttrezzi={() => navigate("equipment")}
