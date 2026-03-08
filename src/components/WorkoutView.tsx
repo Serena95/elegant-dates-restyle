@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Exercise, CONFIG_LIVELLI, ATTREZZO_ICONS, TEMA_CONFIG } from "@/data/exercises";
+import { Exercise, CONFIG_LIVELLI, ATTREZZO_ICONS, TEMA_CONFIG, detectFocus } from "@/data/exercises";
 import { useTimer } from "@/hooks/useTimer";
 import { TimerOverlay } from "./TimerOverlay";
 import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, SkipForward, X } from "lucide-react";
@@ -103,13 +103,22 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         </div>
       </div>
 
-      <h2 className="text-xl font-bold text-foreground">
-        {temaIcon} {giorno} <span className="text-primary">({temaLabel})</span>
-      </h2>
-
-      <div className="text-sm text-muted-foreground">
-        ⏱️ {config.tempoEsercizio}s esercizio • {config.pausa}s pausa • {maxRound} round
-      </div>
+      {(() => {
+        const focus = detectFocus(esercizi);
+        return (
+          <>
+            <h2 className="text-xl font-bold text-foreground">
+              {temaIcon} {giorno} <span className="text-primary">({temaLabel})</span>
+            </h2>
+            <div className="flex items-center gap-3 text-sm text-muted-foreground flex-wrap">
+              <span>⏱️ {config.tempoEsercizio}s esercizio • {config.pausa}s pausa • {maxRound} round</span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/50 text-foreground text-xs font-bold">
+                {focus.icon} {focus.label}
+              </span>
+            </div>
+          </>
+        );
+      })()}
 
       {/* Riscaldamento */}
       <div className="bg-amber-50 dark:bg-amber-950/30 p-4 rounded-2xl border-l-[5px] border-amber-400 dark:border-amber-600 space-y-2">

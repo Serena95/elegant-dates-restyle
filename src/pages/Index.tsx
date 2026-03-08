@@ -19,7 +19,7 @@ import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
-import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo } from "@/data/exercises";
 
 const Index = () => {
   const cloud = useCloudData();
@@ -74,6 +74,18 @@ const Index = () => {
     return { completed, total, streak };
   }, [cloud.storicoCal]);
 
+  // Compute focus for each day based on cached exercises
+  const focusMap = useMemo<Record<string, FocusInfo>>(() => {
+    const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
+    const map: Record<string, FocusInfo> = {};
+    for (const giorno of Object.keys(cloud.piano)) {
+      const cached = allenamentiEsercizi[giorno];
+      if (cached && cached.length > 0 && (cached[0] as any).categoria) {
+        map[giorno] = detectFocus(cached);
+      }
+    }
+    return map;
+  }, [cloud.piano, cloud.allenamentiData.esercizi]);
   const effectiveView: string = cloud.loading
     ? "loading"
     : cloud.attrezzi.length === 0 && view === "dashboard"
@@ -146,7 +158,8 @@ const Index = () => {
     if (nuoviRound >= config.round) {
       const dataKey = new Date().toISOString().split("T")[0];
       const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
-      cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true });
+      const focus = detectFocus(eserciziCorrenti);
+      cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true, focus });
 
       // Check for new badges after a short delay to let state update
       const prevCount = prevBadgeCountRef.current;
@@ -257,6 +270,7 @@ const Index = () => {
             userName={userName}
             weeklyStats={weeklyStats}
             onNavigate={navigate}
+            focusMap={focusMap}
           />
         );
       case "progress":

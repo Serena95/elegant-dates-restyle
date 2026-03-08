@@ -1,12 +1,13 @@
 import { motion } from "framer-motion";
 import { ChevronRight, Check } from "lucide-react";
-import { DayPlan, CONFIG_LIVELLI, ATTREZZO_ICONS } from "@/data/exercises";
+import { DayPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo } from "@/data/exercises";
 
 interface DayCardProps {
   giorno: string;
   dati: DayPlan;
   livello: string;
   index: number;
+  focus?: FocusInfo;
   onClick: () => void;
 }
 
@@ -18,7 +19,7 @@ const TEMA_GRADIENTS: Record<string, { from: string; to: string; border: string;
 
 const DEFAULT_GRADIENT = { from: "from-blue-500/10", to: "to-indigo-500/10", border: "border-blue-200 dark:border-blue-800", accent: "bg-blue-500" };
 
-export function DayCard({ giorno, dati, livello, index, onClick }: DayCardProps) {
+export function DayCard({ giorno, dati, livello, index, focus, onClick }: DayCardProps) {
   const maxRound = CONFIG_LIVELLI[livello].round;
   const roundFatti = dati.round || 0;
   const isCompleted = roundFatti >= maxRound;
@@ -78,12 +79,19 @@ export function DayCard({ giorno, dati, livello, index, onClick }: DayCardProps)
             <h3 className="text-lg font-bold text-foreground">{giorno}</h3>
           </div>
 
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-1.5">
             <span className="text-xl">{temaIcon}</span>
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wide">
               {temaLabel}
             </span>
           </div>
+
+          {focus && (
+            <div className="flex items-center gap-1.5 mb-2">
+              <span className="text-sm">{focus.icon}</span>
+              <span className="text-xs font-semibold text-muted-foreground">Focus: <span className="text-foreground">{focus.label}</span></span>
+            </div>
+          )}
 
           <div className="flex items-center gap-3">
             <span className={`text-sm font-bold ${isCompleted ? "text-pilates-green" : "text-muted-foreground"}`}>

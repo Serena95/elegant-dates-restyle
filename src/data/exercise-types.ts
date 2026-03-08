@@ -48,6 +48,53 @@ export const TEMA_CONFIG: Record<string, { label: string; tipi: string[]; icon: 
   "full_body_cardio": { label: "Full Body + Cardio", tipi: ["core", "gambe", "glutei", "schiena", "braccia", "cardio", "stabilità"], icon: "🔥" },
 };
 
+export interface FocusInfo {
+  key: string;
+  label: string;
+  icon: string;
+}
+
+const FOCUS_MAP: Record<string, FocusInfo> = {
+  core: { key: "core", label: "Core & Stabilità", icon: "🎯" },
+  lower_body: { key: "lower_body", label: "Gambe & Glutei", icon: "🦵" },
+  full_body: { key: "full_body", label: "Full Body", icon: "🔥" },
+  mobilita: { key: "mobilita", label: "Mobilità", icon: "🧘" },
+  stabilita: { key: "stabilita", label: "Stabilità", icon: "⚖️" },
+  postura: { key: "postura", label: "Postura", icon: "🧍" },
+};
+
+/**
+ * Detect workout focus based on exercise category composition.
+ */
+export function detectFocus(esercizi: { categoria: string }[]): FocusInfo {
+  if (!esercizi || esercizi.length === 0) return FOCUS_MAP.full_body;
+
+  const counts: Record<string, number> = {};
+  esercizi.forEach(e => {
+    const cat = e.categoria;
+    counts[cat] = (counts[cat] || 0) + 1;
+  });
+
+  const total = esercizi.length;
+  const coreCount = (counts["core"] || 0) + (counts["stabilità"] || 0);
+  const lowerCount = (counts["gambe"] || 0) + (counts["glutei"] || 0);
+  const mobilityCount = counts["mobilità"] || 0;
+  const backCount = counts["schiena"] || 0;
+
+  // If >50% is core/stability → core focus
+  if (coreCount / total > 0.5) return FOCUS_MAP.core;
+  // If >50% is lower body → lower body focus
+  if (lowerCount / total > 0.5) return FOCUS_MAP.lower_body;
+  // If >40% mobility → mobility focus
+  if (mobilityCount / total > 0.4) return FOCUS_MAP.mobilita;
+  // If >40% back + stability → postura
+  if ((backCount + (counts["stabilità"] || 0)) / total > 0.4) return FOCUS_MAP.postura;
+  // If >40% stability alone → stability
+  if ((counts["stabilità"] || 0) / total > 0.4) return FOCUS_MAP.stabilita;
+
+  return FOCUS_MAP.full_body;
+}
+
 export const suggerimentiNutrizionali: Record<string, string> = {
   "Corpo Libero": "Oggi focus sulla fluidità: bevi un bicchiere d'acqua extra prima di iniziare.",
   "Ring": "Il Ring richiede forza resistente: una manciata di mandorle 30 min prima ti darà energia.",
