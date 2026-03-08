@@ -189,8 +189,6 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
           selectedDays={giorniAllenamento}
           onChange={(days) => onChangeGiorniAllenamento?.(days)}
         />
-        <SettingsRow icon={Droplets} label="Monitoraggio Ciclo" onClick={() => onNavigate("cycle")} />
-        <SettingsRow icon={Baby} label="Modalità Gravidanza" onClick={() => onNavigate("pregnancy")} />
       </Section>
 
       {/* Privacy */}
