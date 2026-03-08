@@ -10,7 +10,7 @@ export const BadgeDisplay = forwardRef<HTMLDivElement, BadgeDisplayProps>(functi
   const unlockedIds = new Set(unlockedBadges.map(b => b.id));
 
   return (
-    <div className="space-y-3">
+    <div ref={ref} className="space-y-3">
       <h3 className="text-sm font-bold uppercase text-muted-foreground tracking-wide">🏅 I tuoi Badge</h3>
       <div className="grid grid-cols-3 gap-3">
         {BADGE_DEFINITIONS.map((def, i) => {
