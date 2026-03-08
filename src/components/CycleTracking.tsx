@@ -252,6 +252,24 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
         </div>
       </motion.div>
 
+      {/* Google Calendar Sync */}
+      <motion.button
+        initial={{ opacity: 0, y: 6 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.15 }}
+        onClick={handleSyncGoogleCalendar}
+        className="w-full flex items-center gap-3 p-3.5 rounded-2xl bg-gradient-to-r from-blue-500/10 to-sky-500/5 border border-blue-500/15 text-left transition-all active:scale-[0.98] hover:from-blue-500/15"
+      >
+        <div className="w-10 h-10 rounded-xl bg-blue-500/15 flex items-center justify-center flex-shrink-0">
+          <Calendar size={20} className="text-blue-500" />
+        </div>
+        <div className="flex-1 min-w-0">
+          <p className="text-sm font-bold text-foreground">Sincronizza con Google Calendar</p>
+          <p className="text-[10px] text-muted-foreground">Aggiungi previsioni ciclo e finestra fertile</p>
+        </div>
+        <ExternalLink size={16} className="text-blue-500 flex-shrink-0" />
+      </motion.button>
+
       {/* Settings */}
       <AnimatePresence>
         {showSettings && (
