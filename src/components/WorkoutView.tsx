@@ -2,7 +2,7 @@ import { useState } from "react";
 import { Exercise, CONFIG_LIVELLI, ATTREZZO_ICONS, TEMA_CONFIG } from "@/data/exercises";
 import { useTimer } from "@/hooks/useTimer";
 import { TimerOverlay } from "./TimerOverlay";
-import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell } from "lucide-react";
+import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, SkipForward, X } from "lucide-react";
 
 interface WorkoutViewProps {
   giorno: string;
