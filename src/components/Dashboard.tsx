@@ -137,7 +137,7 @@ export function Dashboard({
           giorni
             .filter(g => piano[g])
             .map((giorno, i) => (
-              <DayCard key={giorno} giorno={giorno} dati={piano[giorno]} livello={livello} index={i} onClick={() => onAvviaAllenamento(giorno)} />
+              <DayCard key={giorno} giorno={giorno} dati={piano[giorno]} livello={livello} index={i} focus={focusMap?.[giorno]} onClick={() => onAvviaAllenamento(giorno)} />
             ))
         )}
       </div>
