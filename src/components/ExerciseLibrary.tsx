@@ -1,6 +1,7 @@
 import { useState } from "react";
 import { ChevronLeft, Search, Dumbbell } from "lucide-react";
 import { EXERCISE_LIBRARY, Exercise, ATTREZZO_ICONS } from "@/data/exercises";
+import { ExerciseImage } from "./ExerciseImage";
 
 interface ExerciseLibraryProps {
   onBack: () => void;
