@@ -19,6 +19,7 @@ export type AppView =
   | "calendar"
   | "food"
   | "library"
+  | "programs"
   | "profile"
   | "settings";
 
