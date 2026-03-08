@@ -343,7 +343,7 @@ const Index = () => {
   };
 
   return (
-    <AppLayout currentView={view} onNavigate={navigate} profile={cloud.profile} userName={userName}>
+    <AppLayout currentView={view as AppView} onNavigate={navigate} profile={cloud.profile} userName={userName}>
       {renderContent()}
       <InstallBanner />
     </AppLayout>
