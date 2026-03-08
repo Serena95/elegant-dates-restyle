@@ -16,6 +16,8 @@ import { ProgramsView } from "@/components/ProgramsView";
 import { CycleTracking } from "@/components/CycleTracking";
 import { PregnancyMode } from "@/components/PregnancyMode";
 import { MoreView } from "@/components/MoreView";
+import { WorkoutReminder } from "@/components/WorkoutReminder";
+import { useNotifications } from "@/hooks/useNotifications";
 import { LegalPage } from "@/components/LegalPage";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
@@ -42,6 +44,7 @@ const Index = () => {
   const lastGeneratedKey = useRef("");
 
   const { unlockedBadges, checkNewBadges } = useBadges(cloud.storicoCal);
+  const notifications = useNotifications(cloud.giorniAllenamento, cloud.storicoCal);
   prevBadgeCountRef.current = unlockedBadges.length;
 
   const userName = cloud.profile.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Utente";
@@ -380,6 +383,10 @@ const Index = () => {
             onToggleVoice={setVoiceEnabled}
             giorniAllenamento={cloud.giorniAllenamento}
             onChangeGiorniAllenamento={handleChangeTrainingDays}
+            notificheAbilitate={notifications.settings.notifiche_abilitate}
+            notificaOrario={notifications.settings.notifica_orario}
+            onToggleNotifiche={notifications.toggleNotifications}
+            onChangeOrarioNotifica={(orario) => notifications.updateSettings({ notifica_orario: orario })}
           />
         );
       case "cycle" as any:

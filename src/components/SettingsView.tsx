@@ -22,6 +22,8 @@ import {
   Baby,
   Volume2,
   Download,
+  Bell,
+  Clock,
 } from "lucide-react";
 
 interface SettingsViewProps {
@@ -31,9 +33,13 @@ interface SettingsViewProps {
   onToggleVoice?: (enabled: boolean) => void;
   giorniAllenamento?: number[];
   onChangeGiorniAllenamento?: (days: number[]) => void;
+  notificheAbilitate?: boolean;
+  notificaOrario?: string;
+  onToggleNotifiche?: (enabled: boolean) => void;
+  onChangeOrarioNotifica?: (orario: string) => void;
 }
 
-export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice, giorniAllenamento = [1, 3, 5], onChangeGiorniAllenamento }: SettingsViewProps) {
+export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice, giorniAllenamento = [1, 3, 5], onChangeGiorniAllenamento, notificheAbilitate = false, notificaOrario = "09:00", onToggleNotifiche, onChangeOrarioNotifica }: SettingsViewProps) {
   const { user, signOut } = useAuth();
   const { isDark, toggle } = useDarkMode();
   const [showDelete, setShowDelete] = useState(false);
@@ -192,6 +198,28 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
           selectedDays={giorniAllenamento}
           onChange={(days) => onChangeGiorniAllenamento?.(days)}
         />
+        <div className="flex items-center gap-3 p-4">
+          <Bell size={18} className="text-muted-foreground" />
+          <span className="flex-1 text-sm font-medium text-foreground">Promemoria Allenamento</span>
+          <button
+            onClick={() => onToggleNotifiche?.(!notificheAbilitate)}
+            className={`w-12 h-7 rounded-full transition-colors relative ${notificheAbilitate ? "bg-primary" : "bg-muted"}`}
+          >
+            <span className={`block w-5 h-5 rounded-full bg-card shadow-sm absolute top-1 transition-transform ${notificheAbilitate ? "translate-x-6" : "translate-x-1"}`} />
+          </button>
+        </div>
+        {notificheAbilitate && (
+          <div className="flex items-center gap-3 p-4">
+            <Clock size={18} className="text-muted-foreground" />
+            <span className="flex-1 text-sm font-medium text-foreground">Orario notifica</span>
+            <input
+              type="time"
+              value={notificaOrario}
+              onChange={(e) => onChangeOrarioNotifica?.(e.target.value)}
+              className="px-3 py-1.5 rounded-xl border border-border bg-background text-foreground text-sm"
+            />
+          </div>
+        )}
       </Section>
 
       {/* Privacy */}
