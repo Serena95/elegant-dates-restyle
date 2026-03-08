@@ -27,6 +27,42 @@ export interface AICoachContext {
   recentIntensity?: string;
 }
 
+export interface CompleteCoachResponse {
+  suggestion: WorkoutSuggestion;
+  motivation: string;
+  recovery: RecoveryAdvice | null;
+}
+
+/**
+ * Single AI call that returns suggestion + motivation + recovery in one response.
+ */
+export async function generateCompleteCoachData(context: AICoachContext): Promise<CompleteCoachResponse> {
+  try {
+    const { data, error } = await supabase.functions.invoke("ai-coach", {
+      body: { type: "complete", context },
+    });
+    if (error) {
+      handleAIError(error);
+      throw error;
+    }
+
+    const raw = data?.result || "";
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return {
+        suggestion: parsed.suggestion || getDefaultSuggestion(),
+        motivation: parsed.motivation || getDefaultMotivation(context.streak),
+        recovery: parsed.recovery || null,
+      };
+    }
+    return getDefaultResponse(context.streak);
+  } catch (e) {
+    console.error("AI complete coach error:", e);
+    return getDefaultResponse(context.streak);
+  }
+}
+
 export async function generateWorkoutSuggestion(context: AICoachContext): Promise<WorkoutSuggestion> {
   try {
     const { data, error } = await supabase.functions.invoke("ai-coach", {
@@ -45,11 +81,7 @@ export async function generateWorkoutSuggestion(context: AICoachContext): Promis
     return { titolo: "Allenamento del Giorno", descrizione: raw.slice(0, 100), focus: "Full Body" };
   } catch (e) {
     console.error("AI workout suggestion error:", e);
-    return {
-      titolo: "Allenamento Bilanciato",
-      descrizione: "Un mix di esercizi per tutto il corpo per mantenerti in forma.",
-      focus: "Full Body",
-    };
+    return getDefaultSuggestion();
   }
 }
 
@@ -89,11 +121,32 @@ export async function generateRecoveryAdvice(context: AICoachContext): Promise<R
   }
 }
 
+function getDefaultSuggestion(): WorkoutSuggestion {
+  return {
+    titolo: "Allenamento Bilanciato",
+    descrizione: "Un mix di esercizi per tutto il corpo per mantenerti in forma.",
+    focus: "Full Body",
+  };
+}
+
+function getDefaultMotivation(streak: number): string {
+  if (streak >= 7) return "Incredibile! Stai mantenendo una streak fantastica 🔥";
+  if (streak >= 3) return "Ottimo ritmo! Continua così 💪";
+  return "Ogni allenamento ti rende più forte. Inizia oggi! 🌟";
+}
+
+function getDefaultResponse(streak: number): CompleteCoachResponse {
+  return {
+    suggestion: getDefaultSuggestion(),
+    motivation: getDefaultMotivation(streak),
+    recovery: null,
+  };
+}
+
 let lastRateLimitToast = 0;
 function handleAIError(error: any) {
   const msg = typeof error === "object" && error?.message ? error.message : String(error);
   const now = Date.now();
-  // Show toast max once every 30s to avoid spam
   if (now - lastRateLimitToast < 30000) return;
   
   if (msg.includes("429") || msg.toLowerCase().includes("rate limit")) {
@@ -103,10 +156,4 @@ function handleAIError(error: any) {
     lastRateLimitToast = now;
     toast.error("Crediti AI esauriti. Contatta il supporto.");
   }
-}
-
-function getDefaultMotivation(streak: number): string {
-  if (streak >= 7) return "Incredibile! Stai mantenendo una streak fantastica 🔥";
-  if (streak >= 3) return "Ottimo ritmo! Continua così 💪";
-  return "Ogni allenamento ti rende più forte. Inizia oggi! 🌟";
 }

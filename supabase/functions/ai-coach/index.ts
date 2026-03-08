@@ -16,17 +16,48 @@ serve(async (req) => {
     let systemPrompt = "";
     let userPrompt = "";
 
-    if (type === "workout_suggestion") {
+    const cycleAdaptation = context.cyclePhase ? `\nFase del ciclo: ${context.cyclePhase}. ${
+      context.cyclePhase === "mestruale" ? "Suggerisci mobilità e stretching leggero." :
+      context.cyclePhase === "luteale" ? "Suggerisci allenamenti moderati." :
+      context.cyclePhase === "follicolare" ? "Puoi suggerire allenamenti più intensi." : ""
+    }` : "";
+    
+    const pregnancyAdaptation = context.pregnancyMode ? `\nModalità gravidanza attiva (settimana ${context.pregnancyWeek || "?"}). Evita addominali compressivi e movimenti intensi del core. Favorisci mobilità, respirazione e stabilità.` : "";
+
+    const cycleNote = context.cyclePhase === "mestruale" ? " L'utente è in fase mestruale, suggerisci attività dolci." : "";
+
+    if (type === "complete") {
+      // Single call that returns everything: suggestion + motivation + recovery
+      const needsRecovery = (context.streak || 0) >= 5 || context.recentIntensity === "alta" || context.cyclePhase === "mestruale";
+
+      systemPrompt = `Sei un coach di Pilates professionista italiano. Rispondi SEMPRE in formato JSON valido con questa struttura esatta:
+{
+  "suggestion": {"titolo": "string", "descrizione": "string (max 2 frasi)", "focus": "string (gruppo muscolare principale)"},
+  "motivation": "string (messaggio motivazionale 1-2 frasi, personalizzato)",
+  ${needsRecovery ? '"recovery": {"consiglio": "string (max 2 frasi)", "tipo": "stretch|mobilità|riposo"}' : '"recovery": null'}
+}
+Non aggiungere testo fuori dal JSON. Non usare markdown.`;
+
+      userPrompt = `Dati utente:
+- Livello: ${context.level || "MEDIO"}
+- Attrezzi disponibili: ${(context.equipment || []).join(", ") || "Corpo Libero"}
+- Focus preferito: ${context.preferredFocus || "full body"}
+- Streak allenamenti: ${context.streak || 0} giorni
+- Allenamenti totali: ${context.totalWorkouts || 0}
+- Ultimo focus allenato: ${context.lastFocus || "nessuno"}
+- Gruppi muscolari più allenati questa settimana: ${context.mostTrainedThisWeek || "nessuno"}
+- Ultimo tipo allenamento: ${context.lastWorkoutType || "sconosciuto"}
+- Intensità recente: ${context.recentIntensity || "media"}${cycleAdaptation}${pregnancyAdaptation}${cycleNote}
+
+Genera:
+1. Un suggerimento allenamento che bilanci i gruppi muscolari
+2. Un messaggio motivazionale personalizzato (${context.streak >= 7 ? "ha una streak impressionante!" : context.streak >= 3 ? "sta costruendo una buona abitudine" : "sta iniziando il suo percorso"})
+${needsRecovery ? "3. Un consiglio di recupero appropriato" : ""}
+Rispondi SOLO con il JSON.`;
+
+    } else if (type === "workout_suggestion") {
       systemPrompt = `Sei un coach di Pilates professionista italiano. Suggerisci un allenamento basato sui dati dell'utente. Non inventare esercizi. Usa solo esercizi comuni di Pilates e fitness funzionale. Rispondi SEMPRE in formato JSON valido con questa struttura: {"titolo": "string", "descrizione": "string (max 2 frasi)", "focus": "string (gruppo muscolare principale)"}`;
       
-      const cycleAdaptation = context.cyclePhase ? `\nFase del ciclo: ${context.cyclePhase}. ${
-        context.cyclePhase === "mestruale" ? "Suggerisci mobilità e stretching leggero." :
-        context.cyclePhase === "luteale" ? "Suggerisci allenamenti moderati." :
-        context.cyclePhase === "follicolare" ? "Puoi suggerire allenamenti più intensi." : ""
-      }` : "";
-      
-      const pregnancyAdaptation = context.pregnancyMode ? `\nModalità gravidanza attiva (settimana ${context.pregnancyWeek || "?"}). Evita addominali compressivi e movimenti intensi del core. Favorisci mobilità, respirazione e stabilità.` : "";
-
       userPrompt = `Dati utente:
 - Livello: ${context.level || "MEDIO"}
 - Attrezzi disponibili: ${(context.equipment || []).join(", ") || "Corpo Libero"}
@@ -43,8 +74,6 @@ Suggerisci un allenamento per oggi che bilanci i gruppi muscolari (se ieri core,
 
     } else if (type === "recovery") {
       systemPrompt = `Sei un coach di Pilates italiano esperto in recupero. Suggerisci consigli di recupero brevi e pratici. Rispondi SEMPRE in formato JSON: {"consiglio": "string (max 2 frasi)", "tipo": "stretch|mobilità|riposo"}`;
-      
-      const cycleNote = context.cyclePhase === "mestruale" ? " L'utente è in fase mestruale, suggerisci attività dolci." : "";
       userPrompt = `L'utente ha una streak di ${context.streak || 0} giorni. Ultimo allenamento: ${context.lastWorkoutType || "sconosciuto"}. Intensità recente: ${context.recentIntensity || "media"}.${cycleNote} Suggerisci un consiglio di recupero. Rispondi SOLO con il JSON.`;
 
     } else {
