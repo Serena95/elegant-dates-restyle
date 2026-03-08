@@ -358,6 +358,8 @@ const Index = () => {
               else navigate(v as AppView);
             }}
             onModificaAttrezzi={() => navigate("equipment")}
+            voiceEnabled={voiceEnabled}
+            onToggleVoice={setVoiceEnabled}
           />
         );
       case "cycle" as any:
