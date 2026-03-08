@@ -44,7 +44,7 @@ export function Dashboard({
       </motion.div>
 
       {/* Today's workout card */}
-      {todayWorkout && !todayWorkout.completato && (
+      {todayWorkout && (todayWorkout as any).round < (CONFIG_LIVELLI[livello]?.round || 3) && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
