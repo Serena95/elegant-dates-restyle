@@ -1,12 +1,16 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { DayCard } from "./DayCard";
 import { AICoachCard } from "./AICoachCard";
 import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
-import { CalendarDays, BarChart3, Flame, Dumbbell, Target } from "lucide-react";
+import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { calculateStreak } from "@/services/streakService";
 import { computeProgress } from "@/services/progressEngine";
 import { AICoachContext } from "@/services/aiCoach";
+import { getLevelInfo } from "@/services/xpService";
+import { useAuth } from "@/contexts/AuthContext";
+import { supabase } from "@/integrations/supabase/client";
+import { Progress } from "@/components/ui/progress";
 
 interface DashboardProps {
   piano: WeekPlan;
