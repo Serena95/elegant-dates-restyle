@@ -17,6 +17,8 @@ import {
   ChevronRight,
   Settings,
   Wrench,
+  Droplets,
+  Baby,
 } from "lucide-react";
 
 interface SettingsViewProps {
