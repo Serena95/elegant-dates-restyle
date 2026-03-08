@@ -1,10 +1,11 @@
 import { useEffect, useState } from "react";
-import { Trophy, Clock, Dumbbell, Flame, Star, Share2, Zap } from "lucide-react";
+import { Trophy, Clock, Dumbbell, Flame, Star, Share2, Zap, Activity } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { Badge, BADGE_DEFINITIONS } from "@/hooks/useBadges";
 import { Button } from "@/components/ui/button";
 import { getLevelInfo, LEVELS } from "@/services/xpService";
 import { toast } from "sonner";
+import { healthService } from "@/services/healthService";
 
 interface WorkoutCompleteProps {
   esercizi: number;
