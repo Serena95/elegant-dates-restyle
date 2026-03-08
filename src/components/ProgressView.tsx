@@ -62,13 +62,17 @@ export function ProgressView({ misure, onAddMisura, onDeleteMisura, onBack }: Pr
       ) : (
         <div className="space-y-2">
           {misure.map((m) => (
-            <div key={m.id} className="bg-card rounded-xl p-4 border border-border flex justify-between items-center border-l-4 border-l-primary">
-              <div>
-                <strong className="text-primary text-sm">{m.data}</strong>
-                <p className="text-xs text-muted-foreground mt-1">
-                  Peso: {m.peso}kg | V: {m.vita}cm | F: {m.fianchi}cm | C: {m.coscia}cm
-                </p>
-              </div>
+            <div key={m.id} className="bg-card rounded-xl p-4 border border-border border-l-4 border-l-primary">
+              <div className="flex justify-between items-start">
+                <div className="min-w-0 flex-1">
+                  <strong className="text-primary text-sm">{m.data}</strong>
+                  <div className="grid grid-cols-2 gap-x-3 gap-y-0.5 mt-1 text-xs text-muted-foreground">
+                    <span>Peso: <strong className="text-foreground">{m.peso}kg</strong></span>
+                    <span>Vita: <strong className="text-foreground">{m.vita}cm</strong></span>
+                    <span>Fianchi: <strong className="text-foreground">{m.fianchi}cm</strong></span>
+                    <span>Coscia: <strong className="text-foreground">{m.coscia}cm</strong></span>
+                  </div>
+                </div>
               {m.id && (
                 <button onClick={() => elimina(m.id!)} className="bg-destructive/10 text-destructive p-2 rounded-lg hover:bg-destructive/20">
                   <Trash2 size={14} />
