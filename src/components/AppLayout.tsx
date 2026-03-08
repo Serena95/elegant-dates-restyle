@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { User } from "lucide-react";
 import {
   LayoutDashboard,
@@ -8,6 +9,7 @@ import {
   UserCircle,
   Settings,
   ClipboardList,
+  MoreHorizontal,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProfileData } from "@/hooks/useCloudData";
@@ -43,7 +45,12 @@ const NAV_ITEMS: { view: AppView; label: string; icon: React.ElementType }[] = [
   { view: "settings", label: "Impostazioni", icon: Settings },
 ];
 
-const MOBILE_NAV_ITEMS = NAV_ITEMS.slice(0, 5); // Dashboard, Progressi, Calendario, Programmi, Alimentazione
+const MOBILE_NAV_ITEMS = NAV_ITEMS.slice(0, 5);
+const MORE_ITEMS = [
+  { view: "library" as AppView, label: "Libreria", icon: BookOpen },
+  { view: "profile" as AppView, label: "Profilo", icon: UserCircle },
+  { view: "settings" as AppView, label: "Impostazioni", icon: Settings },
+];
 
 function ProfileAvatar({ profile, size = 36, onClick }: { profile: ProfileData; size?: number; onClick?: () => void }) {
   return (
@@ -61,6 +68,7 @@ function ProfileAvatar({ profile, size = 36, onClick }: { profile: ProfileData; 
 
 export function AppLayout({ currentView, onNavigate, profile, userName, children }: AppLayoutProps) {
   const isMobile = useIsMobile();
+  const [showMore, setShowMore] = useState(false);
 
   return (
     <div className="min-h-screen bg-background flex">
@@ -141,41 +149,68 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
 
       {/* Mobile Bottom Nav */}
       {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border z-40 px-2 pb-[env(safe-area-inset-bottom)]">
-          <div className="flex items-center justify-around py-2">
-            {MOBILE_NAV_ITEMS.map(item => {
-              const Icon = item.icon;
-              const active = currentView === item.view;
-              return (
-                <button
-                  key={item.view}
-                  onClick={() => onNavigate(item.view)}
-                  className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
-                    active ? "text-primary" : "text-muted-foreground"
-                  }`}
-                >
-                  <Icon size={20} />
-                  <span className="text-[10px] font-semibold truncate">{item.label}</span>
-                </button>
-              );
-            })}
-            {/* More menu with Library/Profile/Settings */}
-            <button
-              onClick={() => {
-                // Cycle through: settings -> profile -> library -> settings
-                if (currentView === "settings") onNavigate("profile");
-                else if (currentView === "profile") onNavigate("library");
-                else onNavigate("settings");
-              }}
-              className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
-                currentView === "settings" || currentView === "profile" || currentView === "library" ? "text-primary" : "text-muted-foreground"
-              }`}
-            >
-              <Settings size={20} />
-              <span className="text-[10px] font-semibold">Altro</span>
-            </button>
-          </div>
-        </nav>
+        <>
+          {/* More submenu popover */}
+          {showMore && (
+            <div className="fixed bottom-0 left-0 right-0 z-50" onClick={() => setShowMore(false)}>
+              <div className="fixed inset-0" />
+              <div className="relative bg-card border-t border-x border-border rounded-t-2xl shadow-lg mx-2 mb-0 pb-[env(safe-area-inset-bottom)]">
+                <div className="flex items-center justify-around py-3 px-2">
+                  {MORE_ITEMS.map(item => {
+                    const Icon = item.icon;
+                    const active = currentView === item.view;
+                    return (
+                      <button
+                        key={item.view}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onNavigate(item.view);
+                          setShowMore(false);
+                        }}
+                        className={`flex flex-col items-center gap-1 px-4 py-2 rounded-xl transition-all ${
+                          active ? "text-primary bg-primary/10" : "text-muted-foreground"
+                        }`}
+                      >
+                        <Icon size={22} />
+                        <span className="text-xs font-semibold">{item.label}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            </div>
+          )}
+
+          <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border z-40 px-2 pb-[env(safe-area-inset-bottom)]">
+            <div className="flex items-center justify-around py-2">
+              {MOBILE_NAV_ITEMS.map(item => {
+                const Icon = item.icon;
+                const active = currentView === item.view;
+                return (
+                  <button
+                    key={item.view}
+                    onClick={() => { setShowMore(false); onNavigate(item.view); }}
+                    className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
+                      active ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    <Icon size={20} />
+                    <span className="text-[10px] font-semibold truncate">{item.label}</span>
+                  </button>
+                );
+              })}
+              <button
+                onClick={() => setShowMore(prev => !prev)}
+                className={`flex flex-col items-center gap-0.5 px-2 py-1.5 rounded-xl transition-all min-w-0 ${
+                  showMore || ["settings", "profile", "library"].includes(currentView) ? "text-primary" : "text-muted-foreground"
+                }`}
+              >
+                <MoreHorizontal size={20} />
+                <span className="text-[10px] font-semibold">Altro</span>
+              </button>
+            </div>
+          </nav>
+        </>
       )}
     </div>
   );
