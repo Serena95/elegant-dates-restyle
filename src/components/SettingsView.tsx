@@ -33,9 +33,13 @@ interface SettingsViewProps {
   onToggleVoice?: (enabled: boolean) => void;
   giorniAllenamento?: number[];
   onChangeGiorniAllenamento?: (days: number[]) => void;
+  notificheAbilitate?: boolean;
+  notificaOrario?: string;
+  onToggleNotifiche?: (enabled: boolean) => void;
+  onChangeOrarioNotifica?: (orario: string) => void;
 }
 
-export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice, giorniAllenamento = [1, 3, 5], onChangeGiorniAllenamento }: SettingsViewProps) {
+export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice, giorniAllenamento = [1, 3, 5], onChangeGiorniAllenamento, notificheAbilitate = false, notificaOrario = "09:00", onToggleNotifiche, onChangeOrarioNotifica }: SettingsViewProps) {
   const { user, signOut } = useAuth();
   const { isDark, toggle } = useDarkMode();
   const [showDelete, setShowDelete] = useState(false);
