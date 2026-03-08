@@ -391,6 +391,7 @@ const Index = () => {
             durataCiclo={cloud.pregnancySettings.durata_ciclo}
             durataMestruazione={cloud.pregnancySettings.durata_mestruazione}
             onUpdateSettings={(s) => cloud.updatePregnancySettings(s)}
+            onBack={() => navigate("more")}
           />
         );
       case "pregnancy" as any:
@@ -400,12 +401,13 @@ const Index = () => {
             settimanaGestazionale={cloud.pregnancySettings.settimana_gestazionale}
             onToggle={(active) => cloud.updatePregnancySettings({ modalita_gravidanza: active, settimana_gestazionale: active ? Math.max(1, cloud.pregnancySettings.settimana_gestazionale) : 0 })}
             onUpdateWeek={(week) => cloud.updatePregnancySettings({ settimana_gestazionale: week })}
+            onBack={() => navigate("more")}
           />
         );
       case "privacy" as any:
-        return <LegalPage type="privacy" onBack={() => navigate("more")} />;
+        return <LegalPage type="privacy" onBack={() => setView("settings" as any)} />;
       case "terms" as any:
-        return <LegalPage type="terms" onBack={() => navigate("more")} />;
+        return <LegalPage type="terms" onBack={() => setView("settings" as any)} />;
       default:
         return null;
     }

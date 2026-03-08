@@ -17,6 +17,7 @@ interface CycleTrackingProps {
   durataCiclo: number;
   durataMestruazione: number;
   onUpdateSettings: (settings: { durata_ciclo?: number; durata_mestruazione?: number }) => void;
+  onBack?: () => void;
 }
 
 const SINTOMI_OPTIONS = [
@@ -37,7 +38,7 @@ const TIPO_OPTIONS = [
   { id: "ovulazione", label: "Ovulazione", color: "bg-violet-500", lightBg: "bg-violet-500/15", border: "border-violet-400/30", icon: "🟣", textColor: "text-violet-500" },
 ];
 
-export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo, durataMestruazione, onUpdateSettings }: CycleTrackingProps) {
+export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo, durataMestruazione, onUpdateSettings, onBack }: CycleTrackingProps) {
   const [meseCorrente, setMeseCorrente] = useState(new Date().getMonth());
   const [annoCorrente, setAnnoCorrente] = useState(new Date().getFullYear());
   const [showAddModal, setShowAddModal] = useState(false);
@@ -145,8 +146,13 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
   return (
     <div className="space-y-5">
       {/* Header */}
-      <div className="flex items-center justify-between">
-        <div>
+      <div className="flex items-center gap-2">
+        {onBack && (
+          <button onClick={onBack} className="text-primary">
+            <ChevronLeft size={24} />
+          </button>
+        )}
+        <div className="flex-1">
           <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
             <Droplets size={22} className="text-pink-500" /> Ciclo Mestruale
           </h2>
