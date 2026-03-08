@@ -25,6 +25,7 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
 
   const loadSuggestions = async (forceRefresh = false) => {
     setLoading(true);
+    setError(false);
     try {
       const result = await generateCompleteCoachData({
         ...context,
@@ -34,6 +35,8 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
       setSuggestion(result.suggestion);
       setMotivation(result.motivation);
       if (result.recovery) setRecovery(result.recovery);
+    } catch {
+      setError(true);
     } finally {
       setLoading(false);
     }
