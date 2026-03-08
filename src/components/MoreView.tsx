@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles, Crown } from "lucide-react";
+import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles, Crown, Trophy, Users } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface MoreViewProps {
