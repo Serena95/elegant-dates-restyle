@@ -77,6 +77,20 @@ export function ProfileView({ profile, onUpdateProfile, unlockedBadges = [], liv
     <div className="space-y-6">
       <h2 className="text-xl font-bold text-foreground">👤 Profilo</h2>
 
+      {/* Admin + Premium Badge */}
+      {isAdmin && (
+        <div className="flex items-center justify-center gap-2">
+          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-amber-500/20 to-yellow-500/20 border border-amber-500/30">
+            <ShieldCheck className="w-4 h-4 text-amber-600" />
+            <span className="text-xs font-bold text-amber-700 dark:text-amber-400">Admin</span>
+          </div>
+          <div className="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full bg-gradient-to-r from-purple-500/20 to-pink-500/20 border border-purple-500/30">
+            <Crown className="w-4 h-4 text-purple-600" />
+            <span className="text-xs font-bold text-purple-700 dark:text-purple-400">Premium Lifetime</span>
+          </div>
+        </div>
+      )}
+
       {/* Avatar */}
       <div className="flex flex-col items-center gap-3">
         <div className="relative">
