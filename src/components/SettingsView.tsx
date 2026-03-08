@@ -19,11 +19,14 @@ import {
   Wrench,
   Droplets,
   Baby,
+  Volume2,
 } from "lucide-react";
 
 interface SettingsViewProps {
   onNavigate: (view: string) => void;
   onModificaAttrezzi: () => void;
+  voiceEnabled?: boolean;
+  onToggleVoice?: (enabled: boolean) => void;
 }
 
 export function SettingsView({ onNavigate, onModificaAttrezzi }: SettingsViewProps) {
