@@ -523,7 +523,17 @@ const Index = () => {
 
   return (
     <AppLayout currentView={view as AppView} onNavigate={navigate} profile={cloud.profile} userName={userName}>
-      {renderContent()}
+      <AnimatePresence mode="wait">
+        <motion.div
+          key={view}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.2, ease: "easeOut" }}
+        >
+          {renderContent()}
+        </motion.div>
+      </AnimatePresence>
       <InstallBanner />
     </AppLayout>
   );
