@@ -46,12 +46,18 @@ const Index = () => {
 
   // Auto-generate weekly plan when needed
   useEffect(() => {
-    if (cloud.loading || cloud.attrezzi.length === 0 || autoGenRef.current) return;
+    if (cloud.loading || cloud.attrezzi.length === 0) return;
+    
+    // Create a key that represents the expected plan
+    const expectedKey = getWeekDates(cloud.giorniAllenamento).sort().join(",");
+    
+    // Skip if we already generated for this exact configuration
+    if (lastGeneratedKey.current === expectedKey) return;
     
     const needsGeneration = !isPianoCurrentWeek(cloud.piano, cloud.giorniAllenamento);
     
     if (needsGeneration) {
-      autoGenRef.current = true;
+      lastGeneratedKey.current = expectedKey;
       const result = generaSettimanaIntelligente(
         cloud.attrezzi,
         cloud.livello,
@@ -63,6 +69,9 @@ const Index = () => {
       cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
       const usedEquipment = Object.values(result.piano).map(d => d.attrezzo);
       cloud.setUltimiAttrezzi(usedEquipment);
+    } else {
+      // Piano matches, record the key so we don't re-check
+      lastGeneratedKey.current = expectedKey;
     }
   }, [cloud.loading, cloud.attrezzi, cloud.piano, cloud.giorniAllenamento]);
 
