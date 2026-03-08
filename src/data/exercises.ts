@@ -173,7 +173,7 @@ export function computeProgressionContext(
     for (let d = 0; d < 7; d++) {
       const dd = new Date(weekStart);
       dd.setDate(dd.getDate() + d);
-      const key = dd.toISOString().split("T")[0];
+      const key = getLocalDateKey(dd);
       if (storicoCal[key]?.completato) weekCompleted++;
     }
     if (weekCompleted >= 2) activeStreak++;
