@@ -37,8 +37,10 @@ interface SettingsViewProps {
   onChangeGiorniAllenamento?: (days: number[]) => void;
   notificheAbilitate?: boolean;
   notificaOrario?: string;
+  fusoOrario?: string;
   onToggleNotifiche?: (enabled: boolean) => void;
   onChangeOrarioNotifica?: (orario: string) => void;
+  onChangeFusoOrario?: (tz: string) => void;
 }
 
 export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice, giorniAllenamento = [1, 3, 5], onChangeGiorniAllenamento, notificheAbilitate = false, notificaOrario = "09:00", onToggleNotifiche, onChangeOrarioNotifica }: SettingsViewProps) {
