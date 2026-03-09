@@ -274,7 +274,7 @@ Deno.serve(async (req) => {
     // Get all users with notifications enabled
     const { data: users } = await supabaseAdmin
       .from("user_settings")
-      .select("user_id, giorni_allenamento, notifica_orario, notifiche_abilitate")
+      .select("user_id, giorni_allenamento, notifica_orario, notifiche_abilitate, fuso_orario")
       .eq("notifiche_abilitate", true);
 
     if (!users || users.length === 0) {
