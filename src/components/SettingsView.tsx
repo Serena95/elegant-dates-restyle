@@ -5,7 +5,7 @@ import { useDarkMode } from "@/hooks/useDarkMode";
 import { toast } from "sonner";
 import { TrainingDaysPicker } from "./TrainingDaysPicker";
 import { HealthIntegration } from "./HealthIntegration";
-import { Smartphone } from "lucide-react";
+import { Smartphone, Globe } from "lucide-react";
 import {
   LogOut,
   Moon,
@@ -38,11 +38,13 @@ interface SettingsViewProps {
   onChangeGiorniAllenamento?: (days: number[]) => void;
   notificheAbilitate?: boolean;
   notificaOrario?: string;
+  fusoOrario?: string;
   onToggleNotifiche?: (enabled: boolean) => void;
   onChangeOrarioNotifica?: (orario: string) => void;
+  onChangeFusoOrario?: (tz: string) => void;
 }
 
-export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice, giorniAllenamento = [1, 3, 5], onChangeGiorniAllenamento, notificheAbilitate = false, notificaOrario = "09:00", onToggleNotifiche, onChangeOrarioNotifica }: SettingsViewProps) {
+export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = true, onToggleVoice, giorniAllenamento = [1, 3, 5], onChangeGiorniAllenamento, notificheAbilitate = false, notificaOrario = "09:00", fusoOrario = "Europe/Rome", onToggleNotifiche, onChangeOrarioNotifica, onChangeFusoOrario }: SettingsViewProps) {
   const { user, signOut, isAdmin } = useAuth();
   const { isDark, toggle } = useDarkMode();
   const [showDelete, setShowDelete] = useState(false);
@@ -235,6 +237,33 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
               onChange={(e) => onChangeOrarioNotifica?.(e.target.value)}
               className="px-3 py-1.5 rounded-xl border border-border bg-background text-foreground text-sm"
             />
+          </div>
+        )}
+        {notificheAbilitate && (
+          <div className="flex items-center gap-3 p-4">
+            <Globe size={18} className="text-muted-foreground" />
+            <span className="flex-1 text-sm font-medium text-foreground">Fuso orario</span>
+            <select
+              value={fusoOrario}
+              onChange={(e) => onChangeFusoOrario?.(e.target.value)}
+              className="px-3 py-1.5 rounded-xl border border-border bg-background text-foreground text-sm max-w-[180px]"
+            >
+              <option value="Europe/Rome">Roma (CET/CEST)</option>
+              <option value="Europe/London">Londra (GMT/BST)</option>
+              <option value="Europe/Paris">Parigi (CET/CEST)</option>
+              <option value="Europe/Berlin">Berlino (CET/CEST)</option>
+              <option value="Europe/Madrid">Madrid (CET/CEST)</option>
+              <option value="Europe/Zurich">Zurigo (CET/CEST)</option>
+              <option value="Europe/Amsterdam">Amsterdam (CET/CEST)</option>
+              <option value="Europe/Brussels">Bruxelles (CET/CEST)</option>
+              <option value="America/New_York">New York (EST/EDT)</option>
+              <option value="America/Chicago">Chicago (CST/CDT)</option>
+              <option value="America/Los_Angeles">Los Angeles (PST/PDT)</option>
+              <option value="America/Sao_Paulo">São Paulo (BRT)</option>
+              <option value="Asia/Tokyo">Tokyo (JST)</option>
+              <option value="Asia/Dubai">Dubai (GST)</option>
+              <option value="Australia/Sydney">Sydney (AEST/AEDT)</option>
+            </select>
           </div>
         )}
       </Section>

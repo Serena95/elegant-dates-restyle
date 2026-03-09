@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface NotificationSettings {
   notifiche_abilitate: boolean;
   notifica_orario: string;
+  fuso_orario: string;
 }
 
 // Convert base64url string to Uint8Array for applicationServerKey
@@ -30,6 +31,7 @@ export function useNotifications(
   const [settings, setSettings] = useState<NotificationSettings>({
     notifiche_abilitate: false,
     notifica_orario: "09:00",
+    fuso_orario: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Rome",
   });
   const [showInAppReminder, setShowInAppReminder] = useState(false);
   const vapidKeyRef = useRef<string | null>(null);
@@ -39,14 +41,15 @@ export function useNotifications(
     if (!user) return;
     supabase
       .from("user_settings")
-      .select("notifiche_abilitate, notifica_orario")
+      .select("notifiche_abilitate, notifica_orario, fuso_orario")
       .eq("user_id", user.id)
       .maybeSingle()
       .then(({ data }) => {
         if (data) {
           setSettings({
-            notifiche_abilitate: (data as any).notifiche_abilitate || false,
-            notifica_orario: (data as any).notifica_orario || "09:00",
+            notifiche_abilitate: data.notifiche_abilitate || false,
+            notifica_orario: data.notifica_orario || "09:00",
+            fuso_orario: data.fuso_orario || Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Rome",
           });
         }
       });
@@ -153,7 +156,8 @@ export function useNotifications(
         .update({
           notifiche_abilitate: newSettings.notifiche_abilitate,
           notifica_orario: newSettings.notifica_orario,
-        } as any)
+          fuso_orario: newSettings.fuso_orario,
+        })
         .eq("user_id", user.id);
     },
     [user, settings]

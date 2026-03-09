@@ -464,8 +464,10 @@ const Index = () => {
             onChangeGiorniAllenamento={handleChangeTrainingDays}
             notificheAbilitate={notifications.settings.notifiche_abilitate}
             notificaOrario={notifications.settings.notifica_orario}
+            fusoOrario={notifications.settings.fuso_orario}
             onToggleNotifiche={notifications.toggleNotifications}
             onChangeOrarioNotifica={(orario) => notifications.updateSettings({ notifica_orario: orario })}
+            onChangeFusoOrario={(tz) => notifications.updateSettings({ fuso_orario: tz })}
           />
         );
       case "cycle" as any:

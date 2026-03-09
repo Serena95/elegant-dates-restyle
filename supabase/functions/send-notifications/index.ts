@@ -244,37 +244,13 @@ Deno.serve(async (req) => {
       vapidKeys.find((k: any) => k.key === "vapid_private_key_jwk")!.value
     );
 
-    // Get current time in Europe/Rome timezone (CET/CEST)
     const now = new Date();
-    const romeFormatter = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Europe/Rome",
-      hour: "2-digit",
-      minute: "2-digit",
-      hour12: false,
-    });
-    const romeParts = romeFormatter.formatToParts(now);
-    const currentHour = parseInt(romeParts.find(p => p.type === "hour")!.value);
-    const currentMinute = parseInt(romeParts.find(p => p.type === "minute")!.value);
-
-    const romeDateFormatter = new Intl.DateTimeFormat("en-GB", {
-      timeZone: "Europe/Rome",
-      weekday: "short",
-    });
     const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
-    const currentDow = dayMap[romeDateFormatter.format(now)] ?? now.getDay();
-
-    const romeDateFullFormatter = new Intl.DateTimeFormat("en-CA", {
-      timeZone: "Europe/Rome",
-      year: "numeric",
-      month: "2-digit",
-      day: "2-digit",
-    });
-    const todayKey = romeDateFullFormatter.format(now); // YYYY-MM-DD
 
     // Get all users with notifications enabled
     const { data: users } = await supabaseAdmin
       .from("user_settings")
-      .select("user_id, giorni_allenamento, notifica_orario, notifiche_abilitate")
+      .select("user_id, giorni_allenamento, notifica_orario, notifiche_abilitate, fuso_orario")
       .eq("notifiche_abilitate", true);
 
     if (!users || users.length === 0) {
@@ -290,13 +266,38 @@ Deno.serve(async (req) => {
     for (const user of users) {
       const trainingDays = (user as any).giorni_allenamento || [1, 3, 5];
       const notificaOrario = (user as any).notifica_orario || "09:00";
+      const userTimezone = (user as any).fuso_orario || "Europe/Rome";
 
-      // Check if current Rome time matches user's preferred notification time (±30 min window)
+      // Get current time in user's timezone
+      const timeFormatter = new Intl.DateTimeFormat("en-GB", {
+        timeZone: userTimezone,
+        hour: "2-digit",
+        minute: "2-digit",
+        hour12: false,
+      });
+      const timeParts = timeFormatter.formatToParts(now);
+      const currentHour = parseInt(timeParts.find(p => p.type === "hour")!.value);
+      const currentMinute = parseInt(timeParts.find(p => p.type === "minute")!.value);
+
+      const dowFormatter = new Intl.DateTimeFormat("en-GB", {
+        timeZone: userTimezone,
+        weekday: "short",
+      });
+      const currentDow = dayMap[dowFormatter.format(now)] ?? now.getDay();
+
+      const dateFormatter = new Intl.DateTimeFormat("en-CA", {
+        timeZone: userTimezone,
+        year: "numeric",
+        month: "2-digit",
+        day: "2-digit",
+      });
+      const todayKey = dateFormatter.format(now);
+
+      // Check if current user-local time matches preferred notification time (±30 min window)
       const [targetHour, targetMinute] = notificaOrario.split(":").map(Number);
       const targetTotalMin = targetHour * 60 + targetMinute;
       const currentTotalMin = currentHour * 60 + currentMinute;
       const diffMin = Math.abs(currentTotalMin - targetTotalMin);
-      // Allow a 30-minute window to account for cron frequency
       if (diffMin > 30 && diffMin < (24 * 60 - 30)) {
         continue; // Not the right time for this user
       }
