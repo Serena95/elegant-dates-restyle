@@ -309,8 +309,7 @@ Deno.serve(async (req) => {
 
       if (!subscriptions || subscriptions.length === 0) continue;
 
-      // Check if workout already completed today
-      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      // Check if workout already completed today (using Rome timezone date)
       const { data: history } = await supabaseAdmin
         .from("workout_history")
         .select("completato")
