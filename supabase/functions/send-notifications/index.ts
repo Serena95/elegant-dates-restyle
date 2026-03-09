@@ -244,11 +244,32 @@ Deno.serve(async (req) => {
       vapidKeys.find((k: any) => k.key === "vapid_private_key_jwk")!.value
     );
 
-    // Get current day of week (0=Sun, 1=Mon, ..., 6=Sat)
+    // Get current time in Europe/Rome timezone (CET/CEST)
     const now = new Date();
-    const currentDow = now.getDay();
-    const currentHour = now.getUTCHours();
-    const currentMinute = now.getUTCMinutes();
+    const romeFormatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Rome",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const romeParts = romeFormatter.formatToParts(now);
+    const currentHour = parseInt(romeParts.find(p => p.type === "hour")!.value);
+    const currentMinute = parseInt(romeParts.find(p => p.type === "minute")!.value);
+
+    const romeDateFormatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Rome",
+      weekday: "short",
+    });
+    const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const currentDow = dayMap[romeDateFormatter.format(now)] ?? now.getDay();
+
+    const romeDateFullFormatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Rome",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const todayKey = romeDateFullFormatter.format(now); // YYYY-MM-DD
 
     // Get all users with notifications enabled
     const { data: users } = await supabaseAdmin
@@ -270,6 +291,16 @@ Deno.serve(async (req) => {
       const trainingDays = (user as any).giorni_allenamento || [1, 3, 5];
       const notificaOrario = (user as any).notifica_orario || "09:00";
 
+      // Check if current Rome time matches user's preferred notification time (±30 min window)
+      const [targetHour, targetMinute] = notificaOrario.split(":").map(Number);
+      const targetTotalMin = targetHour * 60 + targetMinute;
+      const currentTotalMin = currentHour * 60 + currentMinute;
+      const diffMin = Math.abs(currentTotalMin - targetTotalMin);
+      // Allow a 30-minute window to account for cron frequency
+      if (diffMin > 30 && diffMin < (24 * 60 - 30)) {
+        continue; // Not the right time for this user
+      }
+
       // Get push subscriptions for this user
       const { data: subscriptions } = await supabaseAdmin
         .from("push_subscriptions")
@@ -278,8 +309,7 @@ Deno.serve(async (req) => {
 
       if (!subscriptions || subscriptions.length === 0) continue;
 
-      // Check if workout already completed today
-      const todayKey = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+      // Check if workout already completed today (using Rome timezone date)
       const { data: history } = await supabaseAdmin
         .from("workout_history")
         .select("completato")
