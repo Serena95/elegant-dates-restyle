@@ -293,12 +293,14 @@ Deno.serve(async (req) => {
       });
       const todayKey = dateFormatter.format(now);
 
-      // Check if current user-local time matches preferred notification time (±30 min window)
+      // Check if current user-local time matches preferred notification time (±2 min window, cron runs every 5 min)
       const [targetHour, targetMinute] = notificaOrario.split(":").map(Number);
       const targetTotalMin = targetHour * 60 + targetMinute;
       const currentTotalMin = currentHour * 60 + currentMinute;
-      const diffMin = Math.abs(currentTotalMin - targetTotalMin);
-      if (diffMin > 30 && diffMin < (24 * 60 - 30)) {
+      let diffMin = Math.abs(currentTotalMin - targetTotalMin);
+      // Handle midnight wraparound
+      if (diffMin > 12 * 60) diffMin = 24 * 60 - diffMin;
+      if (diffMin > 2) {
         continue; // Not the right time for this user
       }
 
