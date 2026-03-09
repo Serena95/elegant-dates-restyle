@@ -5,6 +5,7 @@ import { useAuth } from "@/contexts/AuthContext";
 export interface NotificationSettings {
   notifiche_abilitate: boolean;
   notifica_orario: string;
+  fuso_orario: string;
 }
 
 // Convert base64url string to Uint8Array for applicationServerKey
