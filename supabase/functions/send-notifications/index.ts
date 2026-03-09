@@ -270,6 +270,16 @@ Deno.serve(async (req) => {
       const trainingDays = (user as any).giorni_allenamento || [1, 3, 5];
       const notificaOrario = (user as any).notifica_orario || "09:00";
 
+      // Check if current UTC time is within the notification window (±30 min)
+      const [targetHour, targetMinute] = notificaOrario.split(":").map(Number);
+      const targetTotalMin = targetHour * 60 + targetMinute;
+      const currentTotalMin = currentHour * 60 + currentMinute;
+      const diffMin = Math.abs(currentTotalMin - targetTotalMin);
+      // Allow a 30-minute window to account for cron frequency
+      if (diffMin > 30 && diffMin < (24 * 60 - 30)) {
+        continue; // Not the right time for this user
+      }
+
       // Get push subscriptions for this user
       const { data: subscriptions } = await supabaseAdmin
         .from("push_subscriptions")
