@@ -244,11 +244,32 @@ Deno.serve(async (req) => {
       vapidKeys.find((k: any) => k.key === "vapid_private_key_jwk")!.value
     );
 
-    // Get current day of week (0=Sun, 1=Mon, ..., 6=Sat)
+    // Get current time in Europe/Rome timezone (CET/CEST)
     const now = new Date();
-    const currentDow = now.getDay();
-    const currentHour = now.getUTCHours();
-    const currentMinute = now.getUTCMinutes();
+    const romeFormatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Rome",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    });
+    const romeParts = romeFormatter.formatToParts(now);
+    const currentHour = parseInt(romeParts.find(p => p.type === "hour")!.value);
+    const currentMinute = parseInt(romeParts.find(p => p.type === "minute")!.value);
+
+    const romeDateFormatter = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "Europe/Rome",
+      weekday: "short",
+    });
+    const dayMap: Record<string, number> = { Sun: 0, Mon: 1, Tue: 2, Wed: 3, Thu: 4, Fri: 5, Sat: 6 };
+    const currentDow = dayMap[romeDateFormatter.format(now)] ?? now.getDay();
+
+    const romeDateFullFormatter = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "Europe/Rome",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    });
+    const todayKey = romeDateFullFormatter.format(now); // YYYY-MM-DD
 
     // Get all users with notifications enabled
     const { data: users } = await supabaseAdmin
