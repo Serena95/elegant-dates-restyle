@@ -31,6 +31,7 @@ export function useNotifications(
   const [settings, setSettings] = useState<NotificationSettings>({
     notifiche_abilitate: false,
     notifica_orario: "09:00",
+    fuso_orario: Intl.DateTimeFormat().resolvedOptions().timeZone || "Europe/Rome",
   });
   const [showInAppReminder, setShowInAppReminder] = useState(false);
   const vapidKeyRef = useRef<string | null>(null);
