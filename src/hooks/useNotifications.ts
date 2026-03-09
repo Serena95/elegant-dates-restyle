@@ -156,7 +156,8 @@ export function useNotifications(
         .update({
           notifiche_abilitate: newSettings.notifiche_abilitate,
           notifica_orario: newSettings.notifica_orario,
-        } as any)
+          fuso_orario: newSettings.fuso_orario,
+        })
         .eq("user_id", user.id);
     },
     [user, settings]
