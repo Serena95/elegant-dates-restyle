@@ -16,6 +16,9 @@ interface WorkoutViewProps {
   onBack: () => void;
   voiceEnabled?: boolean;
   aiGenerated?: boolean;
+  initialExerciseIdx?: number;
+  initialCompletati?: number[];
+  onStateChange?: (state: { currentExerciseIdx: number; completati: number[] }) => void;
 }
 
 const RISCALDAMENTO_MODES = [
