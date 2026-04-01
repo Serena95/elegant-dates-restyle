@@ -277,6 +277,7 @@ const Index = () => {
     cloud.savePiano(updatedPiano);
 
     if (nuoviRound >= config.round) {
+      clearWorkoutSession();
       const dataKey = getLocalDateKey(new Date());
       const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
       const focus = detectFocus(eserciziCorrenti);
