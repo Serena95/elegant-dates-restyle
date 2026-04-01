@@ -325,14 +325,14 @@ export function generaEserciziGiorno(
 
   let prioritySlots: string[][];
 
-  if (focus === "core" || focus === "core_stabilita") {
-    prioritySlots = [...FOCUS_SLOTS.core_stabilita];
+  if (focus === "upper_body" || focus === "core" || focus === "core_stabilita") {
+    prioritySlots = [...FOCUS_SLOTS.upper_body];
   } else if (focus === "lower_body" || focus === "gambe_glutei") {
-    prioritySlots = [...FOCUS_SLOTS.gambe_glutei];
-  } else if (focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
-    prioritySlots = [...FOCUS_SLOTS.full_body_mobilita];
+    prioritySlots = [...FOCUS_SLOTS.lower_body];
+  } else if (focus === "total_body" || focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
+    prioritySlots = [...FOCUS_SLOTS.total_body];
   } else {
-    prioritySlots = [...FOCUS_SLOTS.full_body_mobilita];
+    prioritySlots = [...FOCUS_SLOTS.total_body];
   }
 
   if (ctx.weekNumber >= 4 && prioritySlots.length < targetCount) {
