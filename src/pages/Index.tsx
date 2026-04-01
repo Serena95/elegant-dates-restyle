@@ -1,4 +1,4 @@
-import { useState, useCallback, useMemo, useRef, useEffect } from "react";
+import { useState, useCallback, useMemo, useRef, useEffect, useLayoutEffect } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { AppLayout, AppView } from "@/components/AppLayout";
 import { Dashboard } from "@/components/Dashboard";
@@ -41,6 +41,7 @@ import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
 import { supabase } from "@/integrations/supabase/client";
+import { useWorkoutAutosave, loadWorkoutSession, clearWorkoutSession } from "@/hooks/useWorkoutPersistence";
 
 function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): string | undefined {
   if (!entries || entries.length === 0) return undefined;
@@ -81,6 +82,8 @@ const Index = () => {
   const [aiGenerated, setAiGenerated] = useState(false);
   const [xpResult, setXpResult] = useState<{ xpGained: number; newXp: number; leveledUp: boolean } | null>(null);
   const [voiceEnabled, setVoiceEnabled] = useLocalStorage("voice_trainer_enabled", true);
+  const [workoutExerciseIdx, setWorkoutExerciseIdx] = useState(0);
+  const [workoutCompletati, setWorkoutCompletati] = useState<number[]>([]);
   const prevBadgeCountRef = useRef(0);
   const lastGeneratedKey = useRef("");
 
@@ -89,6 +92,37 @@ const Index = () => {
   prevBadgeCountRef.current = unlockedBadges.length;
 
   const userName = cloud.profile.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Utente";
+
+  // Restore workout session on mount
+  useEffect(() => {
+    if (cloud.loading) return;
+    const saved = loadWorkoutSession();
+    if (saved && cloud.piano[saved.giornoSelezionato]) {
+      const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
+      const cached = allenamentiEsercizi[saved.giornoSelezionato];
+      if (cached && cached.length > 0) {
+        setGiornoSelezionato(saved.giornoSelezionato);
+        setEserciziCorrenti(cached);
+        setRoundCorrenti(saved.roundCorrenti);
+        setWorkoutExerciseIdx(saved.currentExerciseIdx);
+        setWorkoutCompletati(saved.completati);
+        setWorkoutStartTime(Date.now() - 60000); // approximate
+        setView("workout");
+      }
+    }
+  }, [cloud.loading]);
+
+  // Autosave workout state
+  useWorkoutAutosave(
+    view === "workout" && !!giornoSelezionato,
+    giornoSelezionato,
+    workoutExerciseIdx,
+    new Set(workoutCompletati),
+    roundCorrenti,
+    0, // timer managed internally
+    "",
+    false
+  );
 
   // Auto-generate weekly plan when needed
   useEffect(() => {
@@ -243,6 +277,7 @@ const Index = () => {
     cloud.savePiano(updatedPiano);
 
     if (nuoviRound >= config.round) {
+      clearWorkoutSession();
       const dataKey = getLocalDateKey(new Date());
       const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
       const focus = detectFocus(eserciziCorrenti);
@@ -329,9 +364,15 @@ const Index = () => {
             livello={cloud.livello}
             roundCorrenti={roundCorrenti}
             onSegnaRound={segnaRound}
-            onBack={() => navigate("dashboard")}
+            onBack={() => { clearWorkoutSession(); navigate("dashboard"); }}
             voiceEnabled={voiceEnabled}
             aiGenerated={aiGenerated}
+            initialExerciseIdx={workoutExerciseIdx}
+            initialCompletati={workoutCompletati}
+            onStateChange={(state) => {
+              setWorkoutExerciseIdx(state.currentExerciseIdx);
+              setWorkoutCompletati(state.completati);
+            }}
           />
         </div>
         {showComplete && (

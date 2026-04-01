@@ -16,6 +16,9 @@ interface WorkoutViewProps {
   onBack: () => void;
   voiceEnabled?: boolean;
   aiGenerated?: boolean;
+  initialExerciseIdx?: number;
+  initialCompletati?: number[];
+  onStateChange?: (state: { currentExerciseIdx: number; completati: number[] }) => void;
 }
 
 const RISCALDAMENTO_MODES = [
@@ -24,19 +27,24 @@ const RISCALDAMENTO_MODES = [
   { tipo: "CAMMINATA ESTERNA", emoji: "🌳", desc: "25 min • Passo svelto • Braccia attive e rullata del piede completa.", durata: 1500, label: "25 MIN" },
 ];
 
-export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, voiceEnabled = true, aiGenerated = false }: WorkoutViewProps) {
+export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], onStateChange }: WorkoutViewProps) {
   const config = CONFIG_LIVELLI[livello];
   const maxRound = config.round;
   const timer = useTimer();
   const voice = useVoiceTrainer({ enabled: voiceEnabled });
-  const [completati, setCompletati] = useState<Set<number>>(new Set());
+  const [completati, setCompletati] = useState<Set<number>>(new Set(initialCompletati));
   const [tipoRiscaldamento, setTipoRiscaldamento] = useState(0);
-  const [currentExerciseIdx, setCurrentExerciseIdx] = useState(0);
+  const [currentExerciseIdx, setCurrentExerciseIdx] = useState(initialExerciseIdx);
   const [isPaused, setIsPaused] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [voiceActive, setVoiceActive] = useState(voiceEnabled);
   const lastTimerRef = useRef<string | null>(null);
   const isCompleted = roundCorrenti >= maxRound;
+
+  // Report state changes for persistence
+  useEffect(() => {
+    onStateChange?.({ currentExerciseIdx, completati: Array.from(completati) });
+  }, [currentExerciseIdx, completati, onStateChange]);
 
   // Voice cues synced with timer
   useEffect(() => {
