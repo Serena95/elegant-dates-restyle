@@ -363,9 +363,15 @@ const Index = () => {
             livello={cloud.livello}
             roundCorrenti={roundCorrenti}
             onSegnaRound={segnaRound}
-            onBack={() => navigate("dashboard")}
+            onBack={() => { clearWorkoutSession(); navigate("dashboard"); }}
             voiceEnabled={voiceEnabled}
             aiGenerated={aiGenerated}
+            initialExerciseIdx={workoutExerciseIdx}
+            initialCompletati={workoutCompletati}
+            onStateChange={(state) => {
+              setWorkoutExerciseIdx(state.currentExerciseIdx);
+              setWorkoutCompletati(state.completati);
+            }}
           />
         </div>
         {showComplete && (
