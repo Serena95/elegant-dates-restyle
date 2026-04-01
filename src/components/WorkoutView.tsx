@@ -41,6 +41,11 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const lastTimerRef = useRef<string | null>(null);
   const isCompleted = roundCorrenti >= maxRound;
 
+  // Report state changes for persistence
+  useEffect(() => {
+    onStateChange?.({ currentExerciseIdx, completati: Array.from(completati) });
+  }, [currentExerciseIdx, completati, onStateChange]);
+
   // Voice cues synced with timer
   useEffect(() => {
     if (!voiceActive || !timer.isActive) return;
