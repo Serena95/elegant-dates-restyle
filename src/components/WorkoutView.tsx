@@ -1,10 +1,61 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Exercise, CONFIG_LIVELLI, ATTREZZO_ICONS, TEMA_CONFIG, detectFocus } from "@/data/exercises";
 import { useTimer } from "@/hooks/useTimer";
 import { useVoiceTrainer } from "@/hooks/useVoiceTrainer";
 import { TimerOverlay } from "./TimerOverlay";
 import { ExerciseImage } from "./ExerciseImage";
-import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, SkipForward, X, Volume2, VolumeX, Sparkles } from "lucide-react";
+import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, X, Volume2, VolumeX, Sparkles, ArrowRight } from "lucide-react";
+import type { DayFocus } from "@/data/exercises";
+
+// ============================================================
+// DYNAMIC STRETCHING DATA
+// ============================================================
+
+interface StretchExercise {
+  nome: string;
+  emoji: string;
+  desc: string;
+  durata: number;
+}
+
+const STRETCHING_UPPER: StretchExercise[] = [
+  { nome: "Stretch Schiena (Cat-Cow)", emoji: "🐱", desc: "In quadrupedia, alterna inarcamento e arrotondamento della schiena.", durata: 60 },
+  { nome: "Stretch Spalle", emoji: "🙆", desc: "Porta un braccio al petto e tira col braccio opposto. Alterna.", durata: 45 },
+  { nome: "Stretch Tricipiti", emoji: "💪", desc: "Braccio dietro la testa, spingi il gomito con l'altra mano.", durata: 45 },
+  { nome: "Stretch Petto Apertura", emoji: "🦅", desc: "Braccia dietro la schiena intrecciate, apri il petto e guarda su.", durata: 45 },
+  { nome: "Torsione Spinale", emoji: "🔄", desc: "Seduta, ruota il busto portando la mano al ginocchio opposto.", durata: 60 },
+  { nome: "Rilascio Core", emoji: "🧘", desc: "Posizione del bambino: braccia avanti, fronte a terra, respira.", durata: 60 },
+];
+
+const STRETCHING_LOWER: StretchExercise[] = [
+  { nome: "Stretch Glutei (Piriforme)", emoji: "🍑", desc: "Supina, caviglia sulla coscia opposta, tira il ginocchio al petto.", durata: 60 },
+  { nome: "Stretch Quadricipiti", emoji: "🦵", desc: "In piedi, porta il tallone al gluteo e tieni. Alterna.", durata: 45 },
+  { nome: "Stretch Femorali", emoji: "🦿", desc: "Seduta, gambe tese, piegati avanti cercando le punte.", durata: 60 },
+  { nome: "Stretch Interno Coscia (Farfalla)", emoji: "🦋", desc: "Seduta, piante dei piedi unite, spingi le ginocchia verso il basso.", durata: 60 },
+  { nome: "Affondo Basso", emoji: "🧎", desc: "Un ginocchio a terra, spingi il bacino avanti per allungare il flessore.", durata: 45 },
+  { nome: "Rilascio Core", emoji: "🧘", desc: "Posizione del bambino: braccia avanti, fronte a terra, respira.", durata: 60 },
+];
+
+const STRETCHING_TOTAL: StretchExercise[] = [
+  { nome: "Stretch Schiena (Cat-Cow)", emoji: "🐱", desc: "In quadrupedia, alterna inarcamento e arrotondamento della schiena.", durata: 60 },
+  { nome: "Stretch Spalle e Petto", emoji: "🙆", desc: "Braccia intrecciate dietro, apri il petto. Poi braccio al petto, alterna.", durata: 45 },
+  { nome: "Stretch Glutei", emoji: "🍑", desc: "Supina, caviglia sulla coscia opposta, tira al petto.", durata: 60 },
+  { nome: "Stretch Quadricipiti", emoji: "🦵", desc: "In piedi, tallone al gluteo, mantieni l'equilibrio.", durata: 45 },
+  { nome: "Stretch Femorali", emoji: "🦿", desc: "Seduta, gambe tese, piegati avanti cercando le punte.", durata: 60 },
+  { nome: "Farfalla + Core", emoji: "🦋", desc: "Piante dei piedi unite, spingi ginocchia giù, poi piegati avanti.", durata: 60 },
+  { nome: "Torsione Spinale", emoji: "🔄", desc: "Seduta, ruota il busto. Allunga obliqui e colonna.", durata: 45 },
+  { nome: "Rilascio Finale", emoji: "🧘", desc: "Posizione del bambino: braccia avanti, fronte a terra, 5 respiri profondi.", durata: 60 },
+];
+
+function getStretchingForFocus(focus: DayFocus | string): StretchExercise[] {
+  if (focus === "upper_body") return STRETCHING_UPPER;
+  if (focus === "lower_body") return STRETCHING_LOWER;
+  return STRETCHING_TOTAL;
+}
+
+// ============================================================
+// WORKOUT VIEW
+// ============================================================
 
 interface WorkoutViewProps {
   giorno: string;
@@ -19,6 +70,7 @@ interface WorkoutViewProps {
   initialExerciseIdx?: number;
   initialCompletati?: number[];
   onStateChange?: (state: { currentExerciseIdx: number; completati: number[] }) => void;
+  dayFocus?: DayFocus;
 }
 
 const RISCALDAMENTO_MODES = [
@@ -27,7 +79,7 @@ const RISCALDAMENTO_MODES = [
   { tipo: "CAMMINATA ESTERNA", emoji: "🌳", desc: "25 min • Passo svelto • Braccia attive e rullata del piede completa.", durata: 1500, label: "25 MIN" },
 ];
 
-export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], onStateChange }: WorkoutViewProps) {
+export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], onStateChange, dayFocus }: WorkoutViewProps) {
   const config = CONFIG_LIVELLI[livello];
   const maxRound = config.round;
   const timer = useTimer();
@@ -38,7 +90,11 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const [isPaused, setIsPaused] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [voiceActive, setVoiceActive] = useState(voiceEnabled);
+  const [showStretching, setShowStretching] = useState(false);
+  const [stretchingComplete, setStretchingComplete] = useState(false);
+  const [completedStretches, setCompletedStretches] = useState<Set<number>>(new Set());
   const lastTimerRef = useRef<string | null>(null);
+  const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isCompleted = roundCorrenti >= maxRound;
 
   // Report state changes for persistence
@@ -52,25 +108,19 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     const remaining = timer.timeLeft;
     const label = timer.label;
     
-    // Only fire cues when timer label changes (new exercise started)
     if (label !== lastTimerRef.current) {
       lastTimerRef.current = label;
-      // Don't announce on first tick - the start button handler does it
     }
 
-    // Mid-exercise cue
     if (remaining === Math.floor(config.tempoEsercizio / 2) && config.tempoEsercizio >= 20) {
       voice.announceMidExercise();
     }
-    // Almost done
     if (remaining === 10 && config.tempoEsercizio >= 20) {
       voice.announceAlmostDone();
     }
-    // Countdown
     if (remaining <= 5 && remaining > 0) {
       voice.announceCountdown(remaining);
     }
-    // End
     if (remaining === 0 && lastTimerRef.current) {
       voice.announceEndExercise();
       lastTimerRef.current = null;
@@ -82,42 +132,161 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     return () => voice.stop();
   }, [voice]);
 
+  // Auto-scroll to next exercise
+  const scrollToExercise = useCallback((idx: number) => {
+    setTimeout(() => {
+      exerciseRefs.current[idx]?.scrollIntoView({ behavior: "smooth", block: "center" });
+    }, 150);
+  }, []);
+
   const temaConfig = TEMA_CONFIG[tema];
   const temaLabel = temaConfig?.label || tema;
   const temaIcon = temaConfig?.icon || "🏋️";
 
+  // Determine focus for stretching
+  const effectiveFocus = dayFocus || "total_body";
+  const stretchingExercises = getStretchingForFocus(effectiveFocus);
+
   const toggleEsercizio = (idx: number) => {
     setCompletati(prev => {
       const next = new Set(prev);
-      if (next.has(idx)) next.delete(idx); else next.add(idx);
+      if (next.has(idx)) {
+        next.delete(idx);
+      } else {
+        next.add(idx);
+        // Auto-advance to next exercise
+        if (idx < esercizi.length - 1) {
+          setCurrentExerciseIdx(idx + 1);
+          scrollToExercise(idx + 1);
+        }
+      }
       return next;
     });
   };
 
   const handleSegnaRound = () => {
     onSegnaRound();
+    // Reset: deselect all and go back to first exercise
     setCompletati(new Set());
+    setCurrentExerciseIdx(0);
+    
     if (voiceActive) voice.announceRoundComplete(roundCorrenti + 1, maxRound);
+    
     if (roundCorrenti + 1 < maxRound) {
       timer.start(config.pausa, `PAUSA ROUND ${roundCorrenti + 1}`);
-    } else if (voiceActive) {
-      voice.announceAllComplete();
+      // Scroll back to first exercise after pause starts
+      setTimeout(() => scrollToExercise(0), 300);
+    } else {
+      // All rounds completed → show stretching
+      if (voiceActive) voice.announceAllComplete();
+      setShowStretching(true);
     }
+  };
+
+  const toggleStretch = (idx: number) => {
+    setCompletedStretches(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
   };
 
   const cambiaRiscaldamento = () => {
     setTipoRiscaldamento(prev => (prev + 1) % 3);
   };
 
-  const nextExercise = () => {
-    if (currentExerciseIdx < esercizi.length - 1) {
-      toggleEsercizio(currentExerciseIdx);
-      setCurrentExerciseIdx(prev => prev + 1);
-    }
-  };
-
   const risc = RISCALDAMENTO_MODES[tipoRiscaldamento];
 
+  // ============================================================
+  // STRETCHING SCREEN
+  // ============================================================
+  if (showStretching && !stretchingComplete) {
+    const focusLabel = effectiveFocus === "upper_body" ? "Upper Body" : effectiveFocus === "lower_body" ? "Lower Body" : "Total Body";
+    return (
+      <div className="space-y-4">
+        <TimerOverlay timer={timer} />
+        
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-foreground">🌊 Stretching {focusLabel}</h2>
+        </div>
+        
+        <p className="text-sm text-muted-foreground">
+          Espira profondamente e rilassa i muscoli lavorati durante l'allenamento.
+        </p>
+
+        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full transition-all duration-500 bg-pilates-green"
+            style={{ width: `${(completedStretches.size / stretchingExercises.length) * 100}%` }}
+          />
+        </div>
+
+        <div className="space-y-3">
+          {stretchingExercises.map((s, idx) => {
+            const done = completedStretches.has(idx);
+            return (
+              <div
+                key={s.nome}
+                onClick={() => toggleStretch(idx)}
+                className={`rounded-xl border p-4 transition-all cursor-pointer ${
+                  done ? "opacity-40 bg-muted border-border" : "bg-card border-border hover:border-primary/30 hover:shadow-md"
+                }`}
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      {done && <Check size={16} className="text-pilates-green" />}
+                      <strong className="text-base text-foreground">{s.emoji} {s.nome}</strong>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{s.desc}</p>
+                  </div>
+                  <button
+                    onClick={e => { e.stopPropagation(); timer.start(s.durata, s.nome); }}
+                    className="bg-primary text-primary-foreground px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0"
+                  >
+                    <Timer size={12} /> {s.durata}s
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => setStretchingComplete(true)}
+          className="w-full py-4 rounded-2xl bg-pilates-green text-white font-bold shadow-lg flex items-center justify-center gap-2"
+        >
+          ✅ Stretching Completato
+        </button>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // COMPLETION SCREEN (after stretching)
+  // ============================================================
+  if (stretchingComplete) {
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[60vh] space-y-6 text-center">
+        <div className="w-20 h-20 rounded-full bg-pilates-green/20 flex items-center justify-center">
+          <span className="text-4xl">🏆</span>
+        </div>
+        <h2 className="text-2xl font-black text-foreground">Allenamento Completato!</h2>
+        <p className="text-muted-foreground">Ottimo lavoro! Hai completato tutti i round e lo stretching.</p>
+        <button
+          onClick={onBack}
+          className="w-full max-w-xs py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg flex items-center justify-center gap-2"
+        >
+          <ArrowRight size={18} /> Torna alla Dashboard
+        </button>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // MAIN WORKOUT VIEW
+  // ============================================================
   return (
     <div className="space-y-4">
       <TimerOverlay timer={timer} />
@@ -177,6 +346,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
 
       {(() => {
         const focus = detectFocus(esercizi);
+        const focusLabel = effectiveFocus === "upper_body" ? "💪 Upper Body" : effectiveFocus === "lower_body" ? "🦵 Lower Body" : "🔥 Total Body";
         return (
           <>
             <h2 className="text-xl font-bold text-foreground">
@@ -185,7 +355,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
             <div className="flex items-center gap-2 text-xs sm:text-sm text-muted-foreground flex-wrap">
               <span className="whitespace-nowrap">⏱️ {config.tempoEsercizio}s esercizio • {config.pausa}s pausa • {maxRound} round</span>
               <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-secondary/50 text-foreground text-xs font-bold">
-                {focus.icon} {focus.label}
+                {focusLabel}
               </span>
               {aiGenerated && (
                 <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold">
@@ -234,6 +404,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
           return (
             <div
               key={idx}
+              ref={el => { exerciseRefs.current[idx] = el; }}
               onClick={() => toggleEsercizio(idx)}
               className={`rounded-xl border p-4 transition-all cursor-pointer ${
                 done
@@ -297,18 +468,6 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         })}
       </div>
 
-      {/* Floating next exercise button */}
-      {!isCompleted && !isPaused && currentExerciseIdx < esercizi.length - 1 && (
-        <div className="sticky bottom-20 z-30">
-          <button
-            onClick={nextExercise}
-            className="w-full py-3 rounded-xl bg-secondary text-secondary-foreground font-bold shadow-lg flex items-center justify-center gap-2 hover:opacity-90 transition"
-          >
-            <SkipForward size={16} /> Prossimo Esercizio ({currentExerciseIdx + 1}/{esercizi.length})
-          </button>
-        </div>
-      )}
-
       {/* Paused overlay */}
       {isPaused && (
         <div className="bg-card rounded-2xl border-2 border-primary p-8 text-center space-y-4">
@@ -337,35 +496,6 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
           <button onClick={handleSegnaRound} className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg">
             SEGNA ROUND E PAUSA
           </button>
-        )}
-        {isCompleted && (
-          <div className="space-y-4 bg-accent/30 p-6 rounded-2xl border-2 border-primary">
-            <h3 className="text-xl font-bold text-primary">🌊 Defaticamento Rigenerante</h3>
-            <p className="text-sm text-muted-foreground">Espira profondamente e rilassa i muscoli.</p>
-
-            {[
-              { nome: "Posizione del Bambino", emoji: "🧒", desc: "Fronte a terra, allunga le braccia avanti." },
-              { nome: "Farfalla", emoji: "🦋", desc: "Pianta dei piedi uniti, ginocchia in fuori." },
-              { nome: "Cobra", emoji: "🐍", desc: "Distendi le braccia e allunga l'addome." },
-            ].map(s => (
-              <div key={s.nome} className="flex justify-between items-center bg-card p-3 rounded-xl border border-border">
-                <div>
-                  <strong className="text-primary">{s.emoji} {s.nome}</strong>
-                  <p className="text-xs text-muted-foreground">{s.desc}</p>
-                </div>
-                <button
-                  onClick={() => timer.start(60, s.nome)}
-                  className="bg-primary text-primary-foreground px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1"
-                >
-                  <Timer size={12} /> 60s
-                </button>
-              </div>
-            ))}
-
-            <button onClick={onBack} className="w-full py-4 rounded-2xl bg-pilates-green text-white font-bold shadow-lg">
-              🏆 COMPLETA SESSIONE
-            </button>
-          </div>
         )}
       </div>
     </div>

@@ -57,20 +57,45 @@ function livelloAccessibile(eserLivello: string, userLivello: string): boolean {
 // WEEKLY FOCUS STRUCTURE (consistent across weeks)
 // ============================================================
 
-export type DayFocus = "core_stabilita" | "gambe_glutei" | "full_body_mobilita";
+export type DayFocus = "upper_body" | "lower_body" | "total_body";
 
-const DAY_FOCUS_PATTERN: DayFocus[] = ["core_stabilita", "gambe_glutei", "full_body_mobilita"];
+const DAY_FOCUS_PATTERN: DayFocus[] = ["upper_body", "lower_body", "total_body"];
 
+/**
+ * Muscle-group slots for each focus type.
+ * Each slot is a list of muscoli/categoria to look for.
+ */
 const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
-  core_stabilita: [["core"], ["core"], ["stabilità"], ["core"], ["schiena"], ["mobilità"]],
-  gambe_glutei: [["gambe"], ["glutei"], ["gambe", "glutei"], ["core"], ["stabilità"], ["mobilità"]],
-  full_body_mobilita: [["core"], ["gambe", "glutei"], ["braccia", "schiena"], ["stabilità"], ["mobilità"], ["cardio"]],
+  upper_body: [
+    ["schiena"],           // mandatory
+    ["braccia"],           // petto/tricipiti
+    ["schiena"],           // dorsali
+    ["braccia", "stabilità"], // spalle
+    ["core"],              // addominali (mandatory)
+    ["core"],              // fianchi/obliqui (mandatory)
+  ],
+  lower_body: [
+    ["gambe"],             // quadricipiti
+    ["glutei"],            // glutei
+    ["gambe"],             // femorali
+    ["gambe"],             // interno coscia (mandatory)
+    ["core"],              // addominali (mandatory)
+    ["core"],              // fianchi/obliqui (mandatory)
+  ],
+  total_body: [
+    ["schiena", "braccia"], // upper
+    ["gambe", "glutei"],    // lower
+    ["braccia", "stabilità"], // upper
+    ["gambe", "glutei"],    // lower
+    ["core"],              // addominali (mandatory)
+    ["core"],              // fianchi/obliqui (mandatory)
+  ],
 };
 
 export const FOCUS_LABELS: Record<DayFocus, { label: string; icon: string }> = {
-  core_stabilita: { label: "Core & Stabilità", icon: "🎯" },
-  gambe_glutei: { label: "Gambe & Glutei", icon: "🦵" },
-  full_body_mobilita: { label: "Full Body & Mobilità", icon: "🔥" },
+  upper_body: { label: "Upper Body", icon: "💪" },
+  lower_body: { label: "Lower Body", icon: "🦵" },
+  total_body: { label: "Total Body", icon: "🔥" },
 };
 
 // ============================================================
@@ -300,14 +325,14 @@ export function generaEserciziGiorno(
 
   let prioritySlots: string[][];
 
-  if (focus === "core" || focus === "core_stabilita") {
-    prioritySlots = [...FOCUS_SLOTS.core_stabilita];
+  if (focus === "upper_body" || focus === "core" || focus === "core_stabilita") {
+    prioritySlots = [...FOCUS_SLOTS.upper_body];
   } else if (focus === "lower_body" || focus === "gambe_glutei") {
-    prioritySlots = [...FOCUS_SLOTS.gambe_glutei];
-  } else if (focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
-    prioritySlots = [...FOCUS_SLOTS.full_body_mobilita];
+    prioritySlots = [...FOCUS_SLOTS.lower_body];
+  } else if (focus === "total_body" || focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
+    prioritySlots = [...FOCUS_SLOTS.total_body];
   } else {
-    prioritySlots = [...FOCUS_SLOTS.full_body_mobilita];
+    prioritySlots = [...FOCUS_SLOTS.total_body];
   }
 
   if (ctx.weekNumber >= 4 && prioritySlots.length < targetCount) {
