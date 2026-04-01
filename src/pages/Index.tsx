@@ -373,6 +373,7 @@ const Index = () => {
               setWorkoutExerciseIdx(state.currentExerciseIdx);
               setWorkoutCompletati(state.completati);
             }}
+            dayFocus={focusMap[giornoSelezionato]?.key as any}
           />
         </div>
         {showComplete && (
