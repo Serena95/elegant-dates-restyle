@@ -93,6 +93,37 @@ const Index = () => {
 
   const userName = cloud.profile.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Utente";
 
+  // Restore workout session on mount
+  useEffect(() => {
+    if (cloud.loading) return;
+    const saved = loadWorkoutSession();
+    if (saved && cloud.piano[saved.giornoSelezionato]) {
+      const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
+      const cached = allenamentiEsercizi[saved.giornoSelezionato];
+      if (cached && cached.length > 0) {
+        setGiornoSelezionato(saved.giornoSelezionato);
+        setEserciziCorrenti(cached);
+        setRoundCorrenti(saved.roundCorrenti);
+        setWorkoutExerciseIdx(saved.currentExerciseIdx);
+        setWorkoutCompletati(saved.completati);
+        setWorkoutStartTime(Date.now() - 60000); // approximate
+        setView("workout");
+      }
+    }
+  }, [cloud.loading]);
+
+  // Autosave workout state
+  useWorkoutAutosave(
+    view === "workout" && !!giornoSelezionato,
+    giornoSelezionato,
+    workoutExerciseIdx,
+    new Set(workoutCompletati),
+    roundCorrenti,
+    0, // timer managed internally
+    "",
+    false
+  );
+
   // Auto-generate weekly plan when needed
   useEffect(() => {
     const equipmentPool = cloud.attrezzi.length > 0
