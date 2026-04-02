@@ -101,8 +101,8 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
 
   // Report state changes for persistence
   useEffect(() => {
-    onStateChange?.({ currentExerciseIdx, completati: Array.from(completati) });
-  }, [currentExerciseIdx, completati, onStateChange]);
+    onStateChange?.({ currentExerciseIdx, completati: Array.from(completati), showStretching });
+  }, [currentExerciseIdx, completati, onStateChange, showStretching]);
 
   // Voice cues synced with timer
   useEffect(() => {
