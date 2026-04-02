@@ -121,9 +121,10 @@ const Index = () => {
     workoutExerciseIdx,
     new Set(workoutCompletati),
     roundCorrenti,
-    0, // timer managed internally
+    0,
     "",
-    false
+    false,
+    workoutShowStretching
   );
 
   // Auto-generate weekly plan when needed
