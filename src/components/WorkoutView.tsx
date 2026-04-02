@@ -65,11 +65,13 @@ interface WorkoutViewProps {
   roundCorrenti: number;
   onSegnaRound: () => void;
   onBack: () => void;
+  onStretchingComplete?: () => void;
   voiceEnabled?: boolean;
   aiGenerated?: boolean;
   initialExerciseIdx?: number;
   initialCompletati?: number[];
-  onStateChange?: (state: { currentExerciseIdx: number; completati: number[] }) => void;
+  initialShowStretching?: boolean;
+  onStateChange?: (state: { currentExerciseIdx: number; completati: number[]; showStretching: boolean }) => void;
   dayFocus?: DayFocus;
 }
 
@@ -79,7 +81,7 @@ const RISCALDAMENTO_MODES = [
   { tipo: "CAMMINATA ESTERNA", emoji: "🌳", desc: "25 min • Passo svelto • Braccia attive e rullata del piede completa.", durata: 1500, label: "25 MIN" },
 ];
 
-export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], onStateChange, dayFocus }: WorkoutViewProps) {
+export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, onStretchingComplete, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], initialShowStretching = false, onStateChange, dayFocus }: WorkoutViewProps) {
   const config = CONFIG_LIVELLI[livello];
   const maxRound = config.round;
   const timer = useTimer();
@@ -90,7 +92,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const [isPaused, setIsPaused] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [voiceActive, setVoiceActive] = useState(voiceEnabled);
-  const [showStretching, setShowStretching] = useState(false);
+  const [showStretching, setShowStretching] = useState(initialShowStretching);
   const [stretchingComplete, setStretchingComplete] = useState(false);
   const [completedStretches, setCompletedStretches] = useState<Set<number>>(new Set());
   const lastTimerRef = useRef<string | null>(null);
@@ -99,8 +101,8 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
 
   // Report state changes for persistence
   useEffect(() => {
-    onStateChange?.({ currentExerciseIdx, completati: Array.from(completati) });
-  }, [currentExerciseIdx, completati, onStateChange]);
+    onStateChange?.({ currentExerciseIdx, completati: Array.from(completati), showStretching });
+  }, [currentExerciseIdx, completati, onStateChange, showStretching]);
 
   // Voice cues synced with timer
   useEffect(() => {
@@ -254,7 +256,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         </div>
 
         <button
-          onClick={() => setStretchingComplete(true)}
+          onClick={() => { setStretchingComplete(true); onStretchingComplete?.(); }}
           className="w-full py-4 rounded-2xl bg-pilates-green text-white font-bold shadow-lg flex items-center justify-center gap-2"
         >
           ✅ Stretching Completato

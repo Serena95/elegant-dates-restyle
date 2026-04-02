@@ -84,6 +84,7 @@ const Index = () => {
   const [voiceEnabled, setVoiceEnabled] = useLocalStorage("voice_trainer_enabled", true);
   const [workoutExerciseIdx, setWorkoutExerciseIdx] = useState(0);
   const [workoutCompletati, setWorkoutCompletati] = useState<number[]>([]);
+  const [workoutShowStretching, setWorkoutShowStretching] = useState(false);
   const prevBadgeCountRef = useRef(0);
   const lastGeneratedKey = useRef("");
 
@@ -106,7 +107,8 @@ const Index = () => {
         setRoundCorrenti(saved.roundCorrenti);
         setWorkoutExerciseIdx(saved.currentExerciseIdx);
         setWorkoutCompletati(saved.completati);
-        setWorkoutStartTime(Date.now() - 60000); // approximate
+        setWorkoutShowStretching(saved.showStretching || false);
+        setWorkoutStartTime(Date.now() - 60000);
         setView("workout");
       }
     }
@@ -119,9 +121,10 @@ const Index = () => {
     workoutExerciseIdx,
     new Set(workoutCompletati),
     roundCorrenti,
-    0, // timer managed internally
+    0,
     "",
-    false
+    false,
+    workoutShowStretching
   );
 
   // Auto-generate weekly plan when needed
@@ -277,7 +280,7 @@ const Index = () => {
     cloud.savePiano(updatedPiano);
 
     if (nuoviRound >= config.round) {
-      clearWorkoutSession();
+      // Don't clear session yet - stretching still needs to happen
       const dataKey = getLocalDateKey(new Date());
       const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
       const focus = detectFocus(eserciziCorrenti);
@@ -288,36 +291,27 @@ const Index = () => {
         const streakData = calculateStreak(cloud.storicoCal, cloud.giorniAllenamento);
         addWorkoutXP(user.id, streakData.currentStreak).then(result => {
           setXpResult({ xpGained: result.xpGained, newXp: result.newXp, leveledUp: result.leveledUp });
-          // Update leaderboard
           updateLeaderboard(user.id, result.xpGained).catch(console.error);
         }).catch(console.error);
-        // Sync badges to DB
         const badgeIds = unlockedBadges.map(b => b.id);
         syncBadges(user.id, badgeIds).catch(console.error);
       }
-
-      const prevCount = prevBadgeCountRef.current;
-      setTimeout(() => {
-        const nb = checkNewBadges(prevCount);
-        setNewBadges(nb);
-        setShowComplete(true);
-      }, 500);
     }
   }, [giornoSelezionato, roundCorrenti, cloud.livello, cloud.piano, cloud.savePiano, cloud.saveStoricoCal, checkNewBadges]);
 
   const changeLivello = useCallback((l: string) => {
-    const nuovoMax = CONFIG_LIVELLI[l].round;
     cloud.setLivello(l);
-    const updatedPiano = { ...cloud.piano };
-    let changed = false;
-    Object.keys(updatedPiano).forEach(g => {
-      if (updatedPiano[g].round > nuovoMax) {
-        updatedPiano[g] = { ...updatedPiano[g], round: nuovoMax };
-        changed = true;
-      }
-    });
-    if (changed) cloud.savePiano(updatedPiano);
-  }, [cloud.piano, cloud.setLivello, cloud.savePiano]);
+    // Force full regeneration with new level
+    lastGeneratedKey.current = "";
+    const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
+    if (equipmentPool.length > 0) {
+      const result = generaSettimanaIntelligente(
+        equipmentPool, l, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
+      );
+      cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
+      cloud.setUltimiAttrezzi(Object.values(result.piano).map(d => d.attrezzo));
+    }
+  }, [cloud.attrezzi, cloud.setLivello, cloud.savePiano, cloud.allenamentiData, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento]);
 
   const handleChangeTrainingDays = useCallback((days: number[]) => {
     cloud.setGiorniAllenamento(days);
@@ -365,13 +359,22 @@ const Index = () => {
             roundCorrenti={roundCorrenti}
             onSegnaRound={segnaRound}
             onBack={() => { clearWorkoutSession(); navigate("dashboard"); }}
+            onStretchingComplete={() => {
+              clearWorkoutSession();
+              const prevCount = prevBadgeCountRef.current;
+              const nb = checkNewBadges(prevCount);
+              setNewBadges(nb);
+              setShowComplete(true);
+            }}
             voiceEnabled={voiceEnabled}
             aiGenerated={aiGenerated}
             initialExerciseIdx={workoutExerciseIdx}
             initialCompletati={workoutCompletati}
+            initialShowStretching={workoutShowStretching}
             onStateChange={(state) => {
               setWorkoutExerciseIdx(state.currentExerciseIdx);
               setWorkoutCompletati(state.completati);
+              setWorkoutShowStretching(state.showStretching);
             }}
             dayFocus={focusMap[giornoSelezionato]?.key as any}
           />
@@ -413,7 +416,17 @@ const Index = () => {
   if (view === "equipment") {
     return (
       <AppLayout currentView={view} onNavigate={navigate} profile={cloud.profile} userName={userName}>
-        <EquipmentSelection savedAttrezzi={cloud.attrezzi} onComplete={(selected) => { cloud.setAttrezzi(selected); navigate("dashboard"); }} />
+        <EquipmentSelection savedAttrezzi={cloud.attrezzi} onComplete={(selected) => {
+          cloud.setAttrezzi(selected);
+          // Force full regeneration with new equipment
+          lastGeneratedKey.current = "";
+          const result = generaSettimanaIntelligente(
+            selected, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
+          );
+          cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
+          cloud.setUltimiAttrezzi(Object.values(result.piano).map(d => d.attrezzo));
+          navigate("dashboard");
+        }} />
       </AppLayout>
     );
   }

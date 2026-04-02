@@ -9,6 +9,7 @@ export interface WorkoutSessionState {
   roundCorrenti: number;
   timerSeconds: number | null;
   timerLabel: string | null;
+  showStretching: boolean;
   timestamp: number;
 }
 
@@ -48,7 +49,8 @@ export function useWorkoutAutosave(
   roundCorrenti: number,
   timerTimeLeft: number,
   timerLabel: string,
-  timerIsActive: boolean
+  timerIsActive: boolean,
+  showStretching: boolean = false
 ) {
   // Auto-save on visibility change and periodically
   const save = useCallback(() => {
@@ -60,9 +62,10 @@ export function useWorkoutAutosave(
       roundCorrenti,
       timerSeconds: timerIsActive ? timerTimeLeft : null,
       timerLabel: timerIsActive ? timerLabel : null,
+      showStretching,
       timestamp: Date.now(),
     });
-  }, [isInWorkout, giornoSelezionato, currentExerciseIdx, completati, roundCorrenti, timerTimeLeft, timerLabel, timerIsActive]);
+  }, [isInWorkout, giornoSelezionato, currentExerciseIdx, completati, roundCorrenti, timerTimeLeft, timerLabel, timerIsActive, showStretching]);
 
   useEffect(() => {
     if (!isInWorkout) return;
