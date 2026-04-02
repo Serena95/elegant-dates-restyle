@@ -306,18 +306,18 @@ const Index = () => {
   }, [giornoSelezionato, roundCorrenti, cloud.livello, cloud.piano, cloud.savePiano, cloud.saveStoricoCal, checkNewBadges]);
 
   const changeLivello = useCallback((l: string) => {
-    const nuovoMax = CONFIG_LIVELLI[l].round;
     cloud.setLivello(l);
-    const updatedPiano = { ...cloud.piano };
-    let changed = false;
-    Object.keys(updatedPiano).forEach(g => {
-      if (updatedPiano[g].round > nuovoMax) {
-        updatedPiano[g] = { ...updatedPiano[g], round: nuovoMax };
-        changed = true;
-      }
-    });
-    if (changed) cloud.savePiano(updatedPiano);
-  }, [cloud.piano, cloud.setLivello, cloud.savePiano]);
+    // Force full regeneration with new level
+    lastGeneratedKey.current = "";
+    const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
+    if (equipmentPool.length > 0) {
+      const result = generaSettimanaIntelligente(
+        equipmentPool, l, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
+      );
+      cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
+      cloud.setUltimiAttrezzi(Object.values(result.piano).map(d => d.attrezzo));
+    }
+  }, [cloud.attrezzi, cloud.setLivello, cloud.savePiano, cloud.allenamentiData, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento]);
 
   const handleChangeTrainingDays = useCallback((days: number[]) => {
     cloud.setGiorniAllenamento(days);
