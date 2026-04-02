@@ -256,7 +256,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         </div>
 
         <button
-          onClick={() => setStretchingComplete(true)}
+          onClick={() => { setStretchingComplete(true); onStretchingComplete?.(); }}
           className="w-full py-4 rounded-2xl bg-pilates-green text-white font-bold shadow-lg flex items-center justify-center gap-2"
         >
           ✅ Stretching Completato
