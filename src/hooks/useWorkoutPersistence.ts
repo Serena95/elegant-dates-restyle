@@ -49,7 +49,8 @@ export function useWorkoutAutosave(
   roundCorrenti: number,
   timerTimeLeft: number,
   timerLabel: string,
-  timerIsActive: boolean
+  timerIsActive: boolean,
+  showStretching: boolean = false
 ) {
   // Auto-save on visibility change and periodically
   const save = useCallback(() => {
