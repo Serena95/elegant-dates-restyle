@@ -413,7 +413,17 @@ const Index = () => {
   if (view === "equipment") {
     return (
       <AppLayout currentView={view} onNavigate={navigate} profile={cloud.profile} userName={userName}>
-        <EquipmentSelection savedAttrezzi={cloud.attrezzi} onComplete={(selected) => { cloud.setAttrezzi(selected); navigate("dashboard"); }} />
+        <EquipmentSelection savedAttrezzi={cloud.attrezzi} onComplete={(selected) => {
+          cloud.setAttrezzi(selected);
+          // Force full regeneration with new equipment
+          lastGeneratedKey.current = "";
+          const result = generaSettimanaIntelligente(
+            selected, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
+          );
+          cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
+          cloud.setUltimiAttrezzi(Object.values(result.piano).map(d => d.attrezzo));
+          navigate("dashboard");
+        }} />
       </AppLayout>
     );
   }
