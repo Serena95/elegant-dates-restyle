@@ -278,7 +278,7 @@ const Index = () => {
     cloud.savePiano(updatedPiano);
 
     if (nuoviRound >= config.round) {
-      clearWorkoutSession();
+      // Don't clear session yet - stretching still needs to happen
       const dataKey = getLocalDateKey(new Date());
       const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
       const focus = detectFocus(eserciziCorrenti);
@@ -289,20 +289,11 @@ const Index = () => {
         const streakData = calculateStreak(cloud.storicoCal, cloud.giorniAllenamento);
         addWorkoutXP(user.id, streakData.currentStreak).then(result => {
           setXpResult({ xpGained: result.xpGained, newXp: result.newXp, leveledUp: result.leveledUp });
-          // Update leaderboard
           updateLeaderboard(user.id, result.xpGained).catch(console.error);
         }).catch(console.error);
-        // Sync badges to DB
         const badgeIds = unlockedBadges.map(b => b.id);
         syncBadges(user.id, badgeIds).catch(console.error);
       }
-
-      const prevCount = prevBadgeCountRef.current;
-      setTimeout(() => {
-        const nb = checkNewBadges(prevCount);
-        setNewBadges(nb);
-        setShowComplete(true);
-      }, 500);
     }
   }, [giornoSelezionato, roundCorrenti, cloud.livello, cloud.piano, cloud.savePiano, cloud.saveStoricoCal, checkNewBadges]);
 
