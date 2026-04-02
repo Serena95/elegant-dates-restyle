@@ -81,7 +81,7 @@ const RISCALDAMENTO_MODES = [
   { tipo: "CAMMINATA ESTERNA", emoji: "🌳", desc: "25 min • Passo svelto • Braccia attive e rullata del piede completa.", durata: 1500, label: "25 MIN" },
 ];
 
-export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], onStateChange, dayFocus }: WorkoutViewProps) {
+export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, onStretchingComplete, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], initialShowStretching = false, onStateChange, dayFocus }: WorkoutViewProps) {
   const config = CONFIG_LIVELLI[livello];
   const maxRound = config.round;
   const timer = useTimer();
