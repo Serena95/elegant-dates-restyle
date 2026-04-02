@@ -9,6 +9,7 @@ export interface WorkoutSessionState {
   roundCorrenti: number;
   timerSeconds: number | null;
   timerLabel: string | null;
+  showStretching: boolean;
   timestamp: number;
 }
 
