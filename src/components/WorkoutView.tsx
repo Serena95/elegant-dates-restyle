@@ -92,7 +92,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const [isPaused, setIsPaused] = useState(false);
   const [showQuitConfirm, setShowQuitConfirm] = useState(false);
   const [voiceActive, setVoiceActive] = useState(voiceEnabled);
-  const [showStretching, setShowStretching] = useState(false);
+  const [showStretching, setShowStretching] = useState(initialShowStretching);
   const [stretchingComplete, setStretchingComplete] = useState(false);
   const [completedStretches, setCompletedStretches] = useState<Set<number>>(new Set());
   const lastTimerRef = useRef<string | null>(null);
