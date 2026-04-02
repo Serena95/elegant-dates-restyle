@@ -107,7 +107,8 @@ const Index = () => {
         setRoundCorrenti(saved.roundCorrenti);
         setWorkoutExerciseIdx(saved.currentExerciseIdx);
         setWorkoutCompletati(saved.completati);
-        setWorkoutStartTime(Date.now() - 60000); // approximate
+        setWorkoutShowStretching(saved.showStretching || false);
+        setWorkoutStartTime(Date.now() - 60000);
         setView("workout");
       }
     }
