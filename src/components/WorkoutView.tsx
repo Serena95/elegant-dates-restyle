@@ -65,11 +65,13 @@ interface WorkoutViewProps {
   roundCorrenti: number;
   onSegnaRound: () => void;
   onBack: () => void;
+  onStretchingComplete?: () => void;
   voiceEnabled?: boolean;
   aiGenerated?: boolean;
   initialExerciseIdx?: number;
   initialCompletati?: number[];
-  onStateChange?: (state: { currentExerciseIdx: number; completati: number[] }) => void;
+  initialShowStretching?: boolean;
+  onStateChange?: (state: { currentExerciseIdx: number; completati: number[]; showStretching: boolean }) => void;
   dayFocus?: DayFocus;
 }
 
