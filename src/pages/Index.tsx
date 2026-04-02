@@ -357,13 +357,22 @@ const Index = () => {
             roundCorrenti={roundCorrenti}
             onSegnaRound={segnaRound}
             onBack={() => { clearWorkoutSession(); navigate("dashboard"); }}
+            onStretchingComplete={() => {
+              clearWorkoutSession();
+              const prevCount = prevBadgeCountRef.current;
+              const nb = checkNewBadges(prevCount);
+              setNewBadges(nb);
+              setShowComplete(true);
+            }}
             voiceEnabled={voiceEnabled}
             aiGenerated={aiGenerated}
             initialExerciseIdx={workoutExerciseIdx}
             initialCompletati={workoutCompletati}
+            initialShowStretching={workoutShowStretching}
             onStateChange={(state) => {
               setWorkoutExerciseIdx(state.currentExerciseIdx);
               setWorkoutCompletati(state.completati);
+              setWorkoutShowStretching(state.showStretching);
             }}
             dayFocus={focusMap[giornoSelezionato]?.key as any}
           />
