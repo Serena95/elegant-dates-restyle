@@ -96,6 +96,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const [stretchingComplete, setStretchingComplete] = useState(false);
   const [completedStretches, setCompletedStretches] = useState<Set<number>>(new Set());
   const lastTimerRef = useRef<string | null>(null);
+  const firedCuesRef = useRef<Set<string>>(new Set());
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isCompleted = roundCorrenti >= maxRound;
 
