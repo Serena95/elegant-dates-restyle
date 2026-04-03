@@ -489,7 +489,9 @@ const Index = () => {
         return (
           <ProgramsView
             userAttrezzi={cloud.attrezzi}
+            activeProgram={activeProgState.active?.type === "program" ? { id: activeProgState.active.id, week: activeProgState.active.week || 1 } : null}
             onStartProgram={(program) => {
+              activeProgState.startProgram(program.id, program.nome);
               const week = program.settimane[0];
               const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
               week.giorni.forEach(g => {
@@ -497,6 +499,18 @@ const Index = () => {
               });
               cloud.savePiano(nuovoPiano, { esercizi: {}, storico: cloud.allenamentiData.storico || {} });
               navigate("dashboard");
+            }}
+            onCancelProgram={() => {
+              activeProgState.cancel();
+              // Regenerate standard plan
+              lastGeneratedKey.current = "";
+              const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
+              if (equipmentPool.length > 0) {
+                const result = generaSettimanaIntelligente(
+                  equipmentPool, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
+                );
+                cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
+              }
             }}
           />
         );
