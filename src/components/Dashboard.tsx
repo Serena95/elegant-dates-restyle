@@ -28,6 +28,9 @@ interface DashboardProps {
   cyclePhase?: string;
   pregnancyMode?: boolean;
   pregnancyWeek?: number;
+  activeProgram?: ActiveProgramState | null;
+  onCancelProgram?: () => void;
+  onActivateInDashboard?: () => void;
 }
 
 export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(function Dashboard({
