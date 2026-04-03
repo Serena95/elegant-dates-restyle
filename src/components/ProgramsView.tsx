@@ -1,18 +1,21 @@
 import { useState } from "react";
 import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
-import { ChevronRight, Clock, Dumbbell, Trophy } from "lucide-react";
+import { ChevronRight, Clock, Dumbbell, Trophy, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
+import { Button } from "@/components/ui/button";
 
 interface ProgramsViewProps {
   userAttrezzi: string[];
   onStartProgram: (program: TrainingProgram) => void;
+  onCancelProgram?: () => void;
   activeProgram?: { id: string; week: number } | null;
 }
 
-export function ProgramsView({ userAttrezzi, onStartProgram, activeProgram }: ProgramsViewProps) {
+export function ProgramsView({ userAttrezzi, onStartProgram, onCancelProgram, activeProgram }: ProgramsViewProps) {
   const [selectedProgram, setSelectedProgram] = useState<TrainingProgram | null>(null);
 
   if (selectedProgram) {
+    const isActive = activeProgram?.id === selectedProgram.id;
     return (
       <div className="space-y-5">
         <button onClick={() => setSelectedProgram(null)} className="text-primary font-bold text-sm">
@@ -25,7 +28,7 @@ export function ProgramsView({ userAttrezzi, onStartProgram, activeProgram }: Pr
           <p className="text-sm text-muted-foreground">{selectedProgram.descrizione}</p>
         </div>
 
-      <div className="grid grid-cols-3 gap-2 sm:gap-3">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
           <div className="bg-card rounded-xl border border-border p-3 text-center">
             <Clock size={16} className="text-primary mx-auto mb-1" />
             <p className="text-sm font-black text-foreground">{selectedProgram.durata}</p>
@@ -43,7 +46,6 @@ export function ProgramsView({ userAttrezzi, onStartProgram, activeProgram }: Pr
           </div>
         </div>
 
-        {/* Week breakdown */}
         <div className="space-y-2">
           <h3 className="text-sm font-bold uppercase text-muted-foreground">Piano Settimanale</h3>
           {selectedProgram.settimane.slice(0, 4).map((week) => (
@@ -67,12 +69,23 @@ export function ProgramsView({ userAttrezzi, onStartProgram, activeProgram }: Pr
           )}
         </div>
 
-        <button
-          onClick={() => onStartProgram(selectedProgram)}
-          className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg hover:opacity-90 transition"
-        >
-          {activeProgram?.id === selectedProgram.id ? "Programma in corso" : "Inizia Programma"}
-        </button>
+        {isActive ? (
+          <div className="space-y-2">
+            <div className="bg-primary/10 rounded-xl p-3 border border-primary/20 text-center">
+              <p className="text-sm font-bold text-primary">✅ Programma attivo — Settimana {activeProgram?.week}</p>
+            </div>
+            <Button variant="destructive" className="w-full" onClick={onCancelProgram}>
+              <XCircle className="w-4 h-4 mr-2" /> Annulla Programma
+            </Button>
+          </div>
+        ) : (
+          <button
+            onClick={() => onStartProgram(selectedProgram)}
+            className="w-full py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg hover:opacity-90 transition"
+          >
+            Inizia Programma
+          </button>
+        )}
       </div>
     );
   }
@@ -85,11 +98,16 @@ export function ProgramsView({ userAttrezzi, onStartProgram, activeProgram }: Pr
       </div>
 
       {activeProgram && (
-        <div className="bg-primary/10 rounded-2xl p-4 border border-primary/20">
-          <p className="text-xs font-bold text-primary uppercase">Programma Attivo</p>
-          <p className="text-sm font-bold text-foreground mt-1">
-            {TRAINING_PROGRAMS.find(p => p.id === activeProgram.id)?.nome} — Settimana {activeProgram.week}
-          </p>
+        <div className="bg-primary/10 rounded-2xl p-4 border border-primary/20 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-primary uppercase">Programma Attivo</p>
+            <p className="text-sm font-bold text-foreground mt-1">
+              {TRAINING_PROGRAMS.find(p => p.id === activeProgram.id)?.nome} — Settimana {activeProgram.week}
+            </p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={onCancelProgram} className="text-destructive hover:text-destructive">
+            <XCircle className="w-4 h-4" />
+          </Button>
         </div>
       )}
 

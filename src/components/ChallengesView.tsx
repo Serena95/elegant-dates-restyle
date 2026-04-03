@@ -6,7 +6,7 @@ import { FITNESS_CHALLENGES, FitnessChallenge } from "@/data/challenges";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Progress } from "@/components/ui/progress";
-import { Crown, Trophy, Play, CheckCircle, Lock } from "lucide-react";
+import { Crown, Trophy, Play, CheckCircle, Lock, XCircle } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "sonner";
 
@@ -20,9 +20,12 @@ interface ChallengeParticipation {
 
 interface ChallengesViewProps {
   onBack?: () => void;
+  activeChallenge?: { id: string; name: string } | null;
+  onStartChallenge?: (id: string, name: string) => void;
+  onCancelChallenge?: () => void;
 }
 
-export function ChallengesView({ onBack }: ChallengesViewProps) {
+export function ChallengesView({ onBack, activeChallenge, onStartChallenge, onCancelChallenge }: ChallengesViewProps) {
   const { user } = useAuth();
   const { isPremium } = usePremium();
   const [participations, setParticipations] = useState<ChallengeParticipation[]>([]);
@@ -62,8 +65,21 @@ export function ChallengesView({ onBack }: ChallengesViewProps) {
       toast.error("Errore nell'iscrizione alla challenge");
     } else {
       toast.success(`Iscritto a "${challenge.title}"!`);
+      onStartChallenge?.(challenge.id, challenge.title);
       loadParticipations();
     }
+  };
+
+  const cancelChallenge = async (challengeId: string) => {
+    if (!user) return;
+    await supabase
+      .from("challenge_participations")
+      .delete()
+      .eq("user_id", user.id)
+      .eq("challenge_id", challengeId);
+    onCancelChallenge?.();
+    loadParticipations();
+    toast.success("Challenge annullata");
   };
 
   const completeDay = async (challengeId: string) => {
@@ -94,6 +110,7 @@ export function ChallengesView({ onBack }: ChallengesViewProps) {
     if (!error) {
       if (isCompleted) {
         toast.success(`🎉 Hai completato "${challenge.title}"!`);
+        onCancelChallenge?.(); // remove active state when completed
       } else {
         toast.success(`Giorno ${newDays}/${challenge.durationDays} completato!`);
       }
@@ -112,11 +129,24 @@ export function ChallengesView({ onBack }: ChallengesViewProps) {
         )}
       </div>
 
+      {activeChallenge && (
+        <div className="bg-primary/10 rounded-2xl p-4 border border-primary/20 flex items-center justify-between">
+          <div>
+            <p className="text-xs font-bold text-primary uppercase">Challenge Attiva</p>
+            <p className="text-sm font-bold text-foreground mt-1">{activeChallenge.name}</p>
+          </div>
+          <Button variant="ghost" size="sm" onClick={() => cancelChallenge(activeChallenge.id)} className="text-destructive hover:text-destructive">
+            <XCircle className="w-4 h-4" />
+          </Button>
+        </div>
+      )}
+
       <div className="space-y-4">
         {FITNESS_CHALLENGES.map((challenge, i) => {
           const participation = getParticipation(challenge.id);
           const isJoined = !!participation;
           const isLocked = challenge.premium && !isPremium;
+          const isActive = activeChallenge?.id === challenge.id;
           const progress = participation
             ? (participation.completed_days / challenge.durationDays) * 100
             : 0;
@@ -128,7 +158,7 @@ export function ChallengesView({ onBack }: ChallengesViewProps) {
               animate={{ opacity: 1, y: 0 }}
               transition={{ delay: i * 0.1 }}
             >
-              <Card className={`relative overflow-hidden ${participation?.completed ? "border-green-500/30" : isLocked ? "opacity-70" : ""}`}>
+              <Card className={`relative overflow-hidden ${participation?.completed ? "border-green-500/30" : isActive ? "border-primary/40" : isLocked ? "opacity-70" : ""}`}>
                 {isLocked && (
                   <div className="absolute top-2 right-2 z-10">
                     <div className="flex items-center gap-1 bg-amber-500/20 text-amber-600 dark:text-amber-400 px-2 py-0.5 rounded-full text-xs font-medium">
@@ -141,7 +171,12 @@ export function ChallengesView({ onBack }: ChallengesViewProps) {
                   <div className="flex items-start gap-3">
                     <span className="text-3xl">{challenge.icon}</span>
                     <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-sm">{challenge.title}</h3>
+                      <div className="flex items-center gap-2">
+                        <h3 className="font-bold text-sm">{challenge.title}</h3>
+                        {isActive && (
+                          <span className="text-[10px] bg-primary text-primary-foreground px-2 py-0.5 rounded-full font-bold">ATTIVA</span>
+                        )}
+                      </div>
                       <p className="text-xs text-muted-foreground">{challenge.description}</p>
                       <p className="text-xs text-muted-foreground mt-1">
                         {challenge.durationDays} giorni · Focus: {challenge.focus}
@@ -181,14 +216,23 @@ export function ChallengesView({ onBack }: ChallengesViewProps) {
                       </Button>
                     )}
                     {isJoined && !participation!.completed && (
-                      <Button
-                        size="sm"
-                        className="w-full"
-                        onClick={() => completeDay(challenge.id)}
-                      >
-                        <CheckCircle className="w-3 h-3 mr-1" />
-                        Completa Giorno {participation!.completed_days + 1}
-                      </Button>
+                      <div className="flex gap-2 w-full">
+                        <Button
+                          size="sm"
+                          className="flex-1"
+                          onClick={() => completeDay(challenge.id)}
+                        >
+                          <CheckCircle className="w-3 h-3 mr-1" />
+                          Giorno {participation!.completed_days + 1}
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => cancelChallenge(challenge.id)}
+                        >
+                          <XCircle className="w-3 h-3" />
+                        </Button>
+                      </div>
                     )}
                     {isJoined && participation!.completed && (
                       <Button size="sm" variant="outline" className="w-full" disabled>
