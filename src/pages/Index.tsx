@@ -455,6 +455,12 @@ const Index = () => {
             cyclePhase={cloud.pregnancySettings.modalita_gravidanza ? undefined : getCyclePhase(cloud.cycleEntries, cloud.pregnancySettings)}
             pregnancyMode={cloud.pregnancySettings.modalita_gravidanza}
             pregnancyWeek={cloud.pregnancySettings.settimana_gestazionale}
+            activeProgram={activeProgState.active}
+            onCancelProgram={activeProgState.cancel}
+            onActivateInDashboard={() => {
+              if (activeProgState.active?.type === "program") navigate("programs" as any);
+              else navigate("challenges" as any);
+            }}
           />
         );
       case "progress":
