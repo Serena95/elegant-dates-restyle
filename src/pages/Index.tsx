@@ -576,7 +576,14 @@ const Index = () => {
       case "premium" as any:
         return <PremiumView onNavigate={(v) => navigate(v as AppView)} />;
       case "challenges" as any:
-        return <ChallengesView onBack={() => navigate("more")} />;
+        return (
+          <ChallengesView
+            onBack={() => navigate("more")}
+            activeChallenge={activeProgState.active?.type === "challenge" ? { id: activeProgState.active.id, name: activeProgState.active.name } : null}
+            onStartChallenge={(id, name) => activeProgState.startChallenge(id, name)}
+            onCancelChallenge={activeProgState.cancel}
+          />
+        );
       case "install-app" as any:
         return <InstallAppView />;
       case "community" as any:
