@@ -38,6 +38,7 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
   userName, weeklyStats, onNavigate, focusMap,
   storicoCal = {}, giorniAllenamento = [1, 3, 5], attrezzi = [],
   cyclePhase, pregnancyMode, pregnancyWeek,
+  activeProgram, onCancelProgram, onActivateInDashboard,
 }, ref) {
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "MEDIO" ? "bg-primary" : "bg-pilates-red";
   
