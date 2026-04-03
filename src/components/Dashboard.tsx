@@ -1,5 +1,6 @@
 import React, { useMemo, useState, useEffect } from "react";
 import { DayCard } from "./DayCard";
+import { ActiveProgramState } from "@/hooks/useActiveProgram";
 import { AICoachCard } from "./AICoachCard";
 import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
 import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap } from "lucide-react";
