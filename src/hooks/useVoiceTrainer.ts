@@ -1,4 +1,4 @@
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useRef, useState, useEffect } from "react";
 
 interface VoiceTrainerOptions {
   enabled: boolean;
@@ -19,27 +19,65 @@ const VOICE_CUES = {
 };
 
 export function useVoiceTrainer({ enabled, lang = "it-IT" }: VoiceTrainerOptions) {
-  const synthRef = useRef<SpeechSynthesis | null>(null);
-  const timerCallbacksRef = useRef<Map<number, boolean>>(new Map());
   const [isSpeaking, setIsSpeaking] = useState(false);
+  const keepAliveRef = useRef<ReturnType<typeof setInterval> | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+  const queueRef = useRef<string[]>([]);
+  const processingRef = useRef(false);
+
+  // Get or create a shared AudioContext (for beep sounds)
+  const getAudioCtx = useCallback(() => {
+    if (!audioCtxRef.current || audioCtxRef.current.state === "closed") {
+      audioCtxRef.current = new AudioContext();
+    }
+    if (audioCtxRef.current.state === "suspended") {
+      audioCtxRef.current.resume().catch(() => {});
+    }
+    return audioCtxRef.current;
+  }, []);
+
+  // Chrome/WebKit bug: speechSynthesis pauses after ~15s. Keep-alive pings it.
+  useEffect(() => {
+    if (!enabled || !window.speechSynthesis) return;
+
+    keepAliveRef.current = setInterval(() => {
+      if (window.speechSynthesis.speaking) {
+        window.speechSynthesis.pause();
+        window.speechSynthesis.resume();
+      }
+    }, 10000);
+
+    return () => {
+      if (keepAliveRef.current) clearInterval(keepAliveRef.current);
+    };
+  }, [enabled]);
+
+  // Pre-load voices on mount
+  useEffect(() => {
+    if (!window.speechSynthesis) return;
+    window.speechSynthesis.getVoices();
+    const handleVoicesChanged = () => window.speechSynthesis.getVoices();
+    window.speechSynthesis.addEventListener("voiceschanged", handleVoicesChanged);
+    return () => window.speechSynthesis.removeEventListener("voiceschanged", handleVoicesChanged);
+  }, []);
 
   const getVoice = useCallback((): SpeechSynthesisVoice | null => {
     if (!window.speechSynthesis) return null;
     const voices = window.speechSynthesis.getVoices();
-    // Prefer Italian voice
     return voices.find(v => v.lang.startsWith("it")) || voices.find(v => v.lang.startsWith("en")) || voices[0] || null;
   }, []);
 
-  const speak = useCallback((text: string, priority = false) => {
-    if (!enabled || !window.speechSynthesis) return;
+  // Process speech queue sequentially to avoid overlapping
+  const processQueue = useCallback(() => {
+    if (processingRef.current || queueRef.current.length === 0) return;
+    if (!window.speechSynthesis) return;
 
-    if (priority) {
-      window.speechSynthesis.cancel();
-    }
+    processingRef.current = true;
+    const text = queueRef.current.shift()!;
 
     const utterance = new SpeechSynthesisUtterance(text);
     utterance.lang = lang;
-    utterance.rate = 1.0;
+    utterance.rate = 1.05;
     utterance.pitch = 1.0;
     utterance.volume = 1.0;
 
@@ -47,11 +85,53 @@ export function useVoiceTrainer({ enabled, lang = "it-IT" }: VoiceTrainerOptions
     if (voice) utterance.voice = voice;
 
     utterance.onstart = () => setIsSpeaking(true);
-    utterance.onend = () => setIsSpeaking(false);
-    utterance.onerror = () => setIsSpeaking(false);
+    utterance.onend = () => {
+      setIsSpeaking(false);
+      processingRef.current = false;
+      // Process next in queue
+      processQueue();
+    };
+    utterance.onerror = () => {
+      setIsSpeaking(false);
+      processingRef.current = false;
+      processQueue();
+    };
 
     window.speechSynthesis.speak(utterance);
-  }, [enabled, lang, getVoice]);
+  }, [lang, getVoice]);
+
+  const speak = useCallback((text: string, priority = false) => {
+    if (!enabled || !window.speechSynthesis) return;
+
+    if (priority) {
+      // Clear queue and cancel current speech for priority messages
+      window.speechSynthesis.cancel();
+      queueRef.current = [];
+      processingRef.current = false;
+    }
+
+    queueRef.current.push(text);
+    processQueue();
+  }, [enabled, processQueue]);
+
+  // Play a short beep for countdown ticks (more reliable than speech for single numbers)
+  const playCountdownBeep = useCallback((n: number) => {
+    if (!enabled) return;
+    try {
+      const ctx = getAudioCtx();
+      const osc = ctx.createOscillator();
+      const gain = ctx.createGain();
+      osc.type = "sine";
+      // Higher pitch for final second
+      osc.frequency.value = n === 1 ? 1000 : 700;
+      gain.gain.value = 0.25;
+      gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.15);
+      osc.connect(gain);
+      gain.connect(ctx.destination);
+      osc.start();
+      osc.stop(ctx.currentTime + 0.15);
+    } catch {}
+  }, [enabled, getAudioCtx]);
 
   const announceExercise = useCallback((name: string) => {
     speak(VOICE_CUES.startExercise(name), true);
@@ -66,12 +146,17 @@ export function useVoiceTrainer({ enabled, lang = "it-IT" }: VoiceTrainerOptions
   }, [speak]);
 
   const announceEndExercise = useCallback(() => {
-    speak(VOICE_CUES.endExercise);
+    speak(VOICE_CUES.endExercise, true);
   }, [speak]);
 
   const announceCountdown = useCallback((n: number) => {
-    speak(VOICE_CUES.countdown(n), true);
-  }, [speak]);
+    // Use beep for 3,2,1 and speech for 5,4
+    if (n <= 3) {
+      playCountdownBeep(n);
+    } else {
+      speak(VOICE_CUES.countdown(n), true);
+    }
+  }, [speak, playCountdownBeep]);
 
   const announceRoundComplete = useCallback((round: number, max: number) => {
     speak(VOICE_CUES.roundComplete(round, max), true);
@@ -93,23 +178,17 @@ export function useVoiceTrainer({ enabled, lang = "it-IT" }: VoiceTrainerOptions
     speak(VOICE_CUES.warmup, true);
   }, [speak]);
 
-  /**
-   * Get timer cue callbacks for a given exercise duration.
-   * Returns a function to call on each tick with remaining seconds.
-   */
   const getTimerCueHandler = useCallback((exerciseName: string, totalSeconds: number) => {
     const midPoint = Math.floor(totalSeconds / 2);
-    const firedRef = { mid: false, almost: false, countdown: new Set<number>() };
+    const firedRef = { mid: false, almost: false, countdown: new Set<number>(), started: false, ended: false };
 
     return (remainingSeconds: number) => {
       if (!enabled) return;
 
       // Start announcement
-      if (remainingSeconds === totalSeconds) {
+      if (remainingSeconds === totalSeconds && !firedRef.started) {
+        firedRef.started = true;
         announceExercise(exerciseName);
-        firedRef.mid = false;
-        firedRef.almost = false;
-        firedRef.countdown.clear();
       }
 
       // Mid exercise
@@ -131,7 +210,8 @@ export function useVoiceTrainer({ enabled, lang = "it-IT" }: VoiceTrainerOptions
       }
 
       // End
-      if (remainingSeconds === 0) {
+      if (remainingSeconds === 0 && !firedRef.ended) {
+        firedRef.ended = true;
         announceEndExercise();
       }
     };
@@ -141,6 +221,8 @@ export function useVoiceTrainer({ enabled, lang = "it-IT" }: VoiceTrainerOptions
     if (window.speechSynthesis) {
       window.speechSynthesis.cancel();
     }
+    queueRef.current = [];
+    processingRef.current = false;
     setIsSpeaking(false);
   }, []);
 
