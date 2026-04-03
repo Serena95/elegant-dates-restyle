@@ -141,7 +141,41 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
         onStartSuggested={todayWorkout ? () => onAvviaAllenamento(todayWorkout.key) : undefined}
       />
 
-      {/* Today's workout card */}
+      {/* Active Program/Challenge Banner */}
+      {activeProgram && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-accent/20 to-primary/10 rounded-2xl p-4 border border-primary/20 space-y-3"
+        >
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-[10px] font-bold uppercase text-primary tracking-wide">
+                {activeProgram.type === "program" ? "📋 Programma Attivo" : "🏆 Challenge Attiva"}
+              </p>
+              <p className="text-sm font-black text-foreground mt-1">
+                {activeProgram.name}
+                {activeProgram.type === "program" && activeProgram.week && ` — Sett. ${activeProgram.week}`}
+              </p>
+            </div>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={onActivateInDashboard}
+              className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs hover:opacity-90 transition"
+            >
+              Vai al {activeProgram.type === "program" ? "Programma" : "Challenge"}
+            </button>
+            <button
+              onClick={onCancelProgram}
+              className="py-2 px-3 rounded-xl bg-destructive/10 text-destructive font-bold text-xs hover:bg-destructive/20 transition"
+            >
+              Annulla
+            </button>
+          </div>
+        </motion.div>
+      )}
+
       {todayWorkout && todayWorkout.round < (CONFIG_LIVELLI[livello]?.round || 3) && (
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
