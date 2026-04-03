@@ -42,6 +42,7 @@ import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkoutAutosave, loadWorkoutSession, clearWorkoutSession } from "@/hooks/useWorkoutPersistence";
+import { useActiveProgram } from "@/hooks/useActiveProgram";
 
 function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): string | undefined {
   if (!entries || entries.length === 0) return undefined;
