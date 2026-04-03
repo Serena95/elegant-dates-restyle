@@ -96,6 +96,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const [stretchingComplete, setStretchingComplete] = useState(false);
   const [completedStretches, setCompletedStretches] = useState<Set<number>>(new Set());
   const lastTimerRef = useRef<string | null>(null);
+  const firedCuesRef = useRef<Set<string>>(new Set());
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isCompleted = roundCorrenti >= maxRound;
 
@@ -104,26 +105,34 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     onStateChange?.({ currentExerciseIdx, completati: Array.from(completati), showStretching });
   }, [currentExerciseIdx, completati, onStateChange, showStretching]);
 
-  // Voice cues synced with timer
+  // Voice cues synced with timer - with deduplication
   useEffect(() => {
     if (!voiceActive || !timer.isActive) return;
     const remaining = timer.timeLeft;
     const label = timer.label;
-    
+
+    // Reset fired cues when a new timer starts
     if (label !== lastTimerRef.current) {
       lastTimerRef.current = label;
+      firedCuesRef.current.clear();
     }
 
-    if (remaining === Math.floor(config.tempoEsercizio / 2) && config.tempoEsercizio >= 20) {
+    const cueKey = `${label}-${remaining}`;
+    if (firedCuesRef.current.has(cueKey)) return;
+    firedCuesRef.current.add(cueKey);
+
+    const totalTime = config.tempoEsercizio;
+
+    if (remaining === Math.floor(totalTime / 2) && totalTime >= 20) {
       voice.announceMidExercise();
     }
-    if (remaining === 10 && config.tempoEsercizio >= 20) {
+    if (remaining === 10 && totalTime >= 20) {
       voice.announceAlmostDone();
     }
     if (remaining <= 5 && remaining > 0) {
       voice.announceCountdown(remaining);
     }
-    if (remaining === 0 && lastTimerRef.current) {
+    if (remaining === 0) {
       voice.announceEndExercise();
       lastTimerRef.current = null;
     }
