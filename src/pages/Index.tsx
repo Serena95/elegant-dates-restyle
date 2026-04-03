@@ -91,6 +91,7 @@ const Index = () => {
 
   const { unlockedBadges, checkNewBadges } = useBadges(cloud.storicoCal);
   const notifications = useNotifications(cloud.giorniAllenamento, cloud.storicoCal);
+  const activeProgState = useActiveProgram();
   prevBadgeCountRef.current = unlockedBadges.length;
 
   const userName = cloud.profile.display_name || user?.user_metadata?.full_name || user?.email?.split("@")[0] || "Utente";
