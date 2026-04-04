@@ -578,7 +578,7 @@ const Index = () => {
         );
       case "pregnancy" as any:
         return (
-          <PregnancyMode
+          <PregnancyMonitoring
             isActive={cloud.pregnancySettings.modalita_gravidanza}
             settimanaGestazionale={cloud.pregnancySettings.settimana_gestazionale}
             onToggle={(active) => cloud.updatePregnancySettings({ modalita_gravidanza: active, settimana_gestazionale: active ? Math.max(1, cloud.pregnancySettings.settimana_gestazionale) : 0 })}
@@ -586,6 +586,8 @@ const Index = () => {
             onBack={() => navigate("more")}
           />
         );
+      case "nutrition" as any:
+        return <NutritionPlanView onBack={() => navigate("more")} />;
       case "privacy" as any:
         return <LegalPage type="privacy" onBack={() => setView("settings" as any)} />;
       case "terms" as any:
