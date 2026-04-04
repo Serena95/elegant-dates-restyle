@@ -95,8 +95,8 @@ export function FoodDiary({ piano, pasti, onAddPasto, onDeletePasto, acqua, onSe
           <div className="space-y-3">
             <h4 className="font-bold text-amber-800 dark:text-amber-200">🎯 Nuova Sfida 30gg</h4>
             <input value={sfidaNome} onChange={e => setSfidaNome(e.target.value)} placeholder="Esempio: No Dolci" className="w-full p-3 rounded-xl border border-amber-300 dark:border-amber-700 bg-card text-foreground text-center" />
-            <div className="flex justify-center gap-2">
-              {["🚫 No Dolci", "☕ No Zucchero"].map(s => (
+            <div className="flex justify-center gap-2 flex-wrap">
+              {["🚫 No Dolci", "☕ No Zucchero", "🍔 No Junk Food", "🥤 No Bibite", "🥗 5 Verdure/Giorno", "💧 2L Acqua", "🍎 Frutta Ogni Pasto", "🍕 No Raffinati"].map(s => (
                 <button key={s} onClick={() => setSfidaNome(s)} className="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 px-3 py-1 rounded-full text-xs font-bold">{s}</button>
               ))}
             </div>
