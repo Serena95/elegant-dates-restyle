@@ -57,6 +57,16 @@ const FEATURES = [
     iconColor: "text-orange-500",
     borderColor: "border-orange-500/20",
   },
+  {
+    icon: Utensils,
+    label: "Piani Nutrizionali",
+    desc: "Piani alimentari con lista della spesa automatica",
+    view: "nutrition",
+    gradient: "from-green-500/20 to-emerald-400/10",
+    iconBg: "bg-green-500/15",
+    iconColor: "text-green-500",
+    borderColor: "border-green-500/20",
+  },
 ];
 
 export function MoreView({ onNavigate }: MoreViewProps) {
