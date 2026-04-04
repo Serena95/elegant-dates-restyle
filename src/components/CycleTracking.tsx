@@ -209,6 +209,28 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
         </div>
       </motion.div>
 
+      {/* Lunar Phase */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-blue-500/10 rounded-2xl border border-indigo-500/15 p-4"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{lunarPhase.icon}</span>
+            <div>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1"><Moon size={10} /> Fase Lunare</p>
+              <p className="text-sm font-bold text-foreground">{lunarPhase.name}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-black text-indigo-500">{lunarPhase.illumination}%</p>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Illuminazione</p>
+          </div>
+        </div>
+      </motion.div>
+
       {/* Settings */}
       <AnimatePresence>
         {showSettings && (
