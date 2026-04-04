@@ -492,12 +492,27 @@ const Index = () => {
             activeProgram={activeProgState.active?.type === "program" ? { id: activeProgState.active.id, week: activeProgState.active.week || 1 } : null}
             onStartProgram={(program) => {
               activeProgState.startProgram(program.id, program.nome);
-              const week = program.settimane[0];
+              const weekIdx = 0;
+              const week = program.settimane[weekIdx];
+              // Map program days to real date keys
+              const dateKeys = getWeekDates(cloud.giorniAllenamento);
               const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
-              week.giorni.forEach(g => {
-                nuovoPiano[g.giorno] = { attrezzo: g.attrezzo, round: 0 };
+              const nuoviEsercizi: Record<string, Exercise[]> = {};
+              const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
+              let runningStorico = Object.values(cloud.allenamentiData.storico || {}).flat();
+              
+              dateKeys.forEach((dateKey, i) => {
+                const giorno = week.giorni[i % week.giorni.length];
+                const attrezzo = giorno.attrezzo;
+                const dayFocus = DAY_FOCUS_PATTERN[i % DAY_FOCUS_PATTERN.length] as DayFocus;
+                ctx.recentExerciseIds = runningStorico;
+                const exercises = generaEserciziGiorno(attrezzo, cloud.livello, [], dayFocus, ctx);
+                nuovoPiano[dateKey] = { attrezzo, round: 0 };
+                nuoviEsercizi[dateKey] = exercises;
+                runningStorico = [...runningStorico, ...exercises.map(e => e.id)];
               });
-              cloud.savePiano(nuovoPiano, { esercizi: {}, storico: cloud.allenamentiData.storico || {} });
+              
+              cloud.savePiano(nuovoPiano, { esercizi: nuoviEsercizi, storico: cloud.allenamentiData.storico || {} });
               navigate("dashboard");
             }}
             onCancelProgram={() => {
