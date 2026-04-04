@@ -1,7 +1,26 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, X, Droplets, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Droplets, TrendingUp, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Lunar phase calculation (based on synodic month ~29.53 days)
+function getLunarPhase(date: Date): { name: string; icon: string; illumination: number } {
+  const knownNewMoon = new Date(2000, 0, 6, 18, 14); // Known new moon
+  const synodicMonth = 29.53058770576;
+  const daysSince = (date.getTime() - knownNewMoon.getTime()) / (1000 * 60 * 60 * 24);
+  const phase = ((daysSince % synodicMonth) + synodicMonth) % synodicMonth;
+  const illumination = Math.round((1 - Math.cos(2 * Math.PI * phase / synodicMonth)) / 2 * 100);
+
+  if (phase < 1.85) return { name: "Luna Nuova", icon: "🌑", illumination };
+  if (phase < 7.38) return { name: "Crescente", icon: "🌒", illumination };
+  if (phase < 9.23) return { name: "Primo Quarto", icon: "🌓", illumination };
+  if (phase < 14.77) return { name: "Gibbosa Crescente", icon: "🌔", illumination };
+  if (phase < 16.61) return { name: "Luna Piena", icon: "🌕", illumination };
+  if (phase < 22.15) return { name: "Gibbosa Calante", icon: "🌖", illumination };
+  if (phase < 24.0) return { name: "Ultimo Quarto", icon: "🌗", illumination };
+  if (phase < 27.69) return { name: "Calante", icon: "🌘", illumination };
+  return { name: "Luna Nuova", icon: "🌑", illumination };
+}
 
 interface CycleEntry {
   id?: string;
@@ -122,6 +141,8 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
     return diff;
   }, [periodPredictions, todayKey]);
 
+  // Lunar phase for today
+  const lunarPhase = useMemo(() => getLunarPhase(new Date()), []);
 
   const cambiaMese = (d: number) => {
     let m = meseCorrente + d;
@@ -185,6 +206,28 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
               <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">giorni al ciclo</p>
             </div>
           )}
+        </div>
+      </motion.div>
+
+      {/* Lunar Phase */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ delay: 0.1 }}
+        className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-blue-500/10 rounded-2xl border border-indigo-500/15 p-4"
+      >
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <span className="text-3xl">{lunarPhase.icon}</span>
+            <div>
+              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1"><Moon size={10} /> Fase Lunare</p>
+              <p className="text-sm font-bold text-foreground">{lunarPhase.name}</p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-lg font-black text-indigo-500">{lunarPhase.illumination}%</p>
+            <p className="text-[10px] uppercase font-bold text-muted-foreground">Illuminazione</p>
+          </div>
         </div>
       </motion.div>
 

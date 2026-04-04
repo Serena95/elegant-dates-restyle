@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles, Crown, Trophy, Users } from "lucide-react";
+import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles, Crown, Trophy, Users, Utensils } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface MoreViewProps {
@@ -56,6 +56,16 @@ const FEATURES = [
     iconBg: "bg-orange-500/15",
     iconColor: "text-orange-500",
     borderColor: "border-orange-500/20",
+  },
+  {
+    icon: Utensils,
+    label: "Piani Nutrizionali",
+    desc: "Piani alimentari con lista della spesa automatica",
+    view: "nutrition",
+    gradient: "from-green-500/20 to-emerald-400/10",
+    iconBg: "bg-green-500/15",
+    iconColor: "text-green-500",
+    borderColor: "border-green-500/20",
   },
 ];
 

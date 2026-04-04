@@ -16,7 +16,8 @@ import { InstallBanner } from "@/components/InstallBanner";
 import { InstallAppView } from "@/components/InstallAppView";
 import { ProgramsView } from "@/components/ProgramsView";
 import { CycleTracking } from "@/components/CycleTracking";
-import { PregnancyMode } from "@/components/PregnancyMode";
+import { PregnancyMonitoring } from "@/components/PregnancyMonitoring";
+import { NutritionPlanView } from "@/components/NutritionPlanView";
 import { MoreView } from "@/components/MoreView";
 import { WorkoutReminder } from "@/components/WorkoutReminder";
 import { useNotifications } from "@/hooks/useNotifications";
@@ -245,9 +246,22 @@ const Index = () => {
       const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
       ctx.recentExerciseIds = storici;
 
+      // Cycle-based workout adaptation: adjust level based on cycle phase
+      let effectiveLivello = cloud.livello;
+      if (!cloud.pregnancySettings.modalita_gravidanza) {
+        const phase = getCyclePhase(cloud.cycleEntries, cloud.pregnancySettings);
+        if (phase === "mestruale") {
+          // During menstruation: reduce intensity
+          if (effectiveLivello === "AVANZATO") effectiveLivello = "MEDIO";
+          else if (effectiveLivello === "MEDIO") effectiveLivello = "BASSO";
+        }
+        // Follicolare and ovulazione: keep or boost intensity (normal/high energy)
+        // Luteale: keep normal intensity
+      }
+
       const result = await generateAIWorkout({
         attrezzo,
-        livello: cloud.livello,
+        livello: effectiveLivello,
         storici,
         targetCount: 7,
         progressionCtx: ctx,
@@ -267,7 +281,7 @@ const Index = () => {
     setEserciziCorrenti(esercizi);
     setRoundCorrenti(dati.round || 0);
     setView("workout");
-  }, [cloud.piano, cloud.allenamentiData, cloud.savePiano, cloud.attrezzi, cloud.livello, cloud.storicoCal, cloud.ultimiAttrezzi]);
+  }, [cloud.piano, cloud.allenamentiData, cloud.savePiano, cloud.attrezzi, cloud.livello, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.cycleEntries, cloud.pregnancySettings]);
 
   const segnaRound = useCallback(() => {
     if (!giornoSelezionato) return;
@@ -577,7 +591,7 @@ const Index = () => {
         );
       case "pregnancy" as any:
         return (
-          <PregnancyMode
+          <PregnancyMonitoring
             isActive={cloud.pregnancySettings.modalita_gravidanza}
             settimanaGestazionale={cloud.pregnancySettings.settimana_gestazionale}
             onToggle={(active) => cloud.updatePregnancySettings({ modalita_gravidanza: active, settimana_gestazionale: active ? Math.max(1, cloud.pregnancySettings.settimana_gestazionale) : 0 })}
@@ -585,6 +599,8 @@ const Index = () => {
             onBack={() => navigate("more")}
           />
         );
+      case "nutrition" as any:
+        return <NutritionPlanView onBack={() => navigate("more")} />;
       case "privacy" as any:
         return <LegalPage type="privacy" onBack={() => setView("settings" as any)} />;
       case "terms" as any:
