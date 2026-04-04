@@ -141,6 +141,8 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
     return diff;
   }, [periodPredictions, todayKey]);
 
+  // Lunar phase for today
+  const lunarPhase = useMemo(() => getLunarPhase(new Date()), []);
 
   const cambiaMese = (d: number) => {
     let m = meseCorrente + d;
