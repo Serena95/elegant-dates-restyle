@@ -598,7 +598,7 @@ const Index = () => {
             onStartChallenge={(id, name) => {
               activeProgState.startChallenge(id, name);
               // Generate workout for the challenge based on its focus
-              const challenge = (await import("@/data/challenges")).FITNESS_CHALLENGES.find(c => c.id === id);
+              const challenge = FITNESS_CHALLENGES.find(c => c.id === id);
               const dateKeys = getWeekDates(cloud.giorniAllenamento);
               const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
               const nuoviEsercizi: Record<string, Exercise[]> = {};
