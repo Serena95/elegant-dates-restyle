@@ -246,9 +246,22 @@ const Index = () => {
       const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
       ctx.recentExerciseIds = storici;
 
+      // Cycle-based workout adaptation: adjust level based on cycle phase
+      let effectiveLivello = cloud.livello;
+      if (!cloud.pregnancySettings.modalita_gravidanza) {
+        const phase = getCyclePhase(cloud.cycleEntries, cloud.pregnancySettings);
+        if (phase === "mestruale") {
+          // During menstruation: reduce intensity
+          if (effectiveLivello === "AVANZATO") effectiveLivello = "MEDIO";
+          else if (effectiveLivello === "MEDIO") effectiveLivello = "BASSO";
+        }
+        // Follicolare and ovulazione: keep or boost intensity (normal/high energy)
+        // Luteale: keep normal intensity
+      }
+
       const result = await generateAIWorkout({
         attrezzo,
-        livello: cloud.livello,
+        livello: effectiveLivello,
         storici,
         targetCount: 7,
         progressionCtx: ctx,
@@ -268,7 +281,7 @@ const Index = () => {
     setEserciziCorrenti(esercizi);
     setRoundCorrenti(dati.round || 0);
     setView("workout");
-  }, [cloud.piano, cloud.allenamentiData, cloud.savePiano, cloud.attrezzi, cloud.livello, cloud.storicoCal, cloud.ultimiAttrezzi]);
+  }, [cloud.piano, cloud.allenamentiData, cloud.savePiano, cloud.attrezzi, cloud.livello, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.cycleEntries, cloud.pregnancySettings]);
 
   const segnaRound = useCallback(() => {
     if (!giornoSelezionato) return;
