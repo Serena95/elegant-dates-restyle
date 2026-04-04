@@ -595,8 +595,47 @@ const Index = () => {
           <ChallengesView
             onBack={() => navigate("more")}
             activeChallenge={activeProgState.active?.type === "challenge" ? { id: activeProgState.active.id, name: activeProgState.active.name } : null}
-            onStartChallenge={(id, name) => activeProgState.startChallenge(id, name)}
-            onCancelChallenge={activeProgState.cancel}
+            onStartChallenge={(id, name) => {
+              activeProgState.startChallenge(id, name);
+              // Generate workout for the challenge based on its focus
+              const challenge = (await import("@/data/challenges")).FITNESS_CHALLENGES.find(c => c.id === id);
+              const dateKeys = getWeekDates(cloud.giorniAllenamento);
+              const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
+              const nuoviEsercizi: Record<string, Exercise[]> = {};
+              const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
+              let runningStorico = Object.values(cloud.allenamentiData.storico || {}).flat();
+              const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : ["Corpo Libero"];
+
+              dateKeys.forEach((dateKey, i) => {
+                const attrezzo = equipmentPool[i % equipmentPool.length];
+                const challengeFocus = challenge?.focus || "full_body";
+                // Map challenge focus to DayFocus
+                let dayFocus: DayFocus = "total_body";
+                if (challengeFocus === "core") dayFocus = "upper_body";
+                else if (challengeFocus === "glutei" || challengeFocus === "lower_body") dayFocus = "lower_body";
+                else if (challengeFocus === "upper_body") dayFocus = "upper_body";
+                
+                ctx.recentExerciseIds = runningStorico;
+                const exercises = generaEserciziGiorno(attrezzo, cloud.livello, [], dayFocus, ctx);
+                nuovoPiano[dateKey] = { attrezzo, round: 0 };
+                nuoviEsercizi[dateKey] = exercises;
+                runningStorico = [...runningStorico, ...exercises.map(e => e.id)];
+              });
+
+              cloud.savePiano(nuovoPiano, { esercizi: nuoviEsercizi, storico: cloud.allenamentiData.storico || {} });
+              navigate("dashboard");
+            }}
+            onCancelChallenge={() => {
+              activeProgState.cancel();
+              lastGeneratedKey.current = "";
+              const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
+              if (equipmentPool.length > 0) {
+                const result = generaSettimanaIntelligente(
+                  equipmentPool, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
+                );
+                cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
+              }
+            }}
           />
         );
       case "install-app" as any:
