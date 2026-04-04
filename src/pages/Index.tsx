@@ -23,6 +23,7 @@ import { useNotifications } from "@/hooks/useNotifications";
 import { LegalPage } from "@/components/LegalPage";
 import { PremiumView } from "@/components/PremiumView";
 import { ChallengesView } from "@/components/ChallengesView";
+import { FITNESS_CHALLENGES } from "@/data/challenges";
 import { CommunityView } from "@/components/CommunityView";
 import { LeaderboardView } from "@/components/LeaderboardView";
 import { PublicProfileView } from "@/components/PublicProfileView";
