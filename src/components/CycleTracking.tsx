@@ -1,7 +1,26 @@
 import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, X, Droplets, TrendingUp } from "lucide-react";
+import { ChevronLeft, ChevronRight, X, Droplets, TrendingUp, Moon } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+
+// Lunar phase calculation (based on synodic month ~29.53 days)
+function getLunarPhase(date: Date): { name: string; icon: string; illumination: number } {
+  const knownNewMoon = new Date(2000, 0, 6, 18, 14); // Known new moon
+  const synodicMonth = 29.53058770576;
+  const daysSince = (date.getTime() - knownNewMoon.getTime()) / (1000 * 60 * 60 * 24);
+  const phase = ((daysSince % synodicMonth) + synodicMonth) % synodicMonth;
+  const illumination = Math.round((1 - Math.cos(2 * Math.PI * phase / synodicMonth)) / 2 * 100);
+
+  if (phase < 1.85) return { name: "Luna Nuova", icon: "🌑", illumination };
+  if (phase < 7.38) return { name: "Crescente", icon: "🌒", illumination };
+  if (phase < 9.23) return { name: "Primo Quarto", icon: "🌓", illumination };
+  if (phase < 14.77) return { name: "Gibbosa Crescente", icon: "🌔", illumination };
+  if (phase < 16.61) return { name: "Luna Piena", icon: "🌕", illumination };
+  if (phase < 22.15) return { name: "Gibbosa Calante", icon: "🌖", illumination };
+  if (phase < 24.0) return { name: "Ultimo Quarto", icon: "🌗", illumination };
+  if (phase < 27.69) return { name: "Calante", icon: "🌘", illumination };
+  return { name: "Luna Nuova", icon: "🌑", illumination };
+}
 
 interface CycleEntry {
   id?: string;
