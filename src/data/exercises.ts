@@ -59,7 +59,7 @@ function livelloAccessibile(eserLivello: string, userLivello: string): boolean {
 
 export type DayFocus = "upper_body" | "lower_body" | "total_body";
 
-const DAY_FOCUS_PATTERN: DayFocus[] = ["upper_body", "lower_body", "total_body"];
+export const DAY_FOCUS_PATTERN: DayFocus[] = ["upper_body", "lower_body", "total_body"];
 
 /**
  * Muscle-group slots for each focus type.
