@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles, Crown, Trophy, Users, Utensils } from "lucide-react";
+import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles, Crown, Trophy, Users, Utensils, Apple } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface MoreViewProps {
@@ -66,6 +66,16 @@ const FEATURES = [
     iconBg: "bg-green-500/15",
     iconColor: "text-green-500",
     borderColor: "border-green-500/20",
+  },
+  {
+    icon: Apple,
+    label: "Diario & Sfide Alimentari",
+    desc: "Diario pasti, acqua e sfide come No Zucchero, No Junk Food",
+    view: "food",
+    gradient: "from-amber-500/20 to-orange-400/10",
+    iconBg: "bg-amber-500/15",
+    iconColor: "text-amber-500",
+    borderColor: "border-amber-500/20",
   },
 ];
 

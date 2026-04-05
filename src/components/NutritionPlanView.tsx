@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface NutritionPlanViewProps {
   onBack: () => void;
+  onNavigateFood?: () => void;
 }
 
 interface MealPlan {
@@ -116,7 +117,7 @@ const FOOD_CHALLENGE_PRESETS = [
   "🍎 Frutta a Ogni Pasto",
 ];
 
-export function NutritionPlanView({ onBack }: NutritionPlanViewProps) {
+export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewProps) {
   const [selectedPlan, setSelectedPlan] = useState<NutritionPlan | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showShoppingList, setShowShoppingList] = useState(false);
@@ -270,6 +271,25 @@ export function NutritionPlanView({ onBack }: NutritionPlanViewProps) {
           </motion.button>
         ))}
       </div>
+
+      {/* Link to food challenges */}
+      {onNavigateFood && (
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.3 }}
+          onClick={onNavigateFood}
+          className="w-full bg-gradient-to-r from-amber-500/20 to-orange-400/10 rounded-2xl border border-amber-500/20 p-5 text-left hover:shadow-md transition"
+        >
+          <div className="flex items-center gap-4">
+            <span className="text-4xl">🎯</span>
+            <div className="flex-1">
+              <h3 className="font-bold text-foreground">Sfide Alimentari</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">No Zucchero, No Junk Food, 5 Verdure al giorno e altre sfide da 30 giorni</p>
+            </div>
+          </div>
+        </motion.button>
+      )}
     </div>
   );
 }

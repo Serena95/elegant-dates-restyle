@@ -139,8 +139,10 @@ const Index = () => {
 
     if (cloud.loading || equipmentPool.length === 0) return;
 
-    // Create a key that represents the expected plan
-    const expectedKey = getWeekDates(cloud.giorniAllenamento).sort().join(",");
+    const today = new Date();
+    const todayKey = getLocalDateKey(today);
+    const currentWeekDates = getWeekDates(cloud.giorniAllenamento);
+    const expectedKey = currentWeekDates.sort().join(",");
 
     // Skip if we already generated for this exact configuration
     if (lastGeneratedKey.current === expectedKey) return;
@@ -149,6 +151,26 @@ const Index = () => {
 
     if (needsGeneration) {
       lastGeneratedKey.current = expectedKey;
+
+      // Preserve incomplete workouts from the past week that haven't been completed yet
+      const existingKeys = Object.keys(cloud.piano);
+      const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
+      const preservedPiano: Record<string, any> = {};
+      const preservedEsercizi: Record<string, Exercise[]> = {};
+
+      for (const key of existingKeys) {
+        // Keep workouts that are from the current week or recent past (not completed)
+        // and are not yet expired (within 7 days)
+        const dayDiff = Math.floor((new Date(todayKey + "T00:00:00").getTime() - new Date(key + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24));
+        const isCompleted = cloud.storicoCal[key]?.completato;
+        if (!isCompleted && dayDiff >= 0 && dayDiff <= 6) {
+          preservedPiano[key] = cloud.piano[key];
+          if (allenamentiEsercizi[key]) {
+            preservedEsercizi[key] = allenamentiEsercizi[key];
+          }
+        }
+      }
+
       const result = generaSettimanaIntelligente(
         equipmentPool,
         cloud.livello,
@@ -157,12 +179,49 @@ const Index = () => {
         cloud.ultimiAttrezzi,
         cloud.giorniAllenamento
       );
-      cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
+
+      // Merge: new week plan + preserved incomplete workouts
+      const mergedPiano = { ...preservedPiano, ...result.piano };
+      const mergedEsercizi = { ...preservedEsercizi, ...result.esercizi };
+
+      cloud.savePiano(mergedPiano, { esercizi: mergedEsercizi, storico: result.storico });
       const usedEquipment = Object.values(result.piano).map(d => d.attrezzo);
       cloud.setUltimiAttrezzi(usedEquipment);
     } else {
       // Piano matches, record the key so we don't re-check
       lastGeneratedKey.current = expectedKey;
+
+      // On Sunday evening (after 20:00), pre-generate next week if not already present
+      if (today.getDay() === 0 && today.getHours() >= 20) {
+        const nextMonday = new Date(today);
+        nextMonday.setDate(nextMonday.getDate() + 1);
+        const nextWeekDates = getWeekDates(cloud.giorniAllenamento, nextMonday);
+        const hasNextWeek = nextWeekDates.some(d => cloud.piano[d]);
+
+        if (!hasNextWeek) {
+          const result = generaSettimanaIntelligente(
+            equipmentPool,
+            cloud.livello,
+            cloud.allenamentiData.storico || {},
+            cloud.storicoCal,
+            cloud.ultimiAttrezzi,
+            cloud.giorniAllenamento
+          );
+          // Remap generated dates to next week
+          const nextWeekPiano = { ...cloud.piano };
+          const nextWeekEsercizi = { ...(cloud.allenamentiData.esercizi || {}) };
+          const generatedKeys = Object.keys(result.piano).sort();
+          nextWeekDates.sort().forEach((nextKey, i) => {
+            const genKey = generatedKeys[i];
+            if (genKey) {
+              nextWeekPiano[nextKey] = result.piano[genKey];
+              nextWeekEsercizi[nextKey] = result.esercizi[genKey];
+            }
+          });
+
+          cloud.savePiano(nextWeekPiano, { esercizi: nextWeekEsercizi, storico: result.storico });
+        }
+      }
     }
   }, [cloud.loading, cloud.attrezzi, cloud.piano, cloud.giorniAllenamento]);
 
@@ -600,7 +659,7 @@ const Index = () => {
           />
         );
       case "nutrition" as any:
-        return <NutritionPlanView onBack={() => navigate("more")} />;
+        return <NutritionPlanView onBack={() => navigate("more")} onNavigateFood={() => navigate("food" as any)} />;
       case "privacy" as any:
         return <LegalPage type="privacy" onBack={() => setView("settings" as any)} />;
       case "terms" as any:
