@@ -600,7 +600,7 @@ const Index = () => {
           />
         );
       case "nutrition" as any:
-        return <NutritionPlanView onBack={() => navigate("more")} />;
+        return <NutritionPlanView onBack={() => navigate("more")} onNavigateFood={() => navigate("food" as any)} />;
       case "privacy" as any:
         return <LegalPage type="privacy" onBack={() => setView("settings" as any)} />;
       case "terms" as any:
