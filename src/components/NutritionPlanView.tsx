@@ -117,7 +117,7 @@ const FOOD_CHALLENGE_PRESETS = [
   "🍎 Frutta a Ogni Pasto",
 ];
 
-export function NutritionPlanView({ onBack }: NutritionPlanViewProps) {
+export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewProps) {
   const [selectedPlan, setSelectedPlan] = useState<NutritionPlan | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showShoppingList, setShowShoppingList] = useState(false);
