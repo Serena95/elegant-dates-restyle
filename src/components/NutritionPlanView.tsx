@@ -1,6 +1,8 @@
 import { useState } from "react";
-import { ChevronLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Utensils, Leaf, Apple } from "lucide-react";
+import { ChevronLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Utensils, Sparkles, ArrowRight, Loader2, RefreshCw, Lightbulb } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 interface NutritionPlanViewProps {
   onBack: () => void;
@@ -25,7 +27,14 @@ interface NutritionPlan {
   obiettivo: string;
   giorni: Record<string, MealPlan>;
   listaSpesa: Record<string, string[]>;
+  calorie_giornaliere?: number;
+  macros?: { proteine: string; carboidrati: string; grassi: string };
+  consigli?: string[];
 }
+
+// ============================================================
+// PRESET PLANS
+// ============================================================
 
 const NUTRITION_PLANS: NutritionPlan[] = [
   {
@@ -117,11 +126,71 @@ const FOOD_CHALLENGE_PRESETS = [
   "🍎 Frutta a Ogni Pasto",
 ];
 
+// ============================================================
+// QUESTIONNAIRE
+// ============================================================
+
+interface QuestionnaireData {
+  obiettivo: string;
+  preferenze: string;
+  restrizioni: string;
+  attivita: string;
+  calorie: string;
+  durata: string;
+}
+
+const OBIETTIVI = [
+  { value: "dimagrimento", label: "🔥 Dimagrimento", desc: "Perdere peso in modo sano" },
+  { value: "mantenimento", label: "⚖️ Mantenimento", desc: "Mantenere il peso attuale" },
+  { value: "massa", label: "💪 Aumento massa", desc: "Aumentare massa muscolare" },
+  { value: "energia", label: "⚡ Più energia", desc: "Migliorare energia e vitalità" },
+  { value: "benessere", label: "🧘 Benessere generale", desc: "Alimentazione equilibrata" },
+];
+
+const PREFERENZE = [
+  { value: "onnivoro", label: "🍖 Onnivoro" },
+  { value: "vegetariano", label: "🥗 Vegetariano" },
+  { value: "vegano", label: "🌱 Vegano" },
+  { value: "pescetariano", label: "🐟 Pescetariano" },
+  { value: "mediterraneo", label: "🫒 Mediterraneo" },
+];
+
+const RESTRIZIONI_OPTIONS = [
+  { value: "nessuna", label: "Nessuna" },
+  { value: "senza_glutine", label: "Senza glutine" },
+  { value: "senza_lattosio", label: "Senza lattosio" },
+  { value: "senza_frutta_secca", label: "No frutta secca" },
+  { value: "senza_uova", label: "Senza uova" },
+  { value: "senza_soia", label: "Senza soia" },
+];
+
+const ATTIVITA_OPTIONS = [
+  { value: "sedentario", label: "🪑 Sedentario", desc: "Poco movimento" },
+  { value: "leggera", label: "🚶 Attività leggera", desc: "1-2 allenamenti/settimana" },
+  { value: "moderata", label: "🏃 Moderata", desc: "3-4 allenamenti/settimana" },
+  { value: "intensa", label: "🔥 Intensa", desc: "5+ allenamenti/settimana" },
+];
+
 export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewProps) {
   const [selectedPlan, setSelectedPlan] = useState<NutritionPlan | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+
+  // Questionnaire state
+  const [showQuestionnaire, setShowQuestionnaire] = useState(false);
+  const [questionStep, setQuestionStep] = useState(0);
+  const [formData, setFormData] = useState<QuestionnaireData>({
+    obiettivo: "",
+    preferenze: "",
+    restrizioni: "",
+    attivita: "",
+    calorie: "",
+    durata: "7 giorni",
+  });
+  const [selectedRestrizioni, setSelectedRestrizioni] = useState<Set<string>>(new Set());
+  const [isGenerating, setIsGenerating] = useState(false);
+  const [customPlan, setCustomPlan] = useState<NutritionPlan | null>(null);
 
   const toggleItem = (item: string) => {
     setCheckedItems(prev => {
@@ -131,6 +200,255 @@ export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewP
       return next;
     });
   };
+
+  const toggleRestrizione = (val: string) => {
+    setSelectedRestrizioni(prev => {
+      const next = new Set(prev);
+      if (val === "nessuna") return new Set(["nessuna"]);
+      next.delete("nessuna");
+      if (next.has(val)) next.delete(val);
+      else next.add(val);
+      return next;
+    });
+  };
+
+  const canProceed = () => {
+    switch (questionStep) {
+      case 0: return !!formData.obiettivo;
+      case 1: return !!formData.preferenze;
+      case 2: return selectedRestrizioni.size > 0;
+      case 3: return !!formData.attivita;
+      default: return true;
+    }
+  };
+
+  const generatePlan = async () => {
+    setIsGenerating(true);
+    try {
+      const restrizioniText = Array.from(selectedRestrizioni).filter(r => r !== "nessuna").join(", ");
+      
+      const { data, error } = await supabase.functions.invoke("generate-meal-plan", {
+        body: {
+          obiettivo: formData.obiettivo,
+          preferenze: formData.preferenze,
+          restrizioni: restrizioniText || "Nessuna",
+          attivita: formData.attivita,
+          calorie: formData.calorie || null,
+          durata: formData.durata,
+        },
+      });
+
+      if (error) throw error;
+      if (!data?.result) throw new Error("Nessun piano generato");
+
+      const plan = data.result;
+      const generated: NutritionPlan = {
+        id: "custom_" + Date.now(),
+        nome: plan.nome || "Piano Personalizzato",
+        descrizione: plan.descrizione || "Piano creato su misura per te",
+        icon: "✨",
+        color: "from-primary/10 to-accent/10",
+        durata: formData.durata,
+        obiettivo: formData.obiettivo,
+        giorni: plan.giorni || {},
+        listaSpesa: plan.listaSpesa || {},
+        calorie_giornaliere: plan.calorie_giornaliere,
+        macros: plan.macros,
+        consigli: plan.consigli,
+      };
+
+      setCustomPlan(generated);
+      setSelectedPlan(generated);
+      setShowQuestionnaire(false);
+      toast({ title: "Piano generato! ✨", description: "Il tuo piano personalizzato è pronto" });
+    } catch (e: any) {
+      console.error("Error generating plan:", e);
+      toast({ title: "Errore", description: e.message || "Errore nella generazione. Riprova.", variant: "destructive" });
+    } finally {
+      setIsGenerating(false);
+    }
+  };
+
+  // ============================================================
+  // QUESTIONNAIRE VIEW
+  // ============================================================
+
+  if (showQuestionnaire) {
+    if (isGenerating) {
+      return (
+        <div className="space-y-5">
+          <div className="flex items-center gap-2">
+            <button onClick={() => setShowQuestionnaire(false)} className="text-primary"><ChevronLeft size={24} /></button>
+            <h2 className="text-xl font-bold text-foreground">✨ Generazione in corso...</h2>
+          </div>
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 size={48} className="animate-spin text-primary" />
+            <p className="text-sm text-muted-foreground text-center">
+              Stiamo creando il tuo piano personalizzato<br/>con pasti bilanciati e lista della spesa
+            </p>
+          </div>
+        </div>
+      );
+    }
+
+    const steps = [
+      // Step 0: Obiettivo
+      <div key="obiettivo" className="space-y-3">
+        <h3 className="text-lg font-bold text-foreground">Qual è il tuo obiettivo? 🎯</h3>
+        <p className="text-xs text-muted-foreground">Scegli l'obiettivo principale del piano</p>
+        {OBIETTIVI.map(o => (
+          <button
+            key={o.value}
+            onClick={() => setFormData(p => ({ ...p, obiettivo: o.value }))}
+            className={`w-full p-4 rounded-2xl border-2 text-left transition ${
+              formData.obiettivo === o.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+            }`}
+          >
+            <span className="font-bold text-foreground">{o.label}</span>
+            <p className="text-xs text-muted-foreground mt-0.5">{o.desc}</p>
+          </button>
+        ))}
+      </div>,
+
+      // Step 1: Preferenze
+      <div key="preferenze" className="space-y-3">
+        <h3 className="text-lg font-bold text-foreground">Tipo di alimentazione? 🥗</h3>
+        <p className="text-xs text-muted-foreground">Scegli il tuo stile alimentare</p>
+        {PREFERENZE.map(p => (
+          <button
+            key={p.value}
+            onClick={() => setFormData(prev => ({ ...prev, preferenze: p.value }))}
+            className={`w-full p-4 rounded-2xl border-2 text-left transition ${
+              formData.preferenze === p.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+            }`}
+          >
+            <span className="font-bold text-foreground">{p.label}</span>
+          </button>
+        ))}
+      </div>,
+
+      // Step 2: Restrizioni
+      <div key="restrizioni" className="space-y-3">
+        <h3 className="text-lg font-bold text-foreground">Allergie o restrizioni? ⚠️</h3>
+        <p className="text-xs text-muted-foreground">Seleziona tutte quelle applicabili</p>
+        {RESTRIZIONI_OPTIONS.map(r => (
+          <button
+            key={r.value}
+            onClick={() => toggleRestrizione(r.value)}
+            className={`w-full p-4 rounded-2xl border-2 text-left transition flex items-center gap-3 ${
+              selectedRestrizioni.has(r.value) ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+            }`}
+          >
+            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center flex-shrink-0 ${
+              selectedRestrizioni.has(r.value) ? "bg-primary border-primary" : "border-muted-foreground/30"
+            }`}>
+              {selectedRestrizioni.has(r.value) && <Check size={12} className="text-primary-foreground" />}
+            </div>
+            <span className="font-bold text-foreground">{r.label}</span>
+          </button>
+        ))}
+      </div>,
+
+      // Step 3: Attività
+      <div key="attivita" className="space-y-3">
+        <h3 className="text-lg font-bold text-foreground">Livello di attività? 🏃</h3>
+        <p className="text-xs text-muted-foreground">Quanto ti alleni durante la settimana</p>
+        {ATTIVITA_OPTIONS.map(a => (
+          <button
+            key={a.value}
+            onClick={() => setFormData(prev => ({ ...prev, attivita: a.value }))}
+            className={`w-full p-4 rounded-2xl border-2 text-left transition ${
+              formData.attivita === a.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+            }`}
+          >
+            <span className="font-bold text-foreground">{a.label}</span>
+            <p className="text-xs text-muted-foreground mt-0.5">{a.desc}</p>
+          </button>
+        ))}
+      </div>,
+
+      // Step 4: Riepilogo
+      <div key="riepilogo" className="space-y-4">
+        <h3 className="text-lg font-bold text-foreground">Riepilogo ✅</h3>
+        <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
+          <div className="flex justify-between">
+            <span className="text-xs text-muted-foreground font-bold">Obiettivo</span>
+            <span className="text-xs text-foreground font-bold">{OBIETTIVI.find(o => o.value === formData.obiettivo)?.label}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-xs text-muted-foreground font-bold">Alimentazione</span>
+            <span className="text-xs text-foreground font-bold">{PREFERENZE.find(p => p.value === formData.preferenze)?.label}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-xs text-muted-foreground font-bold">Restrizioni</span>
+            <span className="text-xs text-foreground font-bold">{Array.from(selectedRestrizioni).join(", ") || "Nessuna"}</span>
+          </div>
+          <div className="flex justify-between">
+            <span className="text-xs text-muted-foreground font-bold">Attività</span>
+            <span className="text-xs text-foreground font-bold">{ATTIVITA_OPTIONS.find(a => a.value === formData.attivita)?.label}</span>
+          </div>
+        </div>
+        <p className="text-xs text-muted-foreground text-center">Premi "Genera Piano" per creare il tuo piano personalizzato con AI</p>
+      </div>,
+    ];
+
+    return (
+      <div className="space-y-5">
+        <div className="flex items-center gap-2">
+          <button onClick={() => questionStep > 0 ? setQuestionStep(s => s - 1) : setShowQuestionnaire(false)} className="text-primary">
+            <ChevronLeft size={24} />
+          </button>
+          <h2 className="text-xl font-bold text-foreground flex-1">✨ Piano Personalizzato</h2>
+          <span className="text-xs text-muted-foreground font-bold">{questionStep + 1}/5</span>
+        </div>
+
+        {/* Progress bar */}
+        <div className="w-full h-1.5 bg-muted rounded-full overflow-hidden">
+          <motion.div
+            className="h-full bg-primary rounded-full"
+            initial={{ width: 0 }}
+            animate={{ width: `${((questionStep + 1) / 5) * 100}%` }}
+          />
+        </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={questionStep}
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: -20 }}
+            transition={{ duration: 0.2 }}
+          >
+            {steps[questionStep]}
+          </motion.div>
+        </AnimatePresence>
+
+        {/* Navigation */}
+        <div className="flex gap-3">
+          {questionStep < 4 ? (
+            <button
+              onClick={() => setQuestionStep(s => s + 1)}
+              disabled={!canProceed()}
+              className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground font-bold flex items-center justify-center gap-2 disabled:opacity-40"
+            >
+              Avanti <ArrowRight size={16} />
+            </button>
+          ) : (
+            <button
+              onClick={generatePlan}
+              className="flex-1 py-3 rounded-2xl bg-primary text-primary-foreground font-bold flex items-center justify-center gap-2"
+            >
+              <Sparkles size={16} /> Genera Piano
+            </button>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // SHOPPING LIST VIEW
+  // ============================================================
 
   if (selectedPlan && showShoppingList) {
     return (
@@ -168,12 +486,16 @@ export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewP
     );
   }
 
+  // ============================================================
+  // PLAN DETAIL VIEW
+  // ============================================================
+
   if (selectedPlan) {
     const days = Object.keys(selectedPlan.giorni);
     return (
       <div className="space-y-5">
         <div className="flex items-center gap-2">
-          <button onClick={() => setSelectedPlan(null)} className="text-primary"><ChevronLeft size={24} /></button>
+          <button onClick={() => { setSelectedPlan(null); setCustomPlan(null); }} className="text-primary"><ChevronLeft size={24} /></button>
           <h2 className="text-xl font-bold text-foreground flex-1">{selectedPlan.icon} {selectedPlan.nome}</h2>
         </div>
         <p className="text-sm text-muted-foreground">{selectedPlan.descrizione}</p>
@@ -189,12 +511,47 @@ export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewP
           </div>
         </div>
 
+        {/* Macros & Calories for custom plans */}
+        {selectedPlan.calorie_giornaliere && (
+          <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-2xl border border-primary/20 p-4 space-y-2">
+            <p className="text-xs font-bold text-primary uppercase">📊 Nutrizione giornaliera</p>
+            <p className="text-lg font-black text-foreground">{selectedPlan.calorie_giornaliere} kcal/giorno</p>
+            {selectedPlan.macros && (
+              <div className="flex gap-3">
+                <span className="text-xs bg-blue-500/10 text-blue-700 dark:text-blue-300 px-2 py-1 rounded-full font-bold">🥩 {selectedPlan.macros.proteine}</span>
+                <span className="text-xs bg-amber-500/10 text-amber-700 dark:text-amber-300 px-2 py-1 rounded-full font-bold">🌾 {selectedPlan.macros.carboidrati}</span>
+                <span className="text-xs bg-green-500/10 text-green-700 dark:text-green-300 px-2 py-1 rounded-full font-bold">🥑 {selectedPlan.macros.grassi}</span>
+              </div>
+            )}
+          </div>
+        )}
+
+        {/* Tips */}
+        {selectedPlan.consigli && selectedPlan.consigli.length > 0 && (
+          <div className="bg-card rounded-2xl border border-border p-4 space-y-2">
+            <p className="text-xs font-bold text-muted-foreground uppercase flex items-center gap-1"><Lightbulb size={12} /> Consigli</p>
+            {selectedPlan.consigli.map((c, i) => (
+              <p key={i} className="text-xs text-foreground">• {c}</p>
+            ))}
+          </div>
+        )}
+
         <button
           onClick={() => { setShowShoppingList(true); setCheckedItems(new Set()); }}
           className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-bold flex items-center justify-center gap-2"
         >
           <ShoppingCart size={18} /> Genera Lista della Spesa
         </button>
+
+        {/* Regenerate button for custom plans */}
+        {customPlan && selectedPlan.id === customPlan.id && (
+          <button
+            onClick={() => { setSelectedPlan(null); setShowQuestionnaire(true); setQuestionStep(4); }}
+            className="w-full py-3 rounded-2xl border-2 border-primary text-primary font-bold flex items-center justify-center gap-2 bg-card"
+          >
+            <RefreshCw size={16} /> Rigenera Piano
+          </button>
+        )}
 
         <div className="space-y-2">
           {days.map(day => {
@@ -237,6 +594,10 @@ export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewP
     );
   }
 
+  // ============================================================
+  // MAIN LIST VIEW
+  // ============================================================
+
   return (
     <div className="space-y-5">
       <div className="flex items-center gap-2">
@@ -245,8 +606,29 @@ export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewP
           <Utensils size={20} className="text-primary" /> Piani Nutrizionali
         </h2>
       </div>
-      <p className="text-sm text-muted-foreground">Scegli un piano alimentare con lista della spesa automatica</p>
+      <p className="text-sm text-muted-foreground">Scegli un piano alimentare o creane uno personalizzato</p>
 
+      {/* Custom plan CTA */}
+      <motion.button
+        initial={{ opacity: 0, y: 10 }}
+        animate={{ opacity: 1, y: 0 }}
+        onClick={() => { setShowQuestionnaire(true); setQuestionStep(0); }}
+        className="w-full bg-gradient-to-r from-primary/15 to-accent/15 rounded-2xl border-2 border-primary/30 p-5 text-left hover:shadow-lg transition"
+      >
+        <div className="flex items-center gap-4">
+          <span className="text-4xl">✨</span>
+          <div className="flex-1">
+            <h3 className="font-bold text-foreground">Crea Piano Personalizzato</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">
+              Rispondi a poche domande e l'AI genererà un piano su misura con quantità e lista della spesa
+            </p>
+          </div>
+          <ArrowRight size={20} className="text-primary" />
+        </div>
+      </motion.button>
+
+      {/* Preset plans */}
+      <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Oppure scegli un piano predefinito</p>
       <div className="space-y-3">
         {NUTRITION_PLANS.map((plan, i) => (
           <motion.button
