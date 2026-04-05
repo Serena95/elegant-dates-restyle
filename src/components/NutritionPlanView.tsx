@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "framer-motion";
 
 interface NutritionPlanViewProps {
   onBack: () => void;
+  onNavigateFood?: () => void;
 }
 
 interface MealPlan {
