@@ -3,7 +3,7 @@ import { DayCard } from "./DayCard";
 import { ActiveProgramState } from "@/hooks/useActiveProgram";
 import { AICoachCard } from "./AICoachCard";
 import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
-import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap } from "lucide-react";
+import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap, Utensils, X } from "lucide-react";
 import { motion } from "framer-motion";
 import { calculateStreak } from "@/services/streakService";
 import { computeProgress } from "@/services/progressEngine";
@@ -97,6 +97,11 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
   }, [user, storicoCal]); // re-fetch when storicoCal changes (after workout)
 
   const levelInfo = xpData ? getLevelInfo(xpData.xp) : null;
+
+  // Saved nutrition plan
+  const [savedPlan, setSavedPlan] = useState<{ nome: string; icon: string; id: string; descrizione: string } | null>(() => {
+    try { return JSON.parse(localStorage.getItem("activeNutritionPlan") || "null"); } catch { return null; }
+  });
 
   return (
     <div className="space-y-5">
