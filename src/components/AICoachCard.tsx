@@ -26,6 +26,8 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
   const isCompleted = context.isAlreadyCompleted;
   const needsRecovery = isRestDay || isCompleted || streak.currentStreak >= 5 || progress.recentIntensity === "alta" || context.cyclePhase === "mestruale";
 
+  const [nutritionTip, setNutritionTip] = useState<string>("");
+
   const loadSuggestions = async (forceRefresh = false) => {
     setLoading(true);
     setError(false);
@@ -38,6 +40,7 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
       setSuggestion(result.suggestion);
       setMotivation(result.motivation);
       if (result.recovery) setRecovery(result.recovery);
+      if ((result as any).nutritionTip) setNutritionTip((result as any).nutritionTip);
     } catch {
       setError(true);
     } finally {
@@ -178,6 +181,14 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
                         {isRestDay ? "🌿 " : "🎯 Focus: "}{suggestion.focus}
                       </p>
                     </div>
+
+                    {/* Nutrition tip */}
+                    {nutritionTip && (
+                      <div className="bg-green-500/5 border border-green-500/15 rounded-xl p-3 flex items-start gap-2">
+                        <span className="text-sm">🥗</span>
+                        <p className="text-xs text-foreground">{nutritionTip}</p>
+                      </div>
+                    )}
 
                     {/* Actions */}
                     <div className="flex gap-2">
