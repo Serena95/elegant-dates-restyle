@@ -1,4 +1,4 @@
-// AI Coach edge function - v3 context-aware (synced with daily plan)
+// AI Coach + Nutritionist edge function - v4 context-aware (synced with daily plan + nutrition)
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 
 const corsHeaders = {
