@@ -6,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 
 interface NutritionPlanViewProps {
   onBack: () => void;
-  onNavigateFood?: () => void;
+  onSavePlan?: (plan: any) => void;
 }
 
 interface MealPlan {
@@ -115,16 +115,6 @@ const NUTRITION_PLANS: NutritionPlan[] = [
   },
 ];
 
-const FOOD_CHALLENGE_PRESETS = [
-  "🚫 No Dolci",
-  "☕ No Zucchero",
-  "🍔 No Junk Food",
-  "🥤 No Bevande Gassate",
-  "🍕 No Carboidrati Raffinati",
-  "🥗 5 Porzioni Verdura/Giorno",
-  "💧 2L Acqua al Giorno",
-  "🍎 Frutta a Ogni Pasto",
-];
 
 // ============================================================
 // QUESTIONNAIRE
@@ -171,7 +161,7 @@ const ATTIVITA_OPTIONS = [
   { value: "intensa", label: "🔥 Intensa", desc: "5+ allenamenti/settimana" },
 ];
 
-export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewProps) {
+export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps) {
   const [selectedPlan, setSelectedPlan] = useState<NutritionPlan | null>(null);
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showShoppingList, setShowShoppingList] = useState(false);
@@ -536,11 +526,24 @@ export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewP
           </div>
         )}
 
+        {/* Save plan button */}
         <button
-          onClick={() => { setShowShoppingList(true); setCheckedItems(new Set()); }}
+          onClick={() => {
+            const planToSave = { nome: selectedPlan.nome, icon: selectedPlan.icon, id: selectedPlan.id, descrizione: selectedPlan.descrizione };
+            localStorage.setItem("activeNutritionPlan", JSON.stringify(planToSave));
+            onSavePlan?.(planToSave);
+            toast({ title: "Piano salvato! ✅", description: "Lo troverai nella dashboard" });
+          }}
           className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-bold flex items-center justify-center gap-2"
         >
-          <ShoppingCart size={18} /> Genera Lista della Spesa
+          <Check size={18} /> Segui questo Piano
+        </button>
+
+        <button
+          onClick={() => { setShowShoppingList(true); setCheckedItems(new Set()); }}
+          className="w-full py-3 rounded-2xl border-2 border-primary text-primary font-bold flex items-center justify-center gap-2 bg-card"
+        >
+          <ShoppingCart size={18} /> Lista della Spesa
         </button>
 
         {/* Regenerate button for custom plans */}
@@ -653,27 +656,6 @@ export function NutritionPlanView({ onBack, onNavigateFood }: NutritionPlanViewP
           </motion.button>
         ))}
       </div>
-
-      {/* Link to food challenges */}
-      {onNavigateFood && (
-        <motion.button
-          initial={{ opacity: 0, y: 10 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ delay: 0.3 }}
-          onClick={onNavigateFood}
-          className="w-full bg-gradient-to-r from-amber-500/20 to-orange-400/10 rounded-2xl border border-amber-500/20 p-5 text-left hover:shadow-md transition"
-        >
-          <div className="flex items-center gap-4">
-            <span className="text-4xl">🎯</span>
-            <div className="flex-1">
-              <h3 className="font-bold text-foreground">Sfide Alimentari</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">No Zucchero, No Junk Food, 5 Verdure al giorno e altre sfide da 30 giorni</p>
-            </div>
-          </div>
-        </motion.button>
-      )}
     </div>
   );
 }
-
-export { FOOD_CHALLENGE_PRESETS };
