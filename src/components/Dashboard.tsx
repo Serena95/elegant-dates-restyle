@@ -74,7 +74,8 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     todayFocusIcon: todayFocusInfo?.icon,
     isRestDay,
     isAlreadyCompleted,
-  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, pregnancyMode, pregnancyWeek, todayWorkout, todayFocusInfo, isRestDay, isAlreadyCompleted]);
+    nutritionPlan: savedPlan?.nome,
+  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, pregnancyMode, pregnancyWeek, todayWorkout, todayFocusInfo, isRestDay, isAlreadyCompleted, savedPlan]);
   
   // todayWorkout already computed above
 
