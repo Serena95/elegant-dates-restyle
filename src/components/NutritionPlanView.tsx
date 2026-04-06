@@ -187,6 +187,8 @@ interface QuestionnaireData {
   attivita: string;
   calorie: string;
   durata: string;
+  tipo_dieta: string;
+  pasto_saltato: string;
 }
 
 const OBIETTIVI = [
@@ -237,6 +239,8 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
     attivita: "",
     calorie: "",
     durata: "7 giorni",
+    tipo_dieta: "standard",
+    pasto_saltato: "",
   });
   const [selectedRestrizioni, setSelectedRestrizioni] = useState<Set<string>>(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
