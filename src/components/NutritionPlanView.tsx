@@ -351,8 +351,38 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
       );
     }
 
+    const TIPO_DIETA = [
+      { value: "standard", label: "🍽️ Standard", desc: "Piano equilibrato classico" },
+      { value: "chetogenica", label: "🥑 Chetogenica", desc: "Alto grassi, bassissimi carboidrati" },
+      { value: "digiuno_intermittente", label: "⏰ Digiuno Intermittente 16:8", desc: "Finestra alimentare di 8 ore" },
+    ];
+
+    const PASTO_SALTATO = [
+      { value: "colazione", label: "☀️ Salta Colazione", desc: "Finestra 12:00 – 20:00" },
+      { value: "cena", label: "🌙 Salta Cena", desc: "Finestra 7:00 – 15:00" },
+      { value: "pranzo", label: "🍽️ Salta Pranzo", desc: "Colazione + Cena" },
+    ];
+
     const steps = [
-      // Step 0: Obiettivo
+      // Step 0: Tipo dieta
+      <div key="tipo_dieta" className="space-y-3">
+        <h3 className="text-lg font-bold text-foreground">Che tipo di piano vuoi? 🍽️</h3>
+        <p className="text-xs text-muted-foreground">Scegli l'approccio alimentare</p>
+        {TIPO_DIETA.map(t => (
+          <button
+            key={t.value}
+            onClick={() => setFormData(p => ({ ...p, tipo_dieta: t.value }))}
+            className={`w-full p-4 rounded-2xl border-2 text-left transition ${
+              formData.tipo_dieta === t.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+            }`}
+          >
+            <span className="font-bold text-foreground">{t.label}</span>
+            <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
+          </button>
+        ))}
+      </div>,
+
+      // Step 1: Obiettivo
       <div key="obiettivo" className="space-y-3">
         <h3 className="text-lg font-bold text-foreground">Qual è il tuo obiettivo? 🎯</h3>
         <p className="text-xs text-muted-foreground">Scegli l'obiettivo principale del piano</p>
@@ -370,7 +400,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
         ))}
       </div>,
 
-      // Step 1: Preferenze
+      // Step 2: Preferenze
       <div key="preferenze" className="space-y-3">
         <h3 className="text-lg font-bold text-foreground">Tipo di alimentazione? 🥗</h3>
         <p className="text-xs text-muted-foreground">Scegli il tuo stile alimentare</p>
@@ -387,7 +417,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
         ))}
       </div>,
 
-      // Step 2: Restrizioni
+      // Step 3: Restrizioni
       <div key="restrizioni" className="space-y-3">
         <h3 className="text-lg font-bold text-foreground">Allergie o restrizioni? ⚠️</h3>
         <p className="text-xs text-muted-foreground">Seleziona tutte quelle applicabili</p>
@@ -409,7 +439,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
         ))}
       </div>,
 
-      // Step 3: Attività
+      // Step 4: Attività
       <div key="attivita" className="space-y-3">
         <h3 className="text-lg font-bold text-foreground">Livello di attività? 🏃</h3>
         <p className="text-xs text-muted-foreground">Quanto ti alleni durante la settimana</p>
@@ -427,10 +457,34 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
         ))}
       </div>,
 
-      // Step 4: Riepilogo
+      // Step 5: Pasto saltato (IF only) - or Riepilogo for standard/keto
+      ...(formData.tipo_dieta === "digiuno_intermittente" ? [
+        <div key="pasto_saltato" className="space-y-3">
+          <h3 className="text-lg font-bold text-foreground">Quale pasto vuoi saltare? ⏰</h3>
+          <p className="text-xs text-muted-foreground">Il piano si adatterà alla tua finestra alimentare</p>
+          {PASTO_SALTATO.map(p => (
+            <button
+              key={p.value}
+              onClick={() => setFormData(prev => ({ ...prev, pasto_saltato: p.value }))}
+              className={`w-full p-4 rounded-2xl border-2 text-left transition ${
+                formData.pasto_saltato === p.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+              }`}
+            >
+              <span className="font-bold text-foreground">{p.label}</span>
+              <p className="text-xs text-muted-foreground mt-0.5">{p.desc}</p>
+            </button>
+          ))}
+        </div>,
+      ] : []),
+
+      // Riepilogo (last step)
       <div key="riepilogo" className="space-y-4">
         <h3 className="text-lg font-bold text-foreground">Riepilogo ✅</h3>
         <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
+          <div className="flex justify-between">
+            <span className="text-xs text-muted-foreground font-bold">Tipo piano</span>
+            <span className="text-xs text-foreground font-bold">{TIPO_DIETA.find(t => t.value === formData.tipo_dieta)?.label}</span>
+          </div>
           <div className="flex justify-between">
             <span className="text-xs text-muted-foreground font-bold">Obiettivo</span>
             <span className="text-xs text-foreground font-bold">{OBIETTIVI.find(o => o.value === formData.obiettivo)?.label}</span>
@@ -447,6 +501,12 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
             <span className="text-xs text-muted-foreground font-bold">Attività</span>
             <span className="text-xs text-foreground font-bold">{ATTIVITA_OPTIONS.find(a => a.value === formData.attivita)?.label}</span>
           </div>
+          {formData.tipo_dieta === "digiuno_intermittente" && formData.pasto_saltato && (
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground font-bold">Pasto saltato</span>
+              <span className="text-xs text-foreground font-bold">{PASTO_SALTATO.find(p => p.value === formData.pasto_saltato)?.label}</span>
+            </div>
+          )}
         </div>
         <p className="text-xs text-muted-foreground text-center">Premi "Genera Piano" per creare il tuo piano personalizzato con AI</p>
       </div>,
