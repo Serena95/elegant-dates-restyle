@@ -9,7 +9,7 @@ serve(async (req) => {
   if (req.method === "OPTIONS") return new Response(null, { headers: corsHeaders });
 
   try {
-    const { obiettivo, preferenze, restrizioni, attivita, calorie, pasti_giorno, durata } = await req.json();
+    const { obiettivo, preferenze, restrizioni, attivita, calorie, pasti_giorno, durata, tipo_dieta, pasto_saltato } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
@@ -48,9 +48,13 @@ REGOLE:
 - Rispetta RIGOROSAMENTE le restrizioni alimentari
 - Bilancia i macronutrienti in base all'obiettivo
 - I consigli devono essere pratici e personalizzati
-- Rispondi SOLO con il JSON, nessun testo aggiuntivo`;
+- Rispondi SOLO con il JSON, nessun testo aggiuntivo
+${tipo_dieta === "chetogenica" ? "- DIETA CHETOGENICA: max 20-30g carboidrati netti al giorno, 70% grassi, 25% proteine, 5% carboidrati. NO cereali, NO pane, NO pasta, NO zuccheri. SÌ avocado, olio EVO, burro, noci, formaggi grassi." : ""}
+${tipo_dieta === "digiuno_intermittente" ? `- DIGIUNO INTERMITTENTE 16:8: Il pasto "${pasto_saltato || "colazione"}" deve essere sostituito con "☕ Solo caffè/tè senza zucchero" o "—". Concentra le calorie nei pasti rimanenti. Mantieni le calorie totali giornaliere invariate.` : ""}`;
 
     const userPrompt = `Genera un piano alimentare personalizzato con questi parametri:
+- Tipo dieta: ${tipo_dieta === "chetogenica" ? "Dieta Chetogenica" : tipo_dieta === "digiuno_intermittente" ? "Digiuno Intermittente 16:8" : "Standard"}
+${tipo_dieta === "digiuno_intermittente" && pasto_saltato ? `- Pasto da saltare: ${pasto_saltato}` : ""}
 - Obiettivo: ${obiettivo}
 - Preferenze alimentari: ${preferenze || "Nessuna preferenza specifica"}
 - Restrizioni/Allergie: ${restrizioni || "Nessuna"}

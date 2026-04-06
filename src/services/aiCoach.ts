@@ -31,12 +31,16 @@ export interface AICoachContext {
   todayFocusIcon?: string;
   isRestDay?: boolean;
   isAlreadyCompleted?: boolean;
+  // Nutrition context
+  nutritionPlan?: string;
+  nutritionGoal?: string;
 }
 
 export interface CompleteCoachResponse {
   suggestion: WorkoutSuggestion;
   motivation: string;
   recovery: RecoveryAdvice | null;
+  nutritionTip?: string;
 }
 
 /**
@@ -74,6 +78,7 @@ export async function generateCompleteCoachData(context: AICoachContext, forceRe
         suggestion: parsed.suggestion || getDefaultSuggestion(),
         motivation: parsed.motivation || getDefaultMotivation(context.streak),
         recovery: parsed.recovery || null,
+        nutritionTip: parsed.nutritionTip || undefined,
       };
       sessionCache.set(key, { data: result, timestamp: Date.now() });
       return result;

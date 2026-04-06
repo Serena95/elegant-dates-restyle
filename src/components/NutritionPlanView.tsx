@@ -113,6 +113,66 @@ const NUTRITION_PLANS: NutritionPlan[] = [
       "🥜 Altro": ["Semi di chia", "Semi di zucca", "Semi misti", "Mandorle", "Noci", "Frutta secca", "Hummus", "Zenzero fresco", "Curcuma", "Menta", "Tè verde", "Tè matcha", "Tisane detox", "Spirulina", "Olio EVO"],
     },
   },
+  {
+    id: "keto",
+    nome: "Dieta Chetogenica",
+    descrizione: "Alto contenuto di grassi, proteine moderate, bassissimi carboidrati",
+    icon: "🥑",
+    color: "from-purple-500/10 to-fuchsia-500/10",
+    durata: "7 giorni",
+    obiettivo: "Perdita grasso e chetosi",
+    calorie_giornaliere: 1600,
+    macros: { proteine: "25%", carboidrati: "5%", grassi: "70%" },
+    giorni: {
+      "Lunedì": { colazione: "Uova strapazzate (3) nel burro con avocado (100g)", spuntino1: "Noci di macadamia (30g)", pranzo: "Salmone al forno (200g) con burro alle erbe e spinaci saltati (150g)", spuntino2: "Formaggio Brie (40g)", cena: "Cosce di pollo arrosto (250g) con cavolfiore al burro (200g)" },
+      "Martedì": { colazione: "Frittata con formaggio (3 uova, 40g cheddar) e pancetta (30g)", spuntino1: "Olive (50g)", pranzo: "Insalata di tonno (150g) con avocado (100g), olio EVO, cetrioli", spuntino2: "Sedano con burro d'arachidi (20g)", cena: "Bistecca (200g) con funghi trifolati (150g) e burro" },
+      "Mercoledì": { colazione: "Yogurt greco intero (150g) con semi di chia (15g) e noci (20g)", spuntino1: "Uovo sodo", pranzo: "Petto di pollo (200g) con crema di avocado e insalata verde (150g)", spuntino2: "Mandorle (30g)", cena: "Merluzzo (200g) al burro con zucchine grigliate (200g)" },
+      "Giovedì": { colazione: "Bulletproof coffee + 2 uova al tegamino", spuntino1: "Cioccolato fondente 90% (20g)", pranzo: "Hamburger senza pane (150g) con avocado, bacon e insalata", spuntino2: "Noci (30g)", cena: "Salmone (200g) con asparagi (200g) e salsa al limone" },
+      "Venerdì": { colazione: "Omelette con spinaci (100g) e formaggio cremoso (30g)", spuntino1: "Olive (50g) e formaggio (30g)", pranzo: "Insalata Caesar senza crostini, pollo (200g), parmigiano (30g)", spuntino2: "Avocado (mezzo)", cena: "Costolette di agnello (200g) con broccoli al vapore (200g)" },
+      "Sabato": { colazione: "Pancake keto (farina di mandorle, 3 uova, cream cheese)", spuntino1: "Noci pecan (30g)", pranzo: "Zuppa di cocco con gamberi (200g) e verdure", spuntino2: "Cetrioli con guacamole", cena: "Tagliata (200g) con rucola, parmigiano e olio EVO" },
+      "Domenica": { colazione: "Uova Benedict senza muffin con salmone affumicato (80g)", spuntino1: "Formaggio stagionato (40g)", pranzo: "Bowl di pollo (200g) con avocado, cetrioli e semi di sesamo", spuntino2: "Cioccolato fondente 90% (20g)", cena: "Orata al forno (200g) con verdure grigliate e burro alle erbe" },
+    },
+    listaSpesa: {
+      "🥬 Verdure": ["Spinaci (500g)", "Avocado (7)", "Zucchine (500g)", "Broccoli (500g)", "Cavolfiore (1)", "Asparagi (500g)", "Rucola", "Cetrioli", "Funghi (300g)", "Insalata verde"],
+      "🍎 Frutta": ["Limoni", "Olive (200g)"],
+      "🥩 Proteine": ["Uova (24)", "Salmone (600g)", "Petto di pollo (600g)", "Cosce di pollo (500g)", "Bistecca (400g)", "Merluzzo (200g)", "Gamberi (200g)", "Tonno (300g)", "Agnello (200g)", "Orata (200g)", "Pancetta (100g)", "Salmone affumicato (80g)"],
+      "🥛 Latticini": ["Burro (250g)", "Yogurt greco intero", "Cheddar (100g)", "Brie (100g)", "Parmigiano (100g)", "Cream cheese (100g)", "Formaggio stagionato (100g)"],
+      "🥜 Altro": ["Noci macadamia", "Mandorle", "Noci", "Noci pecan", "Semi di chia", "Semi di sesamo", "Burro d'arachidi", "Olio EVO", "Olio di cocco", "Cioccolato fondente 90%", "Farina di mandorle"],
+    },
+  },
+  {
+    id: "intermittent_fasting",
+    nome: "Digiuno Intermittente 16:8",
+    descrizione: "Finestra alimentare di 8 ore con 2 pasti principali e 1 spuntino",
+    icon: "⏰",
+    color: "from-orange-500/10 to-amber-500/10",
+    durata: "7 giorni",
+    obiettivo: "Dimagrimento e salute metabolica",
+    calorie_giornaliere: 1500,
+    macros: { proteine: "30%", carboidrati: "40%", grassi: "30%" },
+    consigli: [
+      "La finestra alimentare consigliata è dalle 12:00 alle 20:00",
+      "Al mattino puoi bere acqua, tè o caffè senza zucchero",
+      "Puoi personalizzare quale pasto saltare nella versione AI"
+    ],
+    giorni: {
+      "Lunedì": { colazione: "☕ Solo caffè/tè senza zucchero", spuntino1: "—", pranzo: "Bowl di riso integrale (80g) con pollo (200g), avocado (80g) e verdure grigliate (200g)", spuntino2: "Yogurt greco (150g) con noci (20g)", cena: "Salmone al forno (200g) con patate dolci (150g) e spinaci (150g)" },
+      "Martedì": { colazione: "☕ Solo caffè/tè senza zucchero", spuntino1: "—", pranzo: "Pasta integrale (80g) con tonno (150g), pomodorini e olive", spuntino2: "Frutta secca mista (40g)", cena: "Petto di tacchino (200g) con quinoa (80g) e broccoli (200g)" },
+      "Mercoledì": { colazione: "☕ Solo caffè/tè senza zucchero", spuntino1: "—", pranzo: "Insalata proteica con uova (2), feta (50g), noci e verdure miste (250g)", spuntino2: "Banana con burro d'arachidi (15g)", cena: "Orata al cartoccio (200g) con riso basmati (80g) e zucchine (200g)" },
+      "Giovedì": { colazione: "☕ Solo caffè/tè senza zucchero", spuntino1: "—", pranzo: "Buddha bowl con ceci (150g), avocado (80g), verdure e tahini", spuntino2: "Mela + mandorle (20g)", cena: "Bistecca (180g) con patate al forno (150g) e insalata mista" },
+      "Venerdì": { colazione: "☕ Solo caffè/tè senza zucchero", spuntino1: "—", pranzo: "Wrap integrale con pollo (180g), hummus, verdure crude", spuntino2: "Yogurt greco (150g) con frutti di bosco", cena: "Gamberi (200g) saltati con verdure (250g) e riso (80g)" },
+      "Sabato": { colazione: "☕ Solo caffè/tè senza zucchero", spuntino1: "—", pranzo: "Poke bowl con salmone (150g), riso (80g), edamame, avocado (80g)", spuntino2: "Cioccolato fondente (20g) + noci (20g)", cena: "Polpette di tacchino (200g) con sugo e verdure al vapore (200g)" },
+      "Domenica": { colazione: "☕ Solo caffè/tè senza zucchero", spuntino1: "—", pranzo: "Frittata con verdure (3 uova) + pane integrale (60g) + insalata", spuntino2: "Smoothie (banana, latte, burro d'arachidi)", cena: "Merluzzo (200g) con cous cous (80g) e pomodorini" },
+    },
+    listaSpesa: {
+      "🥬 Verdure": ["Spinaci (300g)", "Broccoli (400g)", "Zucchine (400g)", "Pomodorini", "Verdure miste (500g)", "Avocado (4)", "Insalata mista", "Patate dolci (300g)", "Patate (300g)"],
+      "🍎 Frutta": ["Banana (4)", "Mela (2)", "Frutti di bosco", "Limoni"],
+      "🥩 Proteine": ["Pollo (600g)", "Salmone (350g)", "Tonno (150g)", "Tacchino (400g)", "Orata (200g)", "Gamberi (200g)", "Merluzzo (200g)", "Bistecca (180g)", "Uova (12)", "Ceci (300g)"],
+      "🌾 Cereali": ["Riso integrale", "Pasta integrale", "Quinoa", "Riso basmati", "Cous cous", "Pane integrale", "Wrap integrali"],
+      "🥛 Latticini": ["Yogurt greco (500g)", "Feta (100g)"],
+      "🥜 Altro": ["Noci", "Mandorle", "Frutta secca mista", "Burro d'arachidi", "Hummus", "Tahini", "Olive", "Olio EVO", "Edamame", "Cioccolato fondente", "Caffè/Tè"],
+    },
+  },
 ];
 
 
@@ -127,6 +187,8 @@ interface QuestionnaireData {
   attivita: string;
   calorie: string;
   durata: string;
+  tipo_dieta: string;
+  pasto_saltato: string;
 }
 
 const OBIETTIVI = [
@@ -177,6 +239,8 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
     attivita: "",
     calorie: "",
     durata: "7 giorni",
+    tipo_dieta: "standard",
+    pasto_saltato: "",
   });
   const [selectedRestrizioni, setSelectedRestrizioni] = useState<Set<string>>(new Set());
   const [isGenerating, setIsGenerating] = useState(false);
@@ -202,12 +266,16 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
     });
   };
 
+  const totalSteps = formData.tipo_dieta === "digiuno_intermittente" ? 7 : 6;
+
   const canProceed = () => {
     switch (questionStep) {
-      case 0: return !!formData.obiettivo;
-      case 1: return !!formData.preferenze;
-      case 2: return selectedRestrizioni.size > 0;
-      case 3: return !!formData.attivita;
+      case 0: return !!formData.tipo_dieta;
+      case 1: return !!formData.obiettivo;
+      case 2: return !!formData.preferenze;
+      case 3: return selectedRestrizioni.size > 0;
+      case 4: return !!formData.attivita;
+      case 5: return formData.tipo_dieta !== "digiuno_intermittente" || !!formData.pasto_saltato;
       default: return true;
     }
   };
@@ -225,6 +293,8 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
           attivita: formData.attivita,
           calorie: formData.calorie || null,
           durata: formData.durata,
+          tipo_dieta: formData.tipo_dieta,
+          pasto_saltato: formData.pasto_saltato || null,
         },
       });
 
@@ -281,8 +351,38 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
       );
     }
 
+    const TIPO_DIETA = [
+      { value: "standard", label: "🍽️ Standard", desc: "Piano equilibrato classico" },
+      { value: "chetogenica", label: "🥑 Chetogenica", desc: "Alto grassi, bassissimi carboidrati" },
+      { value: "digiuno_intermittente", label: "⏰ Digiuno Intermittente 16:8", desc: "Finestra alimentare di 8 ore" },
+    ];
+
+    const PASTO_SALTATO = [
+      { value: "colazione", label: "☀️ Salta Colazione", desc: "Finestra 12:00 – 20:00" },
+      { value: "cena", label: "🌙 Salta Cena", desc: "Finestra 7:00 – 15:00" },
+      { value: "pranzo", label: "🍽️ Salta Pranzo", desc: "Colazione + Cena" },
+    ];
+
     const steps = [
-      // Step 0: Obiettivo
+      // Step 0: Tipo dieta
+      <div key="tipo_dieta" className="space-y-3">
+        <h3 className="text-lg font-bold text-foreground">Che tipo di piano vuoi? 🍽️</h3>
+        <p className="text-xs text-muted-foreground">Scegli l'approccio alimentare</p>
+        {TIPO_DIETA.map(t => (
+          <button
+            key={t.value}
+            onClick={() => setFormData(p => ({ ...p, tipo_dieta: t.value }))}
+            className={`w-full p-4 rounded-2xl border-2 text-left transition ${
+              formData.tipo_dieta === t.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+            }`}
+          >
+            <span className="font-bold text-foreground">{t.label}</span>
+            <p className="text-xs text-muted-foreground mt-0.5">{t.desc}</p>
+          </button>
+        ))}
+      </div>,
+
+      // Step 1: Obiettivo
       <div key="obiettivo" className="space-y-3">
         <h3 className="text-lg font-bold text-foreground">Qual è il tuo obiettivo? 🎯</h3>
         <p className="text-xs text-muted-foreground">Scegli l'obiettivo principale del piano</p>
@@ -300,7 +400,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
         ))}
       </div>,
 
-      // Step 1: Preferenze
+      // Step 2: Preferenze
       <div key="preferenze" className="space-y-3">
         <h3 className="text-lg font-bold text-foreground">Tipo di alimentazione? 🥗</h3>
         <p className="text-xs text-muted-foreground">Scegli il tuo stile alimentare</p>
@@ -317,7 +417,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
         ))}
       </div>,
 
-      // Step 2: Restrizioni
+      // Step 3: Restrizioni
       <div key="restrizioni" className="space-y-3">
         <h3 className="text-lg font-bold text-foreground">Allergie o restrizioni? ⚠️</h3>
         <p className="text-xs text-muted-foreground">Seleziona tutte quelle applicabili</p>
@@ -339,7 +439,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
         ))}
       </div>,
 
-      // Step 3: Attività
+      // Step 4: Attività
       <div key="attivita" className="space-y-3">
         <h3 className="text-lg font-bold text-foreground">Livello di attività? 🏃</h3>
         <p className="text-xs text-muted-foreground">Quanto ti alleni durante la settimana</p>
@@ -357,10 +457,34 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
         ))}
       </div>,
 
-      // Step 4: Riepilogo
+      // Step 5: Pasto saltato (IF only) - or Riepilogo for standard/keto
+      ...(formData.tipo_dieta === "digiuno_intermittente" ? [
+        <div key="pasto_saltato" className="space-y-3">
+          <h3 className="text-lg font-bold text-foreground">Quale pasto vuoi saltare? ⏰</h3>
+          <p className="text-xs text-muted-foreground">Il piano si adatterà alla tua finestra alimentare</p>
+          {PASTO_SALTATO.map(p => (
+            <button
+              key={p.value}
+              onClick={() => setFormData(prev => ({ ...prev, pasto_saltato: p.value }))}
+              className={`w-full p-4 rounded-2xl border-2 text-left transition ${
+                formData.pasto_saltato === p.value ? "border-primary bg-primary/5" : "border-border hover:border-primary/30"
+              }`}
+            >
+              <span className="font-bold text-foreground">{p.label}</span>
+              <p className="text-xs text-muted-foreground mt-0.5">{p.desc}</p>
+            </button>
+          ))}
+        </div>,
+      ] : []),
+
+      // Riepilogo (last step)
       <div key="riepilogo" className="space-y-4">
         <h3 className="text-lg font-bold text-foreground">Riepilogo ✅</h3>
         <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
+          <div className="flex justify-between">
+            <span className="text-xs text-muted-foreground font-bold">Tipo piano</span>
+            <span className="text-xs text-foreground font-bold">{TIPO_DIETA.find(t => t.value === formData.tipo_dieta)?.label}</span>
+          </div>
           <div className="flex justify-between">
             <span className="text-xs text-muted-foreground font-bold">Obiettivo</span>
             <span className="text-xs text-foreground font-bold">{OBIETTIVI.find(o => o.value === formData.obiettivo)?.label}</span>
@@ -377,6 +501,12 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
             <span className="text-xs text-muted-foreground font-bold">Attività</span>
             <span className="text-xs text-foreground font-bold">{ATTIVITA_OPTIONS.find(a => a.value === formData.attivita)?.label}</span>
           </div>
+          {formData.tipo_dieta === "digiuno_intermittente" && formData.pasto_saltato && (
+            <div className="flex justify-between">
+              <span className="text-xs text-muted-foreground font-bold">Pasto saltato</span>
+              <span className="text-xs text-foreground font-bold">{PASTO_SALTATO.find(p => p.value === formData.pasto_saltato)?.label}</span>
+            </div>
+          )}
         </div>
         <p className="text-xs text-muted-foreground text-center">Premi "Genera Piano" per creare il tuo piano personalizzato con AI</p>
       </div>,
@@ -389,7 +519,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
             <ChevronLeft size={24} />
           </button>
           <h2 className="text-xl font-bold text-foreground flex-1">✨ Piano Personalizzato</h2>
-          <span className="text-xs text-muted-foreground font-bold">{questionStep + 1}/5</span>
+          <span className="text-xs text-muted-foreground font-bold">{questionStep + 1}/{totalSteps}</span>
         </div>
 
         {/* Progress bar */}
@@ -397,7 +527,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
           <motion.div
             className="h-full bg-primary rounded-full"
             initial={{ width: 0 }}
-            animate={{ width: `${((questionStep + 1) / 5) * 100}%` }}
+            animate={{ width: `${((questionStep + 1) / totalSteps) * 100}%` }}
           />
         </div>
 
@@ -415,7 +545,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
 
         {/* Navigation */}
         <div className="flex gap-3">
-          {questionStep < 4 ? (
+          {questionStep < totalSteps - 1 ? (
             <button
               onClick={() => setQuestionStep(s => s + 1)}
               disabled={!canProceed()}

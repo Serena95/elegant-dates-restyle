@@ -57,6 +57,11 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
   const isAlreadyCompleted = todayWorkout ? (todayWorkout.round >= (CONFIG_LIVELLI[livello]?.round || 3)) : false;
   const todayFocusInfo = todayKey ? focusMap?.[todayKey] : undefined;
 
+  // Saved nutrition plan
+  const [savedPlan, setSavedPlan] = useState<{ nome: string; icon: string; id: string; descrizione: string } | null>(() => {
+    try { return JSON.parse(localStorage.getItem("activeNutritionPlan") || "null"); } catch { return null; }
+  });
+
   const aiContext = useMemo<AICoachContext>(() => ({
     level: livello,
     equipment: attrezzi,
@@ -74,9 +79,8 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     todayFocusIcon: todayFocusInfo?.icon,
     isRestDay,
     isAlreadyCompleted,
-  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, pregnancyMode, pregnancyWeek, todayWorkout, todayFocusInfo, isRestDay, isAlreadyCompleted]);
-  
-  // todayWorkout already computed above
+    nutritionPlan: savedPlan?.nome,
+  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, pregnancyMode, pregnancyWeek, todayWorkout, todayFocusInfo, isRestDay, isAlreadyCompleted, savedPlan]);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -94,14 +98,10 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     supabase.from("profiles").select("xp, level").eq("user_id", user.id).single().then(({ data }) => {
       if (data) setXpData({ xp: data.xp ?? 0, level: data.level ?? 1 });
     });
-  }, [user, storicoCal]); // re-fetch when storicoCal changes (after workout)
+  }, [user, storicoCal]);
 
   const levelInfo = xpData ? getLevelInfo(xpData.xp) : null;
 
-  // Saved nutrition plan
-  const [savedPlan, setSavedPlan] = useState<{ nome: string; icon: string; id: string; descrizione: string } | null>(() => {
-    try { return JSON.parse(localStorage.getItem("activeNutritionPlan") || "null"); } catch { return null; }
-  });
 
   return (
     <div className="space-y-5">
