@@ -181,7 +181,37 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
         </motion.div>
       )}
 
-      {todayWorkout && todayWorkout.round < (CONFIG_LIVELLI[livello]?.round || 3) && (
+      {/* Saved Nutrition Plan Banner */}
+      {savedPlan && (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl p-4 border border-green-500/20"
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3 flex-1 min-w-0">
+              <span className="text-2xl">{savedPlan.icon}</span>
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 tracking-wide">Piano Alimentare Attivo</p>
+                <p className="text-sm font-black text-foreground truncate">{savedPlan.nome}</p>
+              </div>
+            </div>
+            <button
+              onClick={(e) => { e.stopPropagation(); localStorage.removeItem("activeNutritionPlan"); setSavedPlan(null); }}
+              className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground"
+            >
+              <X size={14} />
+            </button>
+          </div>
+          <button
+            onClick={() => onNavigate?.("nutrition")}
+            className="w-full mt-3 py-2 rounded-xl bg-green-600 dark:bg-green-500 text-primary-foreground font-bold text-xs hover:opacity-90 transition"
+          >
+            Apri Piano Alimentare
+          </button>
+        </motion.div>
+      )}
+
         <motion.div
           initial={{ opacity: 0, scale: 0.95 }}
           animate={{ opacity: 1, scale: 1 }}
