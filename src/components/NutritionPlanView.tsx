@@ -266,12 +266,16 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
     });
   };
 
+  const totalSteps = formData.tipo_dieta === "digiuno_intermittente" ? 7 : 6;
+
   const canProceed = () => {
     switch (questionStep) {
-      case 0: return !!formData.obiettivo;
-      case 1: return !!formData.preferenze;
-      case 2: return selectedRestrizioni.size > 0;
-      case 3: return !!formData.attivita;
+      case 0: return !!formData.tipo_dieta;
+      case 1: return !!formData.obiettivo;
+      case 2: return !!formData.preferenze;
+      case 3: return selectedRestrizioni.size > 0;
+      case 4: return !!formData.attivita;
+      case 5: return formData.tipo_dieta !== "digiuno_intermittente" || !!formData.pasto_saltato;
       default: return true;
     }
   };
@@ -289,6 +293,8 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
           attivita: formData.attivita,
           calorie: formData.calorie || null,
           durata: formData.durata,
+          tipo_dieta: formData.tipo_dieta,
+          pasto_saltato: formData.pasto_saltato || null,
         },
       });
 
