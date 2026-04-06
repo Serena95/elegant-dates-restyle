@@ -101,6 +101,18 @@ Suggerisci un allenamento coerente con il piano di oggi. Rispondi SOLO con il JS
       systemPrompt = `Sei un coach di Pilates italiano esperto in recupero. Suggerisci consigli di recupero brevi e pratici. Rispondi SEMPRE in formato JSON: {"consiglio": "string (max 2 frasi)", "tipo": "stretch|mobilità|riposo"}`;
       userPrompt = `L'utente ha una streak di ${context.streak || 0} giorni. Ultimo allenamento: ${context.lastWorkoutType || "sconosciuto"}. Intensità recente: ${context.recentIntensity || "media"}.${cycleNote}${todayPlanContext} Suggerisci un consiglio di recupero. Rispondi SOLO con il JSON.`;
 
+    } else if (type === "nutrition_advice") {
+      systemPrompt = `Sei un nutrizionista italiano professionista. Fornisci consigli personalizzati in base al piano alimentare e agli obiettivi dell'utente. Rispondi SEMPRE in formato JSON valido:
+{"consiglio": "string (2-3 frasi con consiglio pratico)", "suggerimento_pasto": "string (un suggerimento specifico per il prossimo pasto)", "nota": "string (nota motivazionale breve)"}
+Non aggiungere testo fuori dal JSON.`;
+      userPrompt = `Piano alimentare attivo: ${nutritionPlanName || "Nessuno"}
+Obiettivo: ${context.nutritionGoal || "benessere"}
+Livello attività: ${context.level || "MEDIO"}
+Streak allenamenti: ${context.streak || 0}
+${context.cyclePhase ? `Fase ciclo: ${context.cyclePhase}` : ""}
+${context.pregnancyMode ? `Gravidanza settimana ${context.pregnancyWeek}` : ""}
+Fornisci un consiglio nutrizionale personalizzato e coerente con il piano. Rispondi SOLO con il JSON.`;
+
     } else {
       return new Response(JSON.stringify({ error: "Unknown type" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
