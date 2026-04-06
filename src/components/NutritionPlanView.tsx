@@ -6,7 +6,7 @@ import { toast } from "@/hooks/use-toast";
 
 interface NutritionPlanViewProps {
   onBack: () => void;
-  onNavigateFood?: () => void;
+  onSavePlan?: (plan: any) => void;
 }
 
 interface MealPlan {
@@ -115,16 +115,6 @@ const NUTRITION_PLANS: NutritionPlan[] = [
   },
 ];
 
-const FOOD_CHALLENGE_PRESETS = [
-  "🚫 No Dolci",
-  "☕ No Zucchero",
-  "🍔 No Junk Food",
-  "🥤 No Bevande Gassate",
-  "🍕 No Carboidrati Raffinati",
-  "🥗 5 Porzioni Verdura/Giorno",
-  "💧 2L Acqua al Giorno",
-  "🍎 Frutta a Ogni Pasto",
-];
 
 // ============================================================
 // QUESTIONNAIRE
