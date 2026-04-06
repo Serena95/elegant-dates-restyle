@@ -31,6 +31,9 @@ export interface AICoachContext {
   todayFocusIcon?: string;
   isRestDay?: boolean;
   isAlreadyCompleted?: boolean;
+  // Nutrition context
+  nutritionPlan?: string;
+  nutritionGoal?: string;
 }
 
 export interface CompleteCoachResponse {
