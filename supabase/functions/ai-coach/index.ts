@@ -17,6 +17,9 @@ serve(async (req) => {
     let systemPrompt = "";
     let userPrompt = "";
 
+    // Nutrition plan context
+    const nutritionPlanName = context.nutritionPlan || null;
+
     const cycleAdaptation = context.cyclePhase ? `\nFase del ciclo: ${context.cyclePhase}. ${
       context.cyclePhase === "mestruale" ? "Suggerisci mobilità e stretching leggero." :
       context.cyclePhase === "luteale" ? "Suggerisci allenamenti moderati." :
@@ -45,17 +48,18 @@ serve(async (req) => {
     if (type === "complete") {
       const needsRecovery = isRestDay || isCompleted || (context.streak || 0) >= 5 || context.recentIntensity === "alta" || context.cyclePhase === "mestruale";
 
-      systemPrompt = `Sei un coach di Pilates professionista italiano, empatico e motivante. Rispondi SEMPRE in formato JSON valido con questa struttura esatta:
+      systemPrompt = `Sei un coach di Pilates e nutrizionista professionista italiano, empatico e motivante. Rispondi SEMPRE in formato JSON valido con questa struttura esatta:
 {
   "suggestion": {"titolo": "string", "descrizione": "string (max 2 frasi)", "focus": "string (gruppo muscolare o attività principale)"},
   "motivation": "string (messaggio motivazionale 1-2 frasi, personalizzato e caloroso)",
-  ${needsRecovery ? '"recovery": {"consiglio": "string (max 2 frasi)", "tipo": "stretch|mobilità|riposo"}' : '"recovery": null'}
+  ${needsRecovery ? '"recovery": {"consiglio": "string (max 2 frasi)", "tipo": "stretch|mobilità|riposo"}' : '"recovery": null'}${nutritionPlanName ? ',\n  "nutritionTip": "string (un consiglio nutrizionale breve coerente con il piano alimentare dell\'utente)"' : ''}
 }
 
 REGOLE IMPORTANTI:
 - Se è giorno di riposo: il campo "suggestion" deve contenere un consiglio di recupero attivo (stretching, mobilità, respirazione), NON un allenamento.
 - Se l'allenamento è già completato: complimentati nel "motivation" e suggerisci recupero nel "suggestion".
 - Se c'è un allenamento programmato: il "suggestion" DEVE parlare di quell'attrezzo e focus specifico.
+${nutritionPlanName ? `- L'utente segue il piano alimentare "${nutritionPlanName}". Integra consigli nutrizionali coerenti con questo piano. Se è chetogenica, ricorda grassi buoni. Se è digiuno intermittente, supporta la finestra alimentare.` : ""}
 - Sii specifico, non generico. Menziona l'attrezzo per nome.
 Non aggiungere testo fuori dal JSON. Non usare markdown.`;
 
