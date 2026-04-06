@@ -526,11 +526,24 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
           </div>
         )}
 
+        {/* Save plan button */}
         <button
-          onClick={() => { setShowShoppingList(true); setCheckedItems(new Set()); }}
+          onClick={() => {
+            const planToSave = { nome: selectedPlan.nome, icon: selectedPlan.icon, id: selectedPlan.id, descrizione: selectedPlan.descrizione };
+            localStorage.setItem("activeNutritionPlan", JSON.stringify(planToSave));
+            onSavePlan?.(planToSave);
+            toast({ title: "Piano salvato! ✅", description: "Lo troverai nella dashboard" });
+          }}
           className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-bold flex items-center justify-center gap-2"
         >
-          <ShoppingCart size={18} /> Genera Lista della Spesa
+          <Check size={18} /> Segui questo Piano
+        </button>
+
+        <button
+          onClick={() => { setShowShoppingList(true); setCheckedItems(new Set()); }}
+          className="w-full py-3 rounded-2xl border-2 border-primary text-primary font-bold flex items-center justify-center gap-2 bg-card"
+        >
+          <ShoppingCart size={18} /> Lista della Spesa
         </button>
 
         {/* Regenerate button for custom plans */}
