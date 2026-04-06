@@ -40,7 +40,7 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
       setSuggestion(result.suggestion);
       setMotivation(result.motivation);
       if (result.recovery) setRecovery(result.recovery);
-      if ((result as any).nutritionTip) setNutritionTip((result as any).nutritionTip);
+      if (result.nutritionTip) setNutritionTip(result.nutritionTip);
     } catch {
       setError(true);
     } finally {
