@@ -519,7 +519,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
             <ChevronLeft size={24} />
           </button>
           <h2 className="text-xl font-bold text-foreground flex-1">✨ Piano Personalizzato</h2>
-          <span className="text-xs text-muted-foreground font-bold">{questionStep + 1}/5</span>
+          <span className="text-xs text-muted-foreground font-bold">{questionStep + 1}/{totalSteps}</span>
         </div>
 
         {/* Progress bar */}
@@ -527,7 +527,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
           <motion.div
             className="h-full bg-primary rounded-full"
             initial={{ width: 0 }}
-            animate={{ width: `${((questionStep + 1) / 5) * 100}%` }}
+            animate={{ width: `${((questionStep + 1) / totalSteps) * 100}%` }}
           />
         </div>
 
@@ -545,7 +545,7 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
 
         {/* Navigation */}
         <div className="flex gap-3">
-          {questionStep < 4 ? (
+          {questionStep < totalSteps - 1 ? (
             <button
               onClick={() => setQuestionStep(s => s + 1)}
               disabled={!canProceed()}
