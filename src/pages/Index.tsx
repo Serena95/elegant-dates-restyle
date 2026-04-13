@@ -419,7 +419,7 @@ const Index = () => {
             onComplete={(selected) => {
               cloud.setAttrezzi(selected);
               setView("dashboard");
-              const result = generaSettimanaIntelligente(selected, cloud.livello, {}, {}, [], cloud.giorniAllenamento);
+              const result = generaSettimanaIntelligente(selected, cloud.livello, {}, {}, [], FIXED_TRAINING_DAYS);
               cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
               cloud.setUltimiAttrezzi(Object.values(result.piano).map(d => d.attrezzo));
             }}
