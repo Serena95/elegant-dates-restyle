@@ -412,7 +412,7 @@ const Index = () => {
   const changeLivello = useCallback((l: string) => {
     cloud.setLivello(l);
     // Force full regeneration with new level
-    lastGeneratedKey.current = "";
+    setStoredGenerationKey("");
     setStoredGenerationKey("");
     const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
     if (equipmentPool.length > 0) {
@@ -427,7 +427,7 @@ const Index = () => {
   const handleChangeTrainingDays = useCallback((days: number[]) => {
     cloud.setGiorniAllenamento(days);
     // Reset generation key to force regeneration
-    lastGeneratedKey.current = "";
+    setStoredGenerationKey("");
     setStoredGenerationKey("");
   }, [cloud.setGiorniAllenamento]);
 
@@ -531,7 +531,7 @@ const Index = () => {
         <EquipmentSelection savedAttrezzi={cloud.attrezzi} onComplete={(selected) => {
           cloud.setAttrezzi(selected);
           // Force full regeneration with new equipment
-          lastGeneratedKey.current = "";
+          setStoredGenerationKey("");
           const result = generaSettimanaIntelligente(
             selected, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
           );
@@ -628,7 +628,7 @@ const Index = () => {
             onCancelProgram={() => {
               activeProgState.cancel();
               // Regenerate standard plan
-              lastGeneratedKey.current = "";
+              setStoredGenerationKey("");
               const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
               if (equipmentPool.length > 0) {
                 const result = generaSettimanaIntelligente(
@@ -741,7 +741,7 @@ const Index = () => {
             }}
             onCancelChallenge={() => {
               activeProgState.cancel();
-              lastGeneratedKey.current = "";
+              setStoredGenerationKey("");
               const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
               if (equipmentPool.length > 0) {
                 const result = generaSettimanaIntelligente(
