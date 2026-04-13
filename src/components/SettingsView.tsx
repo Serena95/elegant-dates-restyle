@@ -213,10 +213,24 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
             <span className={`block w-5 h-5 rounded-full bg-card shadow-sm absolute top-1 transition-transform ${voiceEnabled ? "translate-x-6" : "translate-x-1"}`} />
           </button>
         </div>
-        <TrainingDaysPicker
-          selectedDays={giorniAllenamento}
-          onChange={(days) => onChangeGiorniAllenamento?.(days)}
-        />
+        <div className="p-4 space-y-2">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-foreground">Giorni di Allenamento</span>
+          </div>
+          <div className="flex gap-2">
+            {[
+              { day: 1, label: "Lun", focus: "Upper Body" },
+              { day: 3, label: "Mer", focus: "Lower Body" },
+              { day: 5, label: "Ven", focus: "Total Body" },
+            ].map(({ day, label, focus }) => (
+              <div key={day} className="flex-1 bg-primary/10 rounded-xl p-3 text-center">
+                <p className="text-xs font-bold text-primary">{label}</p>
+                <p className="text-[10px] text-muted-foreground mt-0.5">{focus}</p>
+              </div>
+            ))}
+          </div>
+          <p className="text-[10px] text-muted-foreground text-center">Struttura fissa: Lun–Mer–Ven</p>
+        </div>
         <div className="flex items-center gap-3 p-4">
           <Bell size={18} className="text-muted-foreground" />
           <span className="flex-1 text-sm font-medium text-foreground">Promemoria Allenamento</span>

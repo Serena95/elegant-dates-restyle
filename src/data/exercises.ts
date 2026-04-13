@@ -62,6 +62,12 @@ export type DayFocus = "upper_body" | "lower_body" | "total_body";
 export const DAY_FOCUS_PATTERN: DayFocus[] = ["upper_body", "lower_body", "total_body"];
 
 /**
+ * FIXED training days: Monday (1), Wednesday (3), Friday (5).
+ * This is the canonical source of truth — never changes.
+ */
+export const FIXED_TRAINING_DAYS: number[] = [1, 3, 5];
+
+/**
  * Fixed weekday-to-focus mapping:
  * Monday (1) → Upper Body, Wednesday (3) → Lower Body, Friday (5) → Total Body.
  * Other days get a round-robin fallback.
