@@ -42,8 +42,10 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
   activeProgram, onCancelProgram, onActivateInDashboard,
 }, ref) {
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "MEDIO" ? "bg-primary" : "bg-pilates-red";
+  const { isPremium } = usePremium();
   
   // Sort piano keys by date
+  const sortedDays = Object.keys(piano).sort();
   const sortedDays = Object.keys(piano).sort();
 
   // Compute streak & progress for AI Coach
