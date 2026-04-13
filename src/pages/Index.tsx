@@ -393,7 +393,7 @@ const Index = () => {
         syncBadges(user.id, badgeIds).catch(console.error);
       }
     }
-  }, [giornoSelezionato, roundCorrenti, cloud.livello, cloud.piano, cloud.savePiano, cloud.saveStoricoCal, checkNewBadges]);
+  }, [giornoSelezionato, roundCorrenti, cloud.livello, cloud.piano, cloud.savePiano, cloud.saveStoricoCal, checkNewBadges, eserciziCorrenti, user, unlockedBadges]);
 
   const changeLivello = useCallback((l: string) => {
     cloud.setLivello(l);
