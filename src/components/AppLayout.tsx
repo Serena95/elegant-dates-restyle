@@ -75,10 +75,10 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
   const isMobile = useIsMobile();
 
   return (
-    <div className="min-h-screen bg-background flex">
+    <div className="min-h-screen min-h-dvh w-full max-w-full overflow-x-hidden bg-background flex">
       {/* Desktop/Tablet Sidebar */}
       {!isMobile && (
-        <aside className="w-64 bg-card border-r border-border flex flex-col fixed h-full z-40">
+        <aside className="w-64 bg-card border-r border-border flex flex-col fixed inset-y-0 left-0 z-40">
           <div className="p-5 border-b border-border">
             <h1 className="text-xl font-black bg-gradient-to-r from-primary to-pilates-deep bg-clip-text text-transparent">
               My Pilates Plan
@@ -126,13 +126,13 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
       )}
 
       {/* Main content area */}
-      <div className={`flex-1 flex flex-col ${!isMobile ? "ml-64" : ""}`}>
+      <div className={`flex-1 min-w-0 flex flex-col ${!isMobile ? "ml-64" : ""}`}>
         {/* Header */}
-        <header className="sticky top-0 z-30 bg-card/80 backdrop-blur-lg border-b border-border px-4 py-3">
-          <div className="max-w-4xl mx-auto flex items-center justify-between">
-            <div className="min-w-0">
+        <header className="sticky top-0 z-30 w-full bg-card/80 backdrop-blur-lg border-b border-border px-3 sm:px-4 py-3 overflow-x-hidden">
+          <div className="w-full max-w-4xl mx-auto flex items-center justify-between gap-3 min-w-0">
+            <div className="min-w-0 flex-1">
               {isMobile && (
-                <h1 className="text-lg font-black bg-gradient-to-r from-primary to-pilates-deep bg-clip-text text-transparent">
+                <h1 className="text-lg font-black bg-gradient-to-r from-primary to-pilates-deep bg-clip-text text-transparent truncate">
                   My Pilates Plan
                 </h1>
               )}
@@ -140,7 +140,7 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
                 Welcome, <span className="font-semibold text-foreground">{userName}</span>
               </p>
             </div>
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 flex-shrink-0">
               <ProfileAvatar
                 profile={profile}
                 size={36}
@@ -151,8 +151,8 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
         </header>
 
         {/* Page content */}
-        <main className={`flex-1 px-4 py-6 ${isMobile ? "pb-24" : ""}`}>
-          <div className="max-w-4xl mx-auto">
+        <main className={`flex-1 w-full min-w-0 px-3 sm:px-4 py-5 sm:py-6 overflow-x-hidden ${isMobile ? "pb-24" : ""}`}>
+          <div className="w-full max-w-4xl mx-auto min-w-0">
             {children}
           </div>
         </main>
@@ -160,7 +160,7 @@ export function AppLayout({ currentView, onNavigate, profile, userName, children
 
       {/* Mobile Bottom Nav */}
       {isMobile && (
-        <nav className="fixed bottom-0 left-0 right-0 bg-card/95 backdrop-blur-lg border-t border-border z-40 px-2 pb-[env(safe-area-inset-bottom)]">
+        <nav className="fixed bottom-0 left-0 right-0 w-full max-w-full bg-card/95 backdrop-blur-lg border-t border-border z-40 px-2 pb-[env(safe-area-inset-bottom)] overflow-x-hidden">
           <div className="flex items-center justify-around py-2">
             {MOBILE_NAV_ITEMS.map(item => {
               const Icon = item.icon;
