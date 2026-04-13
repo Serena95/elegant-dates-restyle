@@ -93,7 +93,7 @@ const Index = () => {
   
 
   const { unlockedBadges, checkNewBadges } = useBadges(cloud.storicoCal);
-  const notifications = useNotifications(cloud.giorniAllenamento, cloud.storicoCal);
+  const notifications = useNotifications(FIXED_TRAINING_DAYS, cloud.storicoCal);
   const activeProgState = useActiveProgram();
   prevBadgeCountRef.current = unlockedBadges.length;
 
@@ -236,7 +236,7 @@ const Index = () => {
     startOfWeek.setHours(0, 0, 0, 0);
 
     let completed = 0;
-    const total = cloud.giorniAllenamento.length;
+    const total = FIXED_TRAINING_DAYS.length;
     for (let i = 0; i < 7; i++) {
       const d = new Date(startOfWeek);
       d.setDate(d.getDate() + i);
@@ -248,7 +248,7 @@ const Index = () => {
     let streak = 0;
     const d = new Date();
     d.setHours(0, 0, 0, 0);
-    const trainingDaysSet = new Set(cloud.giorniAllenamento);
+    const trainingDaysSet = new Set(FIXED_TRAINING_DAYS);
     for (let i = 0; i < 365; i++) {
       const dow = d.getDay();
       if (trainingDaysSet.has(dow)) {
@@ -260,7 +260,7 @@ const Index = () => {
     }
 
     return { completed, total, streak };
-  }, [cloud.storicoCal, cloud.giorniAllenamento]);
+  }, [cloud.storicoCal]);
 
   // Compute focus for each day based on cached exercises
   const focusMap = useMemo<Record<string, FocusInfo>>(() => {
