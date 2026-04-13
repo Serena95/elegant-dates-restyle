@@ -163,7 +163,8 @@ const Index = () => {
 
     // Always use fixed training days [1,3,5]
     const currentWeekDates = getWeekDates(FIXED_TRAINING_DAYS);
-    const expectedKey = [...currentWeekDates].sort().join(",");
+    // v2: force regeneration after focus-mapping fix
+    const expectedKey = "v2:" + [...currentWeekDates].sort().join(",");
 
     // Check if piano already has valid data for this week (from DB)
     const pianoKeys = Object.keys(cloud.piano).sort();
