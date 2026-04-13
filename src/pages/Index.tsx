@@ -454,8 +454,8 @@ const Index = () => {
 
   if (effectiveView === "equipment-init") {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center p-4">
-        <div className="w-full max-w-md bg-card rounded-3xl shadow-xl border border-border p-6">
+      <div className="min-h-screen min-h-dvh w-full max-w-full overflow-x-hidden bg-background flex items-center justify-center px-3 sm:px-4 py-4">
+        <div className="w-full max-w-md mx-auto bg-card rounded-3xl shadow-xl border border-border p-6">
           <EquipmentSelection
             savedAttrezzi={cloud.attrezzi}
             onComplete={(selected) => {
@@ -474,8 +474,8 @@ const Index = () => {
   if (view === "workout" && giornoSelezionato) {
     const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "Corpo Libero";
     return (
-      <div className="min-h-screen bg-background p-4">
-        <div className="max-w-4xl mx-auto">
+      <div className="min-h-screen min-h-dvh w-full max-w-full overflow-x-hidden bg-background px-3 sm:px-4 py-4">
+        <div className="w-full max-w-4xl mx-auto min-w-0">
           <WorkoutView
             giorno={giornoSelezionato}
             tema={attrezzo}

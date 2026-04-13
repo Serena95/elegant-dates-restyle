@@ -125,13 +125,13 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
         </div>
         {/* XP Bar */}
         {levelInfo && (
-          <div className="mt-3 space-y-1">
-            <div className="flex items-center justify-between text-[10px]">
-              <span className="font-semibold flex items-center gap-1 text-foreground">
-                <Zap size={10} className="text-amber-500" />
+          <div className="mt-3 space-y-1 min-w-0">
+            <div className="flex items-center justify-between gap-3 text-[10px] min-w-0">
+              <span className="font-semibold flex items-center gap-1 text-foreground min-w-0 truncate">
+                <Zap size={10} className="text-amber-500 flex-shrink-0" />
                 {levelInfo.current.name}
               </span>
-              <span className="text-muted-foreground">
+              <span className="text-muted-foreground flex-shrink-0">
                 {xpData!.xp} / {levelInfo.next?.minXp || "MAX"} XP
               </span>
             </div>
@@ -153,20 +153,20 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-accent/20 to-primary/10 rounded-2xl p-4 border border-primary/20 space-y-3"
+          className="bg-gradient-to-r from-accent/20 to-primary/10 rounded-2xl p-4 border border-primary/20 space-y-3 overflow-hidden"
         >
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-[10px] font-bold uppercase text-primary tracking-wide">
+          <div className="flex items-center justify-between gap-3 min-w-0">
+            <div className="min-w-0 flex-1">
+              <p className="text-[10px] font-bold uppercase text-primary tracking-wide break-words">
                 {activeProgram.type === "program" ? "📋 Programma Attivo" : "🏆 Challenge Attiva"}
               </p>
-              <p className="text-sm font-black text-foreground mt-1">
+              <p className="text-sm font-black text-foreground mt-1 break-words">
                 {activeProgram.name}
                 {activeProgram.type === "program" && activeProgram.week && ` — Sett. ${activeProgram.week}`}
               </p>
             </div>
           </div>
-          <div className="flex gap-2">
+          <div className="flex flex-col sm:flex-row gap-2">
             <button
               onClick={onActivateInDashboard}
               className="flex-1 py-2 rounded-xl bg-primary text-primary-foreground font-bold text-xs hover:opacity-90 transition"
@@ -188,19 +188,19 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
         <motion.div
           initial={{ opacity: 0, y: 10 }}
           animate={{ opacity: 1, y: 0 }}
-          className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl p-4 border border-green-500/20"
+          className="bg-gradient-to-r from-green-500/10 to-emerald-500/10 rounded-2xl p-4 border border-green-500/20 overflow-hidden"
         >
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between gap-3 min-w-0">
             <div className="flex items-center gap-3 flex-1 min-w-0">
-              <span className="text-2xl">{savedPlan.icon}</span>
+              <span className="text-2xl flex-shrink-0">{savedPlan.icon}</span>
               <div className="min-w-0">
-                <p className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 tracking-wide">Piano Alimentare Attivo</p>
+                <p className="text-[10px] font-bold uppercase text-green-600 dark:text-green-400 tracking-wide break-words">Piano Alimentare Attivo</p>
                 <p className="text-sm font-black text-foreground truncate">{savedPlan.nome}</p>
               </div>
             </div>
             <button
               onClick={(e) => { e.stopPropagation(); localStorage.removeItem("activeNutritionPlan"); localStorage.removeItem("activeNutritionPlanFull"); setSavedPlan(null); }}
-              className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground"
+              className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground flex-shrink-0"
             >
               <X size={14} />
             </button>
