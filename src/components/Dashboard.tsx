@@ -26,6 +26,7 @@ interface DashboardProps {
   storicoCal?: Record<string, any>;
   giorniAllenamento?: number[];
   attrezzi?: string[];
+  exercisesMap?: Record<string, any[]>;
   cyclePhase?: string;
   pregnancyMode?: boolean;
   pregnancyWeek?: number;
@@ -40,6 +41,7 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
   storicoCal = {}, giorniAllenamento = [1, 3, 5], attrezzi = [],
   cyclePhase, pregnancyMode, pregnancyWeek,
   activeProgram, onCancelProgram, onActivateInDashboard,
+  exercisesMap = {},
 }, ref) {
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "MEDIO" ? "bg-primary" : "bg-pilates-red";
   const { isPremium } = usePremium();
@@ -327,6 +329,7 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
                 isToday={dateKey === oggi}
                 onClick={() => onAvviaAllenamento(dateKey)}
                 locked={isLocked}
+                exercises={exercisesMap[dateKey]}
               />
             );
           })
