@@ -25,6 +25,14 @@ export function usePremium(): PremiumStatus {
       return;
     }
 
+    // Admin users always have lifetime premium
+    if (isAdmin) {
+      setIsPremium(true);
+      setPremiumExpires(null);
+      setLoading(false);
+      return;
+    }
+
     try {
       const { data, error } = await supabase.functions.invoke("check-subscription");
       if (error) throw error;
