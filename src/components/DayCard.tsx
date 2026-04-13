@@ -106,11 +106,15 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
           </div>
         </div>
 
-        {/* Chevron */}
-        <ChevronRight
-          size={24}
-          className="text-primary flex-shrink-0 group-hover:translate-x-1 transition-transform"
-        />
+        {/* Chevron or Lock */}
+        {locked ? (
+          <Lock size={20} className="text-amber-500 flex-shrink-0" />
+        ) : (
+          <ChevronRight
+            size={24}
+            className="text-primary flex-shrink-0 group-hover:translate-x-1 transition-transform"
+          />
+        )}
       </div>
 
       {/* Decorative corner */}
