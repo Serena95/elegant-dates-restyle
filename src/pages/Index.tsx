@@ -424,6 +424,7 @@ const Index = () => {
     cloud.setLivello(l);
     // Force full regeneration with new level
     lastGeneratedKey.current = "";
+    setStoredGenerationKey("");
     const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
     if (equipmentPool.length > 0) {
       const result = generaSettimanaIntelligente(
@@ -438,6 +439,7 @@ const Index = () => {
     cloud.setGiorniAllenamento(days);
     // Reset generation key to force regeneration
     lastGeneratedKey.current = "";
+    setStoredGenerationKey("");
   }, [cloud.setGiorniAllenamento]);
 
   if (effectiveView === "loading") {
