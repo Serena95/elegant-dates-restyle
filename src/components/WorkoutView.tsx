@@ -1,11 +1,14 @@
-import { useState, useEffect, useRef, useCallback } from "react";
+import { useState, useEffect, useRef, useCallback, useMemo } from "react";
 import { Exercise, CONFIG_LIVELLI, ATTREZZO_ICONS, TEMA_CONFIG, detectFocus } from "@/data/exercises";
 import { useTimer } from "@/hooks/useTimer";
 import { useVoiceTrainer } from "@/hooks/useVoiceTrainer";
 import { TimerOverlay } from "./TimerOverlay";
 import { ExerciseImage } from "./ExerciseImage";
-import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, X, Volume2, VolumeX, Sparkles, ArrowRight } from "lucide-react";
+import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, X, Volume2, VolumeX, Sparkles, ArrowRight, Flame, TrendingUp } from "lucide-react";
 import type { DayFocus } from "@/data/exercises";
+import { getCoreActivationCue } from "@/data/coreActivation";
+import { getFinisherExercises, getFinisherDuration, FinisherExercise } from "@/data/finisher";
+import { getProgressionConfig, getProgressionLabel } from "@/services/progressionService";
 
 // ============================================================
 // DYNAMIC STRETCHING DATA
@@ -77,7 +80,9 @@ const RISCALDAMENTO_MODES = [
 ];
 
 export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, onStretchingComplete, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], initialShowStretching = false, onStateChange, dayFocus }: WorkoutViewProps) {
-  const config = CONFIG_LIVELLI[livello];
+  // Use progression-based config instead of static CONFIG_LIVELLI
+  const progressionConfig = useMemo(() => getProgressionConfig(livello), [livello]);
+  const config = progressionConfig;
   const maxRound = config.round;
   const timer = useTimer();
   const voice = useVoiceTrainer({ enabled: voiceEnabled });
@@ -90,10 +95,16 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const [showStretching, setShowStretching] = useState(initialShowStretching);
   const [stretchingComplete, setStretchingComplete] = useState(false);
   const [completedStretches, setCompletedStretches] = useState<Set<number>>(new Set());
+  const [showFinisher, setShowFinisher] = useState(false);
+  const [finisherComplete, setFinisherComplete] = useState(false);
+  const [completedFinishers, setCompletedFinishers] = useState<Set<number>>(new Set());
   const lastTimerRef = useRef<string | null>(null);
   const firedCuesRef = useRef<Set<string>>(new Set());
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isCompleted = roundCorrenti >= maxRound;
+
+  // Generate finisher exercises once per session
+  const finisherExercises = useMemo(() => getFinisherExercises(), []);
 
   // Report state changes for persistence
   useEffect(() => {
@@ -106,7 +117,6 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     const remaining = timer.timeLeft;
     const label = timer.label;
 
-    // Reset fired cues when a new timer starts
     if (label !== lastTimerRef.current) {
       lastTimerRef.current = label;
       firedCuesRef.current.clear();
@@ -160,7 +170,6 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         next.delete(idx);
       } else {
         next.add(idx);
-        // Auto-advance to next exercise
         if (idx < esercizi.length - 1) {
           setCurrentExerciseIdx(idx + 1);
           scrollToExercise(idx + 1);
@@ -172,7 +181,6 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
 
   const handleSegnaRound = () => {
     onSegnaRound();
-    // Reset: deselect all and go back to first exercise
     setCompletati(new Set());
     setCurrentExerciseIdx(0);
     
@@ -180,12 +188,11 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     
     if (roundCorrenti + 1 < maxRound) {
       timer.start(config.pausa, `PAUSA ROUND ${roundCorrenti + 1}`);
-      // Scroll back to first exercise after pause starts
       setTimeout(() => scrollToExercise(0), 300);
     } else {
-      // All rounds completed → show stretching
+      // All rounds completed → show finisher first
       if (voiceActive) voice.announceAllComplete();
-      setShowStretching(true);
+      setShowFinisher(true);
     }
   };
 
@@ -198,11 +205,91 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     });
   };
 
+  const toggleFinisher = (idx: number) => {
+    setCompletedFinishers(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
   const cambiaRiscaldamento = () => {
     setTipoRiscaldamento(prev => (prev + 1) % 3);
   };
 
   const risc = RISCALDAMENTO_MODES[tipoRiscaldamento];
+
+  // ============================================================
+  // FINISHER SCREEN (after all rounds, before stretching)
+  // ============================================================
+  if (showFinisher && !finisherComplete) {
+    return (
+      <div className="space-y-4">
+        <TimerOverlay timer={timer} />
+        
+        <div className="flex items-center justify-between">
+          <h2 className="text-xl font-bold text-foreground">🔥 Finisher Brucia Grassi</h2>
+        </div>
+        
+        <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-xl p-3">
+          <p className="text-sm text-foreground font-semibold flex items-center gap-2">
+            <Flame size={16} className="text-red-500" />
+            {finisherExercises.length} esercizi • {getFinisherDuration(finisherExercises)} min • Nessuna pausa!
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Alta intensità per massimizzare il consumo calorico. Core sempre attivo!
+          </p>
+        </div>
+
+        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full transition-all duration-500 bg-red-500"
+            style={{ width: `${(completedFinishers.size / finisherExercises.length) * 100}%` }}
+          />
+        </div>
+
+        <div className="space-y-3">
+          {finisherExercises.map((ex, idx) => {
+            const done = completedFinishers.has(idx);
+            return (
+              <div
+                key={ex.nome + idx}
+                onClick={() => toggleFinisher(idx)}
+                className={`rounded-xl border p-4 transition-all cursor-pointer ${
+                  done ? "opacity-40 bg-muted border-border" : "bg-card border-border hover:border-red-500/30 hover:shadow-md"
+                }`}
+              >
+                <div className="flex justify-between items-center">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2">
+                      {done && <Check size={16} className="text-red-500" />}
+                      <strong className="text-base text-foreground">{ex.emoji} {ex.nome}</strong>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{ex.desc}</p>
+                    <p className="text-xs text-red-500 font-semibold mt-1">{ex.coreNote}</p>
+                  </div>
+                  <button
+                    onClick={e => { e.stopPropagation(); timer.start(ex.durata, ex.nome); }}
+                    className="bg-red-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0"
+                  >
+                    <Timer size={12} /> {ex.durata}s
+                  </button>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={() => { setFinisherComplete(true); setShowStretching(true); }}
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-red-500 to-orange-500 text-white font-bold shadow-lg flex items-center justify-center gap-2"
+        >
+          🔥 Finisher Completato → Stretching
+        </button>
+      </div>
+    );
+  }
 
   // ============================================================
   // STRETCHING SCREEN
@@ -279,7 +366,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
           <span className="text-4xl">🏆</span>
         </div>
         <h2 className="text-2xl font-black text-foreground">Allenamento Completato!</h2>
-        <p className="text-muted-foreground">Ottimo lavoro! Hai completato tutti i round e lo stretching.</p>
+        <p className="text-muted-foreground">Ottimo lavoro! Hai completato tutti i round, il finisher e lo stretching.</p>
         <button
           onClick={onBack}
           className="w-full max-w-xs py-4 rounded-2xl bg-primary text-primary-foreground font-bold shadow-lg flex items-center justify-center gap-2"
@@ -369,6 +456,11 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                 </span>
               )}
             </div>
+            {/* Progression indicator */}
+            <div className="flex items-center gap-2 px-1">
+              <TrendingUp size={12} className="text-primary" />
+              <span className="text-[10px] font-bold text-primary">{getProgressionLabel(livello)}</span>
+            </div>
           </>
         );
       })()}
@@ -406,6 +498,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         {esercizi.map((es, idx) => {
           const done = completati.has(idx);
           const attrIcon = ATTREZZO_ICONS[es.attrezzo] || "🏋️";
+          const coreCue = getCoreActivationCue(es.categoria);
 
           return (
             <div
@@ -458,6 +551,11 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                 <p className="text-sm text-foreground mt-1">{es.descrizione}</p>
               </div>
 
+              {/* Core activation cue */}
+              <div className="mt-2 bg-red-500/5 border border-red-500/15 p-2.5 rounded-lg">
+                <p className="text-xs font-semibold text-red-600 dark:text-red-400">{coreCue}</p>
+              </div>
+
               <div className="flex items-center gap-2 mt-2 flex-wrap">
                 <Dumbbell size={12} className="text-muted-foreground" />
                 {es.muscoli.map(m => (
@@ -488,9 +586,14 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         </div>
       )}
 
-      {/* Stretching note */}
-      <div className="bg-pilates-amber/10 border border-pilates-amber/30 p-3 rounded-xl text-center text-sm font-bold text-pilates-amber">
-        ✨ Al termine dei round inizierà lo stretching finale
+      {/* Finisher + Stretching note */}
+      <div className="bg-gradient-to-r from-red-500/10 to-amber-500/10 border border-red-500/20 p-3 rounded-xl text-center space-y-1">
+        <p className="text-sm font-bold text-red-500 flex items-center justify-center gap-1">
+          <Flame size={14} /> Dopo i round: Finisher Brucia Grassi
+        </p>
+        <p className="text-xs text-muted-foreground">
+          ✨ Poi stretching finale per completare la sessione
+        </p>
       </div>
 
       {/* Round control */}
