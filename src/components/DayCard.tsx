@@ -85,6 +85,11 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wide">
               {attrezzo}
             </span>
+            {locked && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
+                <Crown size={10} /> PLUS
+              </span>
+            )}
           </div>
 
           {focus && (
