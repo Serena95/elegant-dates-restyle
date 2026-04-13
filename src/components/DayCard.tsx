@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, Check } from "lucide-react";
+import { ChevronRight, Check, Lock, Crown } from "lucide-react";
 import { DayPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo } from "@/data/exercises";
 
 interface DayCardProps {
@@ -12,12 +12,13 @@ interface DayCardProps {
   focus?: FocusInfo;
   isToday?: boolean;
   onClick: () => void;
+  locked?: boolean;
 }
 
 const DEFAULT_GRADIENT = { from: "from-blue-500/10", to: "to-indigo-500/10", border: "border-blue-200 dark:border-blue-800", accent: "bg-blue-500" };
 const TODAY_GRADIENT = { from: "from-primary/15", to: "to-secondary/15", border: "border-primary/30", accent: "bg-primary" };
 
-export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function DayCard({ giorno, label, dati, livello, index, focus, isToday, onClick }, ref) {
+export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function DayCard({ giorno, label, dati, livello, index, focus, isToday, onClick, locked }, ref) {
   const maxRound = CONFIG_LIVELLI[livello].round;
   const roundFatti = dati.round || 0;
   const isCompleted = roundFatti >= maxRound;
@@ -36,10 +37,10 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ delay: index * 0.1, duration: 0.4 }}
-      whileHover={{ scale: 1.02, y: -4 }}
-      whileTap={{ scale: 0.98 }}
-      onClick={onClick}
-      className={`relative cursor-pointer rounded-2xl border-2 ${gradient.border} bg-gradient-to-br ${gradient.from} ${gradient.to} p-5 transition-shadow hover:shadow-xl hover:shadow-primary/10 overflow-hidden group`}
+      whileHover={{ scale: locked ? 1 : 1.02, y: locked ? 0 : -4 }}
+      whileTap={{ scale: locked ? 1 : 0.98 }}
+      onClick={locked ? undefined : onClick}
+      className={`relative ${locked ? "opacity-60" : "cursor-pointer"} rounded-2xl border-2 ${gradient.border} bg-gradient-to-br ${gradient.from} ${gradient.to} p-5 transition-shadow ${locked ? "" : "hover:shadow-xl hover:shadow-primary/10"} overflow-hidden group`}
     >
       {/* Progress bar at top */}
       <div className="absolute top-0 left-0 right-0 h-1 bg-muted/50 overflow-hidden rounded-t-2xl">
@@ -84,6 +85,11 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
             <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wide">
               {attrezzo}
             </span>
+            {locked && (
+              <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
+                <Crown size={10} /> PLUS
+              </span>
+            )}
           </div>
 
           {focus && (
@@ -100,11 +106,15 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
           </div>
         </div>
 
-        {/* Chevron */}
-        <ChevronRight
-          size={24}
-          className="text-primary flex-shrink-0 group-hover:translate-x-1 transition-transform"
-        />
+        {/* Chevron or Lock */}
+        {locked ? (
+          <Lock size={20} className="text-amber-500 flex-shrink-0" />
+        ) : (
+          <ChevronRight
+            size={24}
+            className="text-primary flex-shrink-0 group-hover:translate-x-1 transition-transform"
+          />
+        )}
       </div>
 
       {/* Decorative corner */}

@@ -9,8 +9,10 @@ export interface PremiumStatus {
   checkSubscription: () => Promise<void>;
 }
 
+// Admin users always have premium - this is an additional safety net
+
 export function usePremium(): PremiumStatus {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [isPremium, setIsPremium] = useState(false);
   const [premiumExpires, setPremiumExpires] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
@@ -18,6 +20,14 @@ export function usePremium(): PremiumStatus {
   const checkSubscription = useCallback(async () => {
     if (!user) {
       setIsPremium(false);
+      setPremiumExpires(null);
+      setLoading(false);
+      return;
+    }
+
+    // Admin users always have lifetime premium
+    if (isAdmin) {
+      setIsPremium(true);
       setPremiumExpires(null);
       setLoading(false);
       return;
@@ -47,7 +57,7 @@ export function usePremium(): PremiumStatus {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   useEffect(() => {
     checkSubscription();
