@@ -106,10 +106,10 @@ const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
   total_body: [
     ["schiena", "braccia"], // upper
     ["gambe", "glutei"],    // lower
-    ["braccia", "stabilità"], // upper
+    ["braccia", "schiena", "stabilità"], // upper
     ["gambe", "glutei"],    // lower
     ["core"],              // addominali (mandatory)
-    ["core"],              // fianchi/obliqui (mandatory)
+    ["core", "stabilità"], // fianchi/obliqui (mandatory)
   ],
 };
 

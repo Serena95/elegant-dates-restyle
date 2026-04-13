@@ -270,18 +270,22 @@ const Index = () => {
     return { completed, total, streak };
   }, [cloud.storicoCal]);
 
-  // Compute focus for each day based on cached exercises
+  // Compute focus labels from the fixed weekly calendar mapping.
+  // Exercises are validated separately during generation/persistence checks.
   const focusMap = useMemo<Record<string, FocusInfo>>(() => {
-    const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
     const map: Record<string, FocusInfo> = {};
+
     for (const giorno of Object.keys(cloud.piano)) {
-      const cached = allenamentiEsercizi[giorno];
-      if (cached && cached.length > 0 && (cached[0] as any).categoria) {
-        map[giorno] = detectFocus(cached);
-      }
+      const dayFocus = getFocusForWeekday(new Date(`${giorno}T00:00:00`).getDay());
+      map[giorno] = {
+        key: dayFocus,
+        label: dayFocus === "total_body" ? "Total Body" : dayFocus === "upper_body" ? "Upper Body" : "Lower Body",
+        icon: dayFocus === "total_body" ? "🔥" : dayFocus === "upper_body" ? "💪" : "🦵",
+      };
     }
+
     return map;
-  }, [cloud.piano, cloud.allenamentiData.esercizi]);
+  }, [cloud.piano]);
 
   const effectiveView: string = cloud.loading
     ? "loading"
