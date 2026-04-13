@@ -67,7 +67,15 @@ export async function generateCompleteCoachData(context: AICoachContext, forceRe
     });
     if (error) {
       handleAIError(error);
-      throw error;
+      return getDefaultResponse(context.streak);
+    }
+
+    // Handle fallback responses from edge function
+    if (data?.fallback || data?.error) {
+      if (data.error === "PAYMENT_REQUIRED") {
+        console.warn("AI Coach: credits exhausted, using defaults");
+      }
+      return getDefaultResponse(context.streak);
     }
 
     const raw = data?.result || "";
