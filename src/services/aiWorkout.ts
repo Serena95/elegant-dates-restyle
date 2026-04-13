@@ -1,5 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-import { Exercise, EXERCISE_LIBRARY, generaEserciziGiorno } from "@/data/exercises";
+import { Exercise, EXERCISE_LIBRARY, generaEserciziGiorno, detectFocus } from "@/data/exercises";
 import type { ProgressionContext } from "@/data/exercises";
 
 interface AIWorkoutParams {
@@ -9,6 +9,20 @@ interface AIWorkoutParams {
   storici?: string[];
   targetCount?: number;
   progressionCtx?: ProgressionContext;
+}
+
+function isFocusConsistent(exercises: Exercise[], focus?: string): boolean {
+  if (!focus || exercises.length === 0) return true;
+
+  const detected = detectFocus(exercises).key;
+
+  if (focus === "upper_body") return detected === "upper_body";
+  if (focus === "lower_body" || focus === "gambe_glutei") return detected === "lower_body";
+  if (focus === "total_body" || focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
+    return detected === "full_body";
+  }
+
+  return true;
 }
 
 /**
@@ -74,6 +88,12 @@ export async function generateAIWorkout({
       // If AI returned too few valid exercises, fill with local generation
       if (validExercises.length < Math.min(6, disponibili.length)) {
         console.warn("AI returned too few valid exercises, using local fallback");
+        const localExercises = generaEserciziGiorno(attrezzo, livello, storici, focus, progressionCtx);
+        return { exercises: localExercises, aiGenerated: false };
+      }
+
+      if (!isFocusConsistent(validExercises, focus)) {
+        console.warn("AI returned exercises inconsistent with requested focus, using local fallback");
         const localExercises = generaEserciziGiorno(attrezzo, livello, storici, focus, progressionCtx);
         return { exercises: localExercises, aiGenerated: false };
       }
