@@ -262,18 +262,25 @@ const Index = () => {
     return { completed, total, streak };
   }, [cloud.storicoCal]);
 
-  // Compute focus for each day based on cached exercises
+  // Compute focus for each day from the fixed weekday mapping.
+  // This keeps the home labels aligned with the locked Mon/Wed/Fri structure.
   const focusMap = useMemo<Record<string, FocusInfo>>(() => {
-    const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
     const map: Record<string, FocusInfo> = {};
+
     for (const giorno of Object.keys(cloud.piano)) {
-      const cached = allenamentiEsercizi[giorno];
-      if (cached && cached.length > 0 && (cached[0] as any).categoria) {
-        map[giorno] = detectFocus(cached);
-      }
+      const dateObj = new Date(`${giorno}T00:00:00`);
+      const dayFocus = getFocusForWeekday(dateObj.getDay());
+      const focusLabel = FOCUS_LABELS[dayFocus];
+
+      map[giorno] = {
+        key: dayFocus,
+        label: focusLabel.label,
+        icon: focusLabel.icon,
+      };
     }
+
     return map;
-  }, [cloud.piano, cloud.allenamentiData.esercizi]);
+  }, [cloud.piano]);
 
   const effectiveView: string = cloud.loading
     ? "loading"
