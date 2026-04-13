@@ -505,7 +505,7 @@ const Index = () => {
            setStoredGenerationKey("");
            generationGuardRef.current = false;
           const result = generaSettimanaIntelligente(
-            selected, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
+            selected, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, FIXED_TRAINING_DAYS
           );
           cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
           cloud.setUltimiAttrezzi(Object.values(result.piano).map(d => d.attrezzo));
