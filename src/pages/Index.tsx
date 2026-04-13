@@ -38,7 +38,7 @@ import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
-import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, FOCUS_LABELS, DayFocus, DAY_FOCUS_PATTERN, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, FOCUS_LABELS, DayFocus, DAY_FOCUS_PATTERN, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey } from "@/data/exercises";
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
@@ -188,7 +188,8 @@ const Index = () => {
           if (!updatedEsercizi[dateKey] || updatedEsercizi[dateKey].length === 0) {
             const dati = cloud.piano[dateKey];
             if (dati) {
-              const dayFocus = DAY_FOCUS_PATTERN[i % DAY_FOCUS_PATTERN.length];
+              const dateObj = new Date(dateKey + "T00:00:00");
+              const dayFocus = getFocusForWeekday(dateObj.getDay(), i);
               const exercises = generaEserciziGiorno(dati.attrezzo, cloud.livello, [], dayFocus, ctx);
               updatedEsercizi[dateKey] = exercises;
               needsUpdate = true;
