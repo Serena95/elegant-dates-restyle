@@ -12,7 +12,7 @@ export interface PremiumStatus {
 // Admin users always have premium - this is an additional safety net
 
 export function usePremium(): PremiumStatus {
-  const { user } = useAuth();
+  const { user, isAdmin } = useAuth();
   const [isPremium, setIsPremium] = useState(false);
   const [premiumExpires, setPremiumExpires] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
