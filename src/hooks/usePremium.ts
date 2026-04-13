@@ -9,6 +9,8 @@ export interface PremiumStatus {
   checkSubscription: () => Promise<void>;
 }
 
+// Admin users always have premium - this is an additional safety net
+
 export function usePremium(): PremiumStatus {
   const { user } = useAuth();
   const [isPremium, setIsPremium] = useState(false);
