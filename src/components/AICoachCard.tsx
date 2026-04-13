@@ -92,13 +92,13 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
           initial={{ opacity: 0 }}
           animate={{ opacity: 1 }}
           transition={{ delay: 0.3 }}
-          className="bg-card rounded-2xl p-4 border border-border"
+          className="bg-card rounded-2xl p-4 border border-border overflow-hidden"
         >
-          <div className="flex items-start gap-3">
+          <div className="flex items-start gap-3 min-w-0">
             <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center flex-shrink-0">
               <Sparkles size={16} className="text-primary" />
             </div>
-            <p className="text-sm text-foreground leading-relaxed">{motivation}</p>
+            <p className="min-w-0 break-words text-sm text-foreground leading-relaxed">{motivation}</p>
           </div>
         </motion.div>
       )}
@@ -168,25 +168,25 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
                       {statusBadge.label}
                     </div>
 
-                    <div>
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-xl">{todayIcon}</span>
-                        <p className="text-xs font-bold uppercase text-primary tracking-wide">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2 mb-1 min-w-0">
+                        <span className="text-xl flex-shrink-0">{todayIcon}</span>
+                        <p className="text-xs font-bold uppercase text-primary tracking-wide truncate">
                           {isRestDay ? "Consiglio per oggi" : isCompleted ? "Ben fatto!" : "Piano di oggi"}
                         </p>
                       </div>
-                      <p className="text-lg font-black text-foreground">{suggestion.titolo}</p>
-                      <p className="text-sm text-muted-foreground mt-1">{suggestion.descrizione}</p>
-                      <p className="text-xs text-primary font-semibold mt-2">
+                      <p className="text-lg font-black text-foreground break-words">{suggestion.titolo}</p>
+                      <p className="text-sm text-muted-foreground mt-1 break-words">{suggestion.descrizione}</p>
+                      <p className="text-xs text-primary font-semibold mt-2 break-words">
                         {isRestDay ? "🌿 " : "🎯 Focus: "}{suggestion.focus}
                       </p>
                     </div>
 
                     {/* Nutrition tip */}
                     {nutritionTip && (
-                      <div className="bg-green-500/5 border border-green-500/15 rounded-xl p-3 flex items-start gap-2">
-                        <span className="text-sm">🥗</span>
-                        <p className="text-xs text-foreground">{nutritionTip}</p>
+                      <div className="bg-green-500/5 border border-green-500/15 rounded-xl p-3 flex items-start gap-2 overflow-hidden">
+                        <span className="text-sm flex-shrink-0">🥗</span>
+                        <p className="min-w-0 break-words text-xs text-foreground">{nutritionTip}</p>
                       </div>
                     )}
 

@@ -106,18 +106,18 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
 
 
   return (
-    <div className="space-y-5">
+    <div className="space-y-5 w-full max-w-full overflow-x-hidden">
       {/* Greeting + Level */}
       <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }}>
-        <div className="flex items-center justify-between">
-          <div>
-            <h2 className="text-2xl font-black text-foreground">
+        <div className="flex items-start justify-between gap-3 min-w-0">
+          <div className="min-w-0 flex-1">
+            <h2 className="text-2xl font-black text-foreground break-words">
               {greeting()}{userName ? `, ${userName}` : ""} 👋
             </h2>
             <p className="text-sm text-muted-foreground mt-0.5">Pronta per allenarti oggi?</p>
           </div>
           {levelInfo && (
-            <div className="text-center">
+            <div className="text-center flex-shrink-0">
               <span className="text-2xl">{levelInfo.current.icon}</span>
               <p className="text-[10px] font-bold text-muted-foreground">Lv.{levelInfo.current.level}</p>
             </div>
