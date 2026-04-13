@@ -227,9 +227,31 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     return (
       <div className="space-y-4">
         <TimerOverlay timer={timer} />
+
+        {showQuitConfirm && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowQuitConfirm(false)}>
+            <div className="bg-card rounded-2xl border border-border shadow-2xl p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-foreground">Terminare l'allenamento?</h3>
+              <p className="text-sm text-muted-foreground">Il workout è già stato registrato. Vuoi uscire?</p>
+              <div className="flex gap-3">
+                <button onClick={() => setShowQuitConfirm(false)} className="flex-1 py-3 rounded-xl bg-muted text-foreground font-bold">Continua</button>
+                <button onClick={onBack} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Esci</button>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="flex items-center justify-between">
-          <h2 className="text-xl font-bold text-foreground">🔥 Finisher Brucia Grassi</h2>
+          <button onClick={() => setShowQuitConfirm(true)} className="flex items-center gap-1 text-primary font-bold text-sm">
+            <ChevronLeft size={18} /> Indietro
+          </button>
+          <h2 className="text-xl font-bold text-foreground">🔥 Finisher</h2>
+          <button
+            onClick={() => { setFinisherComplete(true); setShowStretching(true); }}
+            className="text-xs font-bold text-muted-foreground hover:text-foreground transition"
+          >
+            Salta →
+          </button>
         </div>
         
         <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-xl p-3">
@@ -299,9 +321,31 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     return (
       <div className="space-y-4">
         <TimerOverlay timer={timer} />
+
+        {showQuitConfirm && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowQuitConfirm(false)}>
+            <div className="bg-card rounded-2xl border border-border shadow-2xl p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-foreground">Terminare l'allenamento?</h3>
+              <p className="text-sm text-muted-foreground">Il workout è già stato registrato. Vuoi uscire?</p>
+              <div className="flex gap-3">
+                <button onClick={() => setShowQuitConfirm(false)} className="flex-1 py-3 rounded-xl bg-muted text-foreground font-bold">Continua</button>
+                <button onClick={() => { setStretchingComplete(true); onStretchingComplete?.(); }} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Esci</button>
+              </div>
+            </div>
+          </div>
+        )}
         
         <div className="flex items-center justify-between">
+          <button onClick={() => setShowQuitConfirm(true)} className="flex items-center gap-1 text-primary font-bold text-sm">
+            <ChevronLeft size={18} /> Indietro
+          </button>
           <h2 className="text-xl font-bold text-foreground">🌊 Stretching {focusLabel}</h2>
+          <button
+            onClick={() => { setStretchingComplete(true); onStretchingComplete?.(); }}
+            className="text-xs font-bold text-muted-foreground hover:text-foreground transition"
+          >
+            Salta →
+          </button>
         </div>
         
         <p className="text-sm text-muted-foreground">
