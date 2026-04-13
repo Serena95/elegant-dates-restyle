@@ -674,6 +674,8 @@ export function NutritionPlanView({ onBack, onSavePlan, initialPlanId }: Nutriti
           onClick={() => {
             const planToSave = { nome: selectedPlan.nome, icon: selectedPlan.icon, id: selectedPlan.id, descrizione: selectedPlan.descrizione };
             localStorage.setItem("activeNutritionPlan", JSON.stringify(planToSave));
+            // Save full plan data for direct access from dashboard
+            localStorage.setItem("activeNutritionPlanFull", JSON.stringify(selectedPlan));
             onSavePlan?.(planToSave);
             toast({ title: "Piano salvato! ✅", description: "Lo troverai nella dashboard" });
           }}
