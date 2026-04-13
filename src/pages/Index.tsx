@@ -707,8 +707,10 @@ const Index = () => {
             onBack={() => navigate("more")}
           />
         );
-      case "nutrition" as any:
-        return <NutritionPlanView onBack={() => navigate("more")} onSavePlan={() => setView("dashboard")} initialPlanId={(() => { try { const s = localStorage.getItem("activeNutritionPlan"); return s ? JSON.parse(s)?.id : undefined; } catch { return undefined; } })()} />;
+      case "nutrition" as any: {
+        const planId = (() => { try { const s = localStorage.getItem("activeNutritionPlan"); return s ? JSON.parse(s)?.id : undefined; } catch { return undefined; } })();
+        return <NutritionPlanView key={`nutrition-${planId || 'browse'}`} onBack={() => navigate("more")} onSavePlan={() => setView("dashboard")} initialPlanId={planId} />;
+      }
       case "privacy" as any:
         return <LegalPage type="privacy" onBack={() => setView("settings" as any)} />;
       case "terms" as any:
