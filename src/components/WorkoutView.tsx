@@ -230,6 +230,12 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         
         <div className="flex items-center justify-between">
           <h2 className="text-xl font-bold text-foreground">🔥 Finisher Brucia Grassi</h2>
+          <button
+            onClick={() => { setFinisherComplete(true); setShowStretching(true); }}
+            className="text-xs font-bold text-muted-foreground hover:text-foreground transition"
+          >
+            Salta →
+          </button>
         </div>
         
         <div className="bg-gradient-to-r from-red-500/10 to-orange-500/10 border border-red-500/20 rounded-xl p-3">
