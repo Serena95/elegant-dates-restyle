@@ -135,19 +135,17 @@ Fornisci un consiglio nutrizionale personalizzato e coerente con il piano. Rispo
     });
 
     if (!response.ok) {
-      if (response.status === 429) {
-        return new Response(JSON.stringify({ error: "Rate limit exceeded" }), {
-          status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
-      if (response.status === 402) {
-        return new Response(JSON.stringify({ error: "Payment required" }), {
-          status: 402, headers: { ...corsHeaders, "Content-Type": "application/json" },
-        });
-      }
       const t = await response.text();
       console.error("AI gateway error:", response.status, t);
-      throw new Error("AI gateway error");
+      
+      // Return 200 with fallback flag so frontend doesn't crash
+      return new Response(JSON.stringify({ 
+        error: response.status === 402 ? "PAYMENT_REQUIRED" : response.status === 429 ? "RATE_LIMITED" : "SERVICE_ERROR",
+        fallback: true,
+        result: null 
+      }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await response.json();

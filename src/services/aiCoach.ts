@@ -67,7 +67,15 @@ export async function generateCompleteCoachData(context: AICoachContext, forceRe
     });
     if (error) {
       handleAIError(error);
-      throw error;
+      return getDefaultResponse(context.streak);
+    }
+
+    // Handle fallback responses from edge function
+    if (data?.fallback || data?.error) {
+      if (data.error === "PAYMENT_REQUIRED") {
+        console.warn("AI Coach: credits exhausted, using defaults");
+      }
+      return getDefaultResponse(context.streak);
     }
 
     const raw = data?.result || "";
@@ -95,9 +103,8 @@ export async function generateWorkoutSuggestion(context: AICoachContext): Promis
     const { data, error } = await supabase.functions.invoke("ai-coach", {
       body: { type: "workout_suggestion", context },
     });
-    if (error) {
-      handleAIError(error);
-      throw error;
+    if (error || data?.fallback || data?.error) {
+      return getDefaultSuggestion();
     }
 
     const raw = data?.result || "";
@@ -117,9 +124,8 @@ export async function generateMotivationMessage(context: Pick<AICoachContext, "s
     const { data, error } = await supabase.functions.invoke("ai-coach", {
       body: { type: "motivation", context },
     });
-    if (error) {
-      handleAIError(error);
-      throw error;
+    if (error || data?.fallback || data?.error) {
+      return getDefaultMotivation(context.streak);
     }
     return data?.result?.replace(/^["']|["']$/g, "").trim() || getDefaultMotivation(context.streak);
   } catch {
@@ -132,9 +138,8 @@ export async function generateRecoveryAdvice(context: AICoachContext): Promise<R
     const { data, error } = await supabase.functions.invoke("ai-coach", {
       body: { type: "recovery", context },
     });
-    if (error) {
-      handleAIError(error);
-      throw error;
+    if (error || data?.fallback || data?.error) {
+      return { consiglio: "Fai qualche esercizio di mobilità per recuperare.", tipo: "mobilità" as const };
     }
 
     const raw = data?.result || "";
