@@ -89,11 +89,11 @@ export function getFocusForWeekday(dayOfWeek: number, fallbackIndex: number = 0)
 const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
   upper_body: [
     ["schiena"],           // mandatory
-    ["braccia"],           // petto/tricipiti
-    ["schiena"],           // dorsali
-    ["braccia", "stabilità"], // spalle
+    ["braccia", "schiena"], // petto/tricipiti
+    ["schiena", "braccia"], // dorsali
+    ["braccia", "schiena", "stabilità"], // spalle
     ["core"],              // addominali (mandatory)
-    ["core"],              // fianchi/obliqui (mandatory)
+    ["core", "stabilità"], // fianchi/obliqui (mandatory)
   ],
   lower_body: [
     ["gambe"],             // quadricipiti
@@ -111,6 +111,12 @@ const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
     ["core"],              // addominali (mandatory)
     ["core"],              // fianchi/obliqui (mandatory)
   ],
+};
+
+const FOCUS_PREFERRED_CATEGORIES: Record<DayFocus, string[]> = {
+  upper_body: ["schiena", "braccia", "stabilità", "core"],
+  lower_body: ["gambe", "glutei", "core", "stabilità"],
+  total_body: ["schiena", "braccia", "gambe", "glutei", "core", "stabilità"],
 };
 
 export const FOCUS_LABELS: Record<DayFocus, { label: string; icon: string }> = {
@@ -266,28 +272,76 @@ export function selezionaAttrezziSettimana(
   lastWeekEquipment: string[] = [],
   count: number = 3
 ): string[] {
-  const normalized = attrezziUtente.map(a => a === "Pesi(da 1 a 4kg)" ? "Pesi" : a);
-  if (normalized.length === 0) return [];
+  const orderedEquipment = getOrderedWeeklyEquipment(attrezziUtente, lastWeekEquipment);
+  if (orderedEquipment.length === 0) return [];
 
-  if (normalized.length <= count) {
-    const result = [...normalized];
-    while (result.length < count) result.push(normalized[result.length % normalized.length]);
+  if (orderedEquipment.length <= count) {
+    const result = [...orderedEquipment];
+    while (result.length < count) result.push(orderedEquipment[result.length % orderedEquipment.length]);
     return result;
   }
+
+  return orderedEquipment.slice(0, count);
+}
+
+function getOrderedWeeklyEquipment(
+  attrezziUtente: string[],
+  lastWeekEquipment: string[] = []
+): string[] {
+  const normalized = Array.from(new Set(attrezziUtente.map(a => a === "Pesi(da 1 a 4kg)" ? "Pesi" : a)));
+  if (normalized.length === 0) return [];
 
   const fresh = normalized.filter(a => !lastWeekEquipment.includes(a));
   const stale = normalized.filter(a => lastWeekEquipment.includes(a));
 
-  const picked: string[] = [];
-  const freshShuffled = shuffle(fresh);
-  const staleShuffled = shuffle(stale);
+  return [...shuffle(fresh), ...shuffle(stale)];
+}
 
-  for (const a of [...freshShuffled, ...staleShuffled]) {
-    if (picked.length >= count) break;
-    if (!picked.includes(a)) picked.push(a);
+function getEquipmentCategoryCounts(attrezzo: string, livello: string) {
+  const disponibili = EXERCISE_LIBRARY.filter(e =>
+    e.attrezzo === attrezzo && livelloAccessibile(e.livello, livello)
+  );
+
+  const counts = disponibili.reduce<Record<string, number>>((acc, exercise) => {
+    acc[exercise.categoria] = (acc[exercise.categoria] || 0) + 1;
+    return acc;
+  }, {});
+
+  return {
+    total: disponibili.length,
+    upper: (counts.schiena || 0) + (counts.braccia || 0),
+    lower: (counts.gambe || 0) + (counts.glutei || 0),
+    core: (counts.core || 0) + (counts.stabilità || 0),
+  };
+}
+
+function equipmentSupportsFocus(attrezzo: string, livello: string, focus: DayFocus): boolean {
+  const counts = getEquipmentCategoryCounts(attrezzo, livello);
+  if (counts.total === 0) return false;
+
+  if (focus === "upper_body") return counts.upper >= 3 && counts.core >= 1;
+  if (focus === "lower_body") return counts.lower >= 3 && counts.core >= 1;
+
+  return counts.upper >= 1 && counts.lower >= 2 && counts.core >= 1;
+}
+
+function selectEquipmentForFocus(
+  orderedEquipment: string[],
+  livello: string,
+  focus: DayFocus,
+  usedEquipment: string[] = []
+): string {
+  const compatible = orderedEquipment.filter(attrezzo => equipmentSupportsFocus(attrezzo, livello, focus));
+  const unusedCompatible = compatible.filter(attrezzo => !usedEquipment.includes(attrezzo));
+
+  if (unusedCompatible.length > 0) return unusedCompatible[0];
+  if (compatible.length > 0) return compatible[0];
+  if (!orderedEquipment.includes("Corpo Libero") && equipmentSupportsFocus("Corpo Libero", livello, focus)) {
+    return "Corpo Libero";
   }
 
-  return picked;
+  const unusedAny = orderedEquipment.filter(attrezzo => !usedEquipment.includes(attrezzo));
+  return unusedAny[0] || orderedEquipment[0] || "Corpo Libero";
 }
 
 // ============================================================
@@ -345,22 +399,27 @@ export function generaEserciziGiorno(
   pool = weightByLevel(pool, levelPref);
 
   let prioritySlots: string[][];
+  let preferredCategories: string[];
 
   if (focus === "upper_body" || focus === "core" || focus === "core_stabilita") {
     prioritySlots = [...FOCUS_SLOTS.upper_body];
+    preferredCategories = FOCUS_PREFERRED_CATEGORIES.upper_body;
   } else if (focus === "lower_body" || focus === "gambe_glutei") {
     prioritySlots = [...FOCUS_SLOTS.lower_body];
+    preferredCategories = FOCUS_PREFERRED_CATEGORIES.lower_body;
   } else if (focus === "total_body" || focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
     prioritySlots = [...FOCUS_SLOTS.total_body];
+    preferredCategories = FOCUS_PREFERRED_CATEGORIES.total_body;
   } else {
     prioritySlots = [...FOCUS_SLOTS.total_body];
+    preferredCategories = FOCUS_PREFERRED_CATEGORIES.total_body;
   }
 
   if (ctx.weekNumber >= 4 && prioritySlots.length < targetCount) {
     prioritySlots.push(["core", "gambe", "glutei", "braccia"]);
   }
 
-  return pickBalanced(pool, prioritySlots, Math.max(6, Math.min(targetCount, pool.length)));
+  return pickBalanced(pool, prioritySlots, Math.max(6, Math.min(targetCount, pool.length)), preferredCategories);
 }
 
 function weightByLevel(pool: Exercise[], levelPref: string[]): Exercise[] {
@@ -383,7 +442,7 @@ function weightByLevel(pool: Exercise[], levelPref: string[]): Exercise[] {
   return result;
 }
 
-function pickBalanced(pool: Exercise[], prioritySlots: string[][], count: number): Exercise[] {
+function pickBalanced(pool: Exercise[], prioritySlots: string[][], count: number, preferredCategories: string[] = []): Exercise[] {
   const byCat: Record<string, Exercise[]> = {};
   pool.forEach(e => {
     if (!byCat[e.categoria]) byCat[e.categoria] = [];
@@ -401,8 +460,12 @@ function pickBalanced(pool: Exercise[], prioritySlots: string[][], count: number
   }
 
   if (result.length < count) {
-    const remaining = shuffle(pool.filter(e => !result.find(r => r.id === e.id)));
-    for (const e of remaining) {
+    const remaining = pool.filter(e => !result.find(r => r.id === e.id));
+    const preferredSet = new Set(preferredCategories);
+    const prioritized = shuffle(remaining.filter(e => preferredSet.has(e.categoria)));
+    const fallback = shuffle(remaining.filter(e => !preferredSet.has(e.categoria)));
+
+    for (const e of [...prioritized, ...fallback]) {
       if (result.length >= count) break;
       result.push(e);
     }
@@ -435,18 +498,19 @@ export function generaSettimanaIntelligente(
 ): GeneratedWeek {
   const ctx = computeProgressionContext(storicoCal, lastWeekEquipment);
   const dateKeys = getWeekDates(giorniSettimana);
-  const attrezziSettimana = selezionaAttrezziSettimana(attrezziUtente, lastWeekEquipment, dateKeys.length);
+  const orderedEquipment = getOrderedWeeklyEquipment(attrezziUtente, lastWeekEquipment);
 
   const piano: Record<string, { attrezzo: string; round: number }> = {};
   const esercizi: Record<string, Exercise[]> = {};
   const focusPerDay: Record<string, DayFocus> = {};
   let runningStorico = Object.values(previousStorico).flat();
+  const usedEquipment: string[] = [];
 
   dateKeys.forEach((dateKey, i) => {
-    const attrezzo = attrezziSettimana[i % attrezziSettimana.length];
     // Use fixed weekday-based focus: Mon→Upper, Wed→Lower, Fri→Total
     const dateObj = new Date(dateKey + "T00:00:00");
     const dayFocus = getFocusForWeekday(dateObj.getDay(), i);
+    const attrezzo = selectEquipmentForFocus(orderedEquipment, livello, dayFocus, usedEquipment);
 
     ctx.recentExerciseIds = runningStorico;
 
@@ -456,6 +520,7 @@ export function generaSettimanaIntelligente(
     esercizi[dateKey] = dayExercises;
     focusPerDay[dateKey] = dayFocus;
 
+    usedEquipment.push(attrezzo);
     runningStorico = [...runningStorico, ...dayExercises.map(e => e.id)];
   });
 

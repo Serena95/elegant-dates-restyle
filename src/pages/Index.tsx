@@ -38,7 +38,7 @@ import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
-import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, FOCUS_LABELS, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey } from "@/data/exercises";
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
@@ -163,8 +163,8 @@ const Index = () => {
 
     // Always use fixed training days [1,3,5]
     const currentWeekDates = getWeekDates(FIXED_TRAINING_DAYS);
-    // v2: force regeneration after focus-mapping fix
-    const expectedKey = "v2:" + [...currentWeekDates].sort().join(",");
+    // v3: regenerate once after focus/equipment compatibility fix
+    const expectedKey = "v3:" + [...currentWeekDates].sort().join(",");
 
     // Check if piano already has valid data for this week (from DB)
     const pianoKeys = Object.keys(cloud.piano).sort();
@@ -318,9 +318,12 @@ const Index = () => {
         // Luteale: keep normal intensity
       }
 
+      const dayFocus = getFocusForWeekday(new Date(`${giorno}T00:00:00`).getDay());
+
       const result = await generateAIWorkout({
         attrezzo,
         livello: effectiveLivello,
+        focus: dayFocus,
         storici,
         targetCount: 7,
         progressionCtx: ctx,
