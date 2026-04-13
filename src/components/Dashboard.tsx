@@ -197,7 +197,7 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
               </div>
             </div>
             <button
-              onClick={(e) => { e.stopPropagation(); localStorage.removeItem("activeNutritionPlan"); setSavedPlan(null); }}
+              onClick={(e) => { e.stopPropagation(); localStorage.removeItem("activeNutritionPlan"); localStorage.removeItem("activeNutritionPlanFull"); setSavedPlan(null); }}
               className="p-1.5 rounded-full hover:bg-destructive/10 text-muted-foreground"
             >
               <X size={14} />
