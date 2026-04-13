@@ -141,10 +141,10 @@ const Index = () => {
       storicoCal: cloud.storicoCal,
       attrezzi: cloud.attrezzi,
       livello: cloud.livello,
-      giorniAllenamento: cloud.giorniAllenamento,
+      giorniAllenamento: FIXED_TRAINING_DAYS,
       ultimiAttrezzi: cloud.ultimiAttrezzi,
     });
-  }, [cloud.loading, cloud.piano, cloud.allenamentiData, cloud.storicoCal, cloud.attrezzi, cloud.livello, cloud.giorniAllenamento, cloud.ultimiAttrezzi]);
+  }, [cloud.loading, cloud.piano, cloud.allenamentiData, cloud.storicoCal, cloud.attrezzi, cloud.livello, cloud.ultimiAttrezzi]);
 
   // Auto-generate weekly plan when needed — ONCE per week only
   // Uses FIXED_TRAINING_DAYS [1,3,5] = Mon/Wed/Fri always
@@ -636,8 +636,7 @@ const Index = () => {
             onModificaAttrezzi={() => navigate("equipment")}
             voiceEnabled={voiceEnabled}
             onToggleVoice={setVoiceEnabled}
-            giorniAllenamento={cloud.giorniAllenamento}
-            onChangeGiorniAllenamento={handleChangeTrainingDays}
+            giorniAllenamento={FIXED_TRAINING_DAYS}
             notificheAbilitate={notifications.settings.notifiche_abilitate}
             notificaOrario={notifications.settings.notifica_orario}
             fusoOrario={notifications.settings.fuso_orario}
