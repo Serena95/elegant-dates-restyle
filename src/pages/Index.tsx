@@ -176,16 +176,10 @@ const Index = () => {
     const hasAllExercises = pianoMatchesWeek &&
       currentWeekDates.every(d => allenamentiEsercizi[d]?.length > 0);
 
-    if (pianoMatchesWeek && hasAllExercises) {
-      // Piano loaded from DB is valid — block further generation
-      generationGuardRef.current = true;
-      setStoredGenerationKey(expectedKey);
-      return;
-    }
-
     // Check localStorage key — if it matches, piano was already generated this week
+    // Also serves as the primary guard: if the stored key matches, the plan is valid
     const storedKey = getStoredGenerationKey();
-    if (storedKey === expectedKey && pianoMatchesWeek) {
+    if (storedKey === expectedKey && pianoMatchesWeek && hasAllExercises) {
       generationGuardRef.current = true;
       // Fill missing exercises without regenerating the plan
       const updatedEsercizi = { ...allenamentiEsercizi };
