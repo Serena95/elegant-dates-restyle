@@ -70,6 +70,17 @@ function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): stri
   return "luteale";
 }
 
+function isWorkoutAlignedWithDayFocus(dateKey: string, exercises: Exercise[]): boolean {
+  if (!exercises || exercises.length === 0) return false;
+
+  const expectedFocus = getFocusForWeekday(new Date(`${dateKey}T00:00:00`).getDay());
+  const detectedFocus = detectFocus(exercises).key;
+
+  if (expectedFocus === "upper_body") return detectedFocus === "upper_body";
+  if (expectedFocus === "lower_body") return detectedFocus === "lower_body";
+  return detectedFocus === "full_body";
+}
+
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
@@ -175,11 +186,13 @@ const Index = () => {
     const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
     const hasAllExercises = pianoMatchesWeek &&
       currentWeekDates.every(d => allenamentiEsercizi[d]?.length > 0);
+    const hasAlignedExercises = pianoMatchesWeek &&
+      currentWeekDates.every(d => isWorkoutAlignedWithDayFocus(d, allenamentiEsercizi[d] || []));
 
     // Check localStorage key — if it matches, piano was already generated this week
     // Also serves as the primary guard: if the stored key matches, the plan is valid
     const storedKey = getStoredGenerationKey();
-    if (storedKey === expectedKey && pianoMatchesWeek && hasAllExercises) {
+    if (storedKey === expectedKey && pianoMatchesWeek && hasAllExercises && hasAlignedExercises) {
       generationGuardRef.current = true;
       // Fill missing exercises without regenerating the plan
       const updatedEsercizi = { ...allenamentiEsercizi };
