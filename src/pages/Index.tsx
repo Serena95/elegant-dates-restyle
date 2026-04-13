@@ -90,7 +90,7 @@ const Index = () => {
   const [workoutCompletati, setWorkoutCompletati] = useState<number[]>([]);
   const [workoutShowStretching, setWorkoutShowStretching] = useState(false);
   const prevBadgeCountRef = useRef(0);
-  const lastGeneratedKey = useRef(getStoredGenerationKey());
+  
 
   const { unlockedBadges, checkNewBadges } = useBadges(cloud.storicoCal);
   const notifications = useNotifications(cloud.giorniAllenamento, cloud.storicoCal);
