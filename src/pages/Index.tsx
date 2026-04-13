@@ -549,6 +549,7 @@ const Index = () => {
             storicoCal={cloud.storicoCal}
             giorniAllenamento={FIXED_TRAINING_DAYS}
             attrezzi={cloud.attrezzi}
+            exercisesMap={cloud.allenamentiData.esercizi || {}}
             cyclePhase={cloud.pregnancySettings.modalita_gravidanza ? undefined : getCyclePhase(cloud.cycleEntries, cloud.pregnancySettings)}
             pregnancyMode={cloud.pregnancySettings.modalita_gravidanza}
             pregnancyWeek={cloud.pregnancySettings.settimana_gestazionale}
