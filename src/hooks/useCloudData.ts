@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { WeekPlan, Exercise } from "@/data/exercises";
+import { loadOfflineCache, isOnline } from "@/hooks/useOfflineCache";
 
 export interface Misura {
   id?: string;
@@ -109,6 +110,32 @@ export function useCloudData() {
   const loadAll = async () => {
     if (!user) return;
     setLoading(true);
+
+    // If offline, load from cache
+    if (!isOnline()) {
+      const cache = loadOfflineCache();
+      if (cache) {
+        setPianoState(cache.piano || {});
+        setAllenamentiDataState(cache.allenamentiData || { esercizi: {}, storico: {} });
+        setStoricoCalState(cache.storicoCal || {});
+        setAttrezziState(cache.attrezzi || []);
+        setLivelloState(cache.livello || "MEDIO");
+        setGiorniAllenamentoState(cache.giorniAllenamento || [1, 3, 5]);
+        setUltimiAttrezziState(cache.ultimiAttrezzi || []);
+        if (cache.profile) setProfileState(cache.profile);
+        if (cache.misure) setMisureState(cache.misure);
+        if (cache.pasti) setPastiState(cache.pasti);
+        if (cache.acqua) setAcquaState(cache.acqua);
+        if (cache.sfida) { setSfidaState(cache.sfida); sfidaRef.current = cache.sfida; }
+        if (cache.cycleEntries) setCycleEntriesState(cache.cycleEntries);
+        if (cache.pregnancySettings) setPregnancySettingsState(cache.pregnancySettings);
+        setLoading(false);
+        // Register sync listener for when online returns
+        const handleOnline = () => { window.removeEventListener("online", handleOnline); loadAll(); };
+        window.addEventListener("online", handleOnline);
+        return;
+      }
+    }
 
     const [settingsRes, plansRes, historyRes, measRes, foodRes, waterRes, challengeRes, profileRes, cycleRes] = await Promise.all([
       supabase.from("user_settings").select("*").eq("user_id", user.id).maybeSingle(),

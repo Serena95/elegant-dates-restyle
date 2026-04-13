@@ -45,6 +45,7 @@ import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
 import { supabase } from "@/integrations/supabase/client";
 import { useWorkoutAutosave, loadWorkoutSession, clearWorkoutSession } from "@/hooks/useWorkoutPersistence";
 import { useActiveProgram } from "@/hooks/useActiveProgram";
+import { saveOfflineCache, loadOfflineCache, getStoredGenerationKey, setStoredGenerationKey, isOnline } from "@/hooks/useOfflineCache";
 
 function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): string | undefined {
   if (!entries || entries.length === 0) return undefined;
@@ -89,7 +90,7 @@ const Index = () => {
   const [workoutCompletati, setWorkoutCompletati] = useState<number[]>([]);
   const [workoutShowStretching, setWorkoutShowStretching] = useState(false);
   const prevBadgeCountRef = useRef(0);
-  const lastGeneratedKey = useRef("");
+  const lastGeneratedKey = useRef(getStoredGenerationKey());
 
   const { unlockedBadges, checkNewBadges } = useBadges(cloud.storicoCal);
   const notifications = useNotifications(cloud.giorniAllenamento, cloud.storicoCal);
@@ -131,6 +132,20 @@ const Index = () => {
     workoutShowStretching
   );
 
+  // Save cloud data to offline cache whenever it changes
+  useEffect(() => {
+    if (cloud.loading) return;
+    saveOfflineCache({
+      piano: cloud.piano,
+      allenamentiData: cloud.allenamentiData,
+      storicoCal: cloud.storicoCal,
+      attrezzi: cloud.attrezzi,
+      livello: cloud.livello,
+      giorniAllenamento: cloud.giorniAllenamento,
+      ultimiAttrezzi: cloud.ultimiAttrezzi,
+    });
+  }, [cloud.loading, cloud.piano, cloud.allenamentiData, cloud.storicoCal, cloud.attrezzi, cloud.livello, cloud.giorniAllenamento, cloud.ultimiAttrezzi]);
+
   // Auto-generate weekly plan when needed
   useEffect(() => {
     const equipmentPool = cloud.attrezzi.length > 0
@@ -144,23 +159,63 @@ const Index = () => {
     const currentWeekDates = getWeekDates(cloud.giorniAllenamento);
     const expectedKey = currentWeekDates.sort().join(",");
 
-    // Skip if we already generated for this exact configuration
+    // Skip if we already generated for this exact configuration (persisted across reloads)
     if (lastGeneratedKey.current === expectedKey) return;
 
-    const needsGeneration = !isPianoCurrentWeek(cloud.piano, cloud.giorniAllenamento);
+    // Also check: if the piano already has exercises for the current week dates, don't regenerate
+    const pianoIsValid = isPianoCurrentWeek(cloud.piano, cloud.giorniAllenamento);
+    const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
+    const hasExercises = pianoIsValid && currentWeekDates.every(d => allenamentiEsercizi[d]?.length > 0);
+
+    if (pianoIsValid && hasExercises) {
+      // Piano already valid with exercises - just record the key and skip
+      lastGeneratedKey.current = expectedKey;
+      setStoredGenerationKey(expectedKey);
+
+      // On Sunday evening (after 20:00), pre-generate next week if not already present
+      if (today.getDay() === 0 && today.getHours() >= 20) {
+        const nextMonday = new Date(today);
+        nextMonday.setDate(nextMonday.getDate() + 1);
+        const nextWeekDates = getWeekDates(cloud.giorniAllenamento, nextMonday);
+        const hasNextWeek = nextWeekDates.some(d => cloud.piano[d]);
+
+        if (!hasNextWeek) {
+          const result = generaSettimanaIntelligente(
+            equipmentPool,
+            cloud.livello,
+            cloud.allenamentiData.storico || {},
+            cloud.storicoCal,
+            cloud.ultimiAttrezzi,
+            cloud.giorniAllenamento
+          );
+          const nextWeekPiano = { ...cloud.piano };
+          const nextWeekEsercizi = { ...allenamentiEsercizi };
+          const generatedKeys = Object.keys(result.piano).sort();
+          nextWeekDates.sort().forEach((nextKey, i) => {
+            const genKey = generatedKeys[i];
+            if (genKey) {
+              nextWeekPiano[nextKey] = result.piano[genKey];
+              nextWeekEsercizi[nextKey] = result.esercizi[genKey];
+            }
+          });
+          cloud.savePiano(nextWeekPiano, { esercizi: nextWeekEsercizi, storico: result.storico });
+        }
+      }
+      return;
+    }
+
+    const needsGeneration = !pianoIsValid;
 
     if (needsGeneration) {
       lastGeneratedKey.current = expectedKey;
+      setStoredGenerationKey(expectedKey);
 
       // Preserve incomplete workouts from the past week that haven't been completed yet
       const existingKeys = Object.keys(cloud.piano);
-      const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
       const preservedPiano: Record<string, any> = {};
       const preservedEsercizi: Record<string, Exercise[]> = {};
 
       for (const key of existingKeys) {
-        // Keep workouts that are from the current week or recent past (not completed)
-        // and are not yet expired (within 7 days)
         const dayDiff = Math.floor((new Date(todayKey + "T00:00:00").getTime() - new Date(key + "T00:00:00").getTime()) / (1000 * 60 * 60 * 24));
         const isCompleted = cloud.storicoCal[key]?.completato;
         if (!isCompleted && dayDiff >= 0 && dayDiff <= 6) {
@@ -188,39 +243,29 @@ const Index = () => {
       const usedEquipment = Object.values(result.piano).map(d => d.attrezzo);
       cloud.setUltimiAttrezzi(usedEquipment);
     } else {
-      // Piano matches, record the key so we don't re-check
+      // Piano has the right dates but might be missing exercises - generate them
       lastGeneratedKey.current = expectedKey;
+      setStoredGenerationKey(expectedKey);
 
-      // On Sunday evening (after 20:00), pre-generate next week if not already present
-      if (today.getDay() === 0 && today.getHours() >= 20) {
-        const nextMonday = new Date(today);
-        nextMonday.setDate(nextMonday.getDate() + 1);
-        const nextWeekDates = getWeekDates(cloud.giorniAllenamento, nextMonday);
-        const hasNextWeek = nextWeekDates.some(d => cloud.piano[d]);
+      // Fill in missing exercises for days that don't have them
+      const updatedEsercizi = { ...allenamentiEsercizi };
+      let needsUpdate = false;
+      const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
 
-        if (!hasNextWeek) {
-          const result = generaSettimanaIntelligente(
-            equipmentPool,
-            cloud.livello,
-            cloud.allenamentiData.storico || {},
-            cloud.storicoCal,
-            cloud.ultimiAttrezzi,
-            cloud.giorniAllenamento
-          );
-          // Remap generated dates to next week
-          const nextWeekPiano = { ...cloud.piano };
-          const nextWeekEsercizi = { ...(cloud.allenamentiData.esercizi || {}) };
-          const generatedKeys = Object.keys(result.piano).sort();
-          nextWeekDates.sort().forEach((nextKey, i) => {
-            const genKey = generatedKeys[i];
-            if (genKey) {
-              nextWeekPiano[nextKey] = result.piano[genKey];
-              nextWeekEsercizi[nextKey] = result.esercizi[genKey];
-            }
-          });
-
-          cloud.savePiano(nextWeekPiano, { esercizi: nextWeekEsercizi, storico: result.storico });
+      currentWeekDates.forEach((dateKey, i) => {
+        if (!updatedEsercizi[dateKey] || updatedEsercizi[dateKey].length === 0) {
+          const dati = cloud.piano[dateKey];
+          if (dati) {
+            const dayFocus = DAY_FOCUS_PATTERN[i % DAY_FOCUS_PATTERN.length];
+            const exercises = generaEserciziGiorno(dati.attrezzo, cloud.livello, [], dayFocus, ctx);
+            updatedEsercizi[dateKey] = exercises;
+            needsUpdate = true;
+          }
         }
+      });
+
+      if (needsUpdate) {
+        cloud.savePiano(cloud.piano, { esercizi: updatedEsercizi, storico: cloud.allenamentiData.storico || {} });
       }
     }
   }, [cloud.loading, cloud.attrezzi, cloud.piano, cloud.giorniAllenamento]);
@@ -379,6 +424,7 @@ const Index = () => {
     cloud.setLivello(l);
     // Force full regeneration with new level
     lastGeneratedKey.current = "";
+    setStoredGenerationKey("");
     const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
     if (equipmentPool.length > 0) {
       const result = generaSettimanaIntelligente(
@@ -393,6 +439,7 @@ const Index = () => {
     cloud.setGiorniAllenamento(days);
     // Reset generation key to force regeneration
     lastGeneratedKey.current = "";
+    setStoredGenerationKey("");
   }, [cloud.setGiorniAllenamento]);
 
   if (effectiveView === "loading") {
