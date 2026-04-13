@@ -43,11 +43,14 @@ Il JSON deve avere questa struttura ESATTA:
 }
 
 REGOLE:
-- Includi SEMPRE le quantità in grammi nei pasti (es. "Petto di pollo alla griglia (150g) con riso integrale (80g) e broccoli (200g)")
+- Includi le quantità in grammi nei pasti (es. "Proteine magre alla griglia (150g) con cereali integrali (80g) e verdure (200g)")
+- USA CATEGORIE GENERICHE quando possibile (es. "proteine magre" invece di "petto di pollo specifico", "cereali integrali" invece di "farro", "verdure di stagione" invece di una verdura specifica)
+- Suggerisci ALTERNATIVE tra parentesi (es. "Proteine magre (pollo/tacchino/pesce) 150g con verdure a scelta 200g")
 - La lista della spesa deve avere le quantità TOTALI per l'intera settimana
 - Rispetta RIGOROSAMENTE le restrizioni alimentari
 - Bilancia i macronutrienti in base all'obiettivo
 - I consigli devono essere pratici e personalizzati
+- Aggiungi un campo "alternative" per ogni pasto se possibile
 - Rispondi SOLO con il JSON, nessun testo aggiuntivo
 ${tipo_dieta === "chetogenica" ? "- DIETA CHETOGENICA: max 20-30g carboidrati netti al giorno, 70% grassi, 25% proteine, 5% carboidrati. NO cereali, NO pane, NO pasta, NO zuccheri. SÌ avocado, olio EVO, burro, noci, formaggi grassi." : ""}
 ${tipo_dieta === "digiuno_intermittente" ? `- DIGIUNO INTERMITTENTE 16:8: Il pasto "${pasto_saltato || "colazione"}" deve essere sostituito con "☕ Solo caffè/tè senza zucchero" o "—". Concentra le calorie nei pasti rimanenti. Mantieni le calorie totali giornaliere invariate.` : ""}`;
