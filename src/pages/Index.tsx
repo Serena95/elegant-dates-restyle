@@ -532,7 +532,7 @@ const Index = () => {
             onNavigate={navigate}
             focusMap={focusMap}
             storicoCal={cloud.storicoCal}
-            giorniAllenamento={cloud.giorniAllenamento}
+            giorniAllenamento={FIXED_TRAINING_DAYS}
             attrezzi={cloud.attrezzi}
             cyclePhase={cloud.pregnancySettings.modalita_gravidanza ? undefined : getCyclePhase(cloud.cycleEntries, cloud.pregnancySettings)}
             pregnancyMode={cloud.pregnancySettings.modalita_gravidanza}
@@ -577,7 +577,7 @@ const Index = () => {
               const weekIdx = 0;
               const week = program.settimane[weekIdx];
               // Map program days to real date keys
-              const dateKeys = getWeekDates(cloud.giorniAllenamento);
+              const dateKeys = getWeekDates(FIXED_TRAINING_DAYS);
               const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
               const nuoviEsercizi: Record<string, Exercise[]> = {};
               const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
@@ -586,7 +586,8 @@ const Index = () => {
               dateKeys.forEach((dateKey, i) => {
                 const giorno = week.giorni[i % week.giorni.length];
                 const attrezzo = giorno.attrezzo;
-                const dayFocus = DAY_FOCUS_PATTERN[i % DAY_FOCUS_PATTERN.length] as DayFocus;
+                const dateObj = new Date(dateKey + "T00:00:00");
+                const dayFocus = getFocusForWeekday(dateObj.getDay(), i);
                 ctx.recentExerciseIds = runningStorico;
                 const exercises = generaEserciziGiorno(attrezzo, cloud.livello, [], dayFocus, ctx);
                 nuovoPiano[dateKey] = { attrezzo, round: 0 };
@@ -605,7 +606,7 @@ const Index = () => {
               const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
               if (equipmentPool.length > 0) {
                 const result = generaSettimanaIntelligente(
-                  equipmentPool, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
+                  equipmentPool, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, FIXED_TRAINING_DAYS
                 );
                 cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
               }
@@ -686,7 +687,7 @@ const Index = () => {
               activeProgState.startChallenge(id, name);
               // Generate workout for the challenge based on its focus
               const challenge = FITNESS_CHALLENGES.find(c => c.id === id);
-              const dateKeys = getWeekDates(cloud.giorniAllenamento);
+              const dateKeys = getWeekDates(FIXED_TRAINING_DAYS);
               const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
               const nuoviEsercizi: Record<string, Exercise[]> = {};
               const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
@@ -719,7 +720,7 @@ const Index = () => {
               const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
               if (equipmentPool.length > 0) {
                 const result = generaSettimanaIntelligente(
-                  equipmentPool, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
+                  equipmentPool, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, FIXED_TRAINING_DAYS
                 );
                 cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
               }
