@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { WeekPlan, Exercise } from "@/data/exercises";
+import { loadOfflineCache, isOnline } from "@/hooks/useOfflineCache";
 
 export interface Misura {
   id?: string;
