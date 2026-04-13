@@ -413,7 +413,7 @@ const Index = () => {
     cloud.setLivello(l);
     // Force full regeneration with new level
     setStoredGenerationKey("");
-    setStoredGenerationKey("");
+    generationGuardRef.current = false;
     const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
     if (equipmentPool.length > 0) {
       const result = generaSettimanaIntelligente(
@@ -428,7 +428,7 @@ const Index = () => {
     cloud.setGiorniAllenamento(days);
     // Reset generation key to force regeneration
     setStoredGenerationKey("");
-    setStoredGenerationKey("");
+    generationGuardRef.current = false;
   }, [cloud.setGiorniAllenamento]);
 
   if (effectiveView === "loading") {
@@ -531,7 +531,8 @@ const Index = () => {
         <EquipmentSelection savedAttrezzi={cloud.attrezzi} onComplete={(selected) => {
           cloud.setAttrezzi(selected);
           // Force full regeneration with new equipment
-          setStoredGenerationKey("");
+           setStoredGenerationKey("");
+           generationGuardRef.current = false;
           const result = generaSettimanaIntelligente(
             selected, cloud.livello, cloud.allenamentiData.storico || {}, cloud.storicoCal, cloud.ultimiAttrezzi, cloud.giorniAllenamento
           );
@@ -629,6 +630,7 @@ const Index = () => {
               activeProgState.cancel();
               // Regenerate standard plan
               setStoredGenerationKey("");
+              generationGuardRef.current = false;
               const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
               if (equipmentPool.length > 0) {
                 const result = generaSettimanaIntelligente(
@@ -742,6 +744,7 @@ const Index = () => {
             onCancelChallenge={() => {
               activeProgState.cancel();
               setStoredGenerationKey("");
+              generationGuardRef.current = false;
               const equipmentPool = cloud.attrezzi.length > 0 ? cloud.attrezzi : [];
               if (equipmentPool.length > 0) {
                 const result = generaSettimanaIntelligente(
