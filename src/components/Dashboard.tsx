@@ -3,13 +3,14 @@ import { DayCard } from "./DayCard";
 import { ActiveProgramState } from "@/hooks/useActiveProgram";
 import { AICoachCard } from "./AICoachCard";
 import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
-import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap, Utensils, X } from "lucide-react";
+import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap, Utensils, X, Crown } from "lucide-react";
 import { motion } from "framer-motion";
 import { calculateStreak } from "@/services/streakService";
 import { computeProgress } from "@/services/progressEngine";
 import { AICoachContext } from "@/services/aiCoach";
 import { getLevelInfo } from "@/services/xpService";
 import { useAuth } from "@/contexts/AuthContext";
+import { usePremium } from "@/hooks/usePremium";
 import { supabase } from "@/integrations/supabase/client";
 import { Progress } from "@/components/ui/progress";
 
