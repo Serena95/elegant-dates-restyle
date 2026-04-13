@@ -1,6 +1,6 @@
 import React from "react";
 import { motion } from "framer-motion";
-import { ChevronRight, Check } from "lucide-react";
+import { ChevronRight, Check, Lock, Crown } from "lucide-react";
 import { DayPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo } from "@/data/exercises";
 
 interface DayCardProps {
@@ -12,6 +12,7 @@ interface DayCardProps {
   focus?: FocusInfo;
   isToday?: boolean;
   onClick: () => void;
+  locked?: boolean;
 }
 
 const DEFAULT_GRADIENT = { from: "from-blue-500/10", to: "to-indigo-500/10", border: "border-blue-200 dark:border-blue-800", accent: "bg-blue-500" };
