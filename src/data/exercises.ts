@@ -62,6 +62,21 @@ export type DayFocus = "upper_body" | "lower_body" | "total_body";
 export const DAY_FOCUS_PATTERN: DayFocus[] = ["upper_body", "lower_body", "total_body"];
 
 /**
+ * Fixed weekday-to-focus mapping:
+ * Monday (1) → Upper Body, Wednesday (3) → Lower Body, Friday (5) → Total Body.
+ * Other days get a round-robin fallback.
+ */
+export const WEEKDAY_FOCUS_MAP: Record<number, DayFocus> = {
+  1: "upper_body",   // Lunedì
+  3: "lower_body",   // Mercoledì
+  5: "total_body",   // Venerdì
+};
+
+export function getFocusForWeekday(dayOfWeek: number, fallbackIndex: number = 0): DayFocus {
+  return WEEKDAY_FOCUS_MAP[dayOfWeek] ?? DAY_FOCUS_PATTERN[fallbackIndex % DAY_FOCUS_PATTERN.length];
+}
+
+/**
  * Muscle-group slots for each focus type.
  * Each slot is a list of muscoli/categoria to look for.
  */
@@ -423,7 +438,9 @@ export function generaSettimanaIntelligente(
 
   dateKeys.forEach((dateKey, i) => {
     const attrezzo = attrezziSettimana[i % attrezziSettimana.length];
-    const dayFocus = DAY_FOCUS_PATTERN[i % DAY_FOCUS_PATTERN.length];
+    // Use fixed weekday-based focus: Mon→Upper, Wed→Lower, Fri→Total
+    const dateObj = new Date(dateKey + "T00:00:00");
+    const dayFocus = getFocusForWeekday(dateObj.getDay(), i);
 
     ctx.recentExerciseIds = runningStorico;
 
