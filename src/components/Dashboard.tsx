@@ -46,7 +46,6 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
   
   // Sort piano keys by date
   const sortedDays = Object.keys(piano).sort();
-  const sortedDays = Object.keys(piano).sort();
 
   // Compute streak & progress for AI Coach
   const streakData = useMemo(() => calculateStreak(storicoCal, giorniAllenamento), [storicoCal, giorniAllenamento]);
