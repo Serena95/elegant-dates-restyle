@@ -163,7 +163,8 @@ const Index = () => {
 
     // Always use fixed training days [1,3,5]
     const currentWeekDates = getWeekDates(FIXED_TRAINING_DAYS);
-    const expectedKey = [...currentWeekDates].sort().join(",");
+    // v2: force regeneration after focus-mapping fix
+    const expectedKey = "v2:" + [...currentWeekDates].sort().join(",");
 
     // Check if piano already has valid data for this week (from DB)
     const pianoKeys = Object.keys(cloud.piano).sort();
@@ -175,16 +176,10 @@ const Index = () => {
     const hasAllExercises = pianoMatchesWeek &&
       currentWeekDates.every(d => allenamentiEsercizi[d]?.length > 0);
 
-    if (pianoMatchesWeek && hasAllExercises) {
-      // Piano loaded from DB is valid — block further generation
-      generationGuardRef.current = true;
-      setStoredGenerationKey(expectedKey);
-      return;
-    }
-
     // Check localStorage key — if it matches, piano was already generated this week
+    // Also serves as the primary guard: if the stored key matches, the plan is valid
     const storedKey = getStoredGenerationKey();
-    if (storedKey === expectedKey && pianoMatchesWeek) {
+    if (storedKey === expectedKey && pianoMatchesWeek && hasAllExercises) {
       generationGuardRef.current = true;
       // Fill missing exercises without regenerating the plan
       const updatedEsercizi = { ...allenamentiEsercizi };
@@ -262,25 +257,18 @@ const Index = () => {
     return { completed, total, streak };
   }, [cloud.storicoCal]);
 
-  // Compute focus for each day from the fixed weekday mapping.
-  // This keeps the home labels aligned with the locked Mon/Wed/Fri structure.
+  // Compute focus for each day based on cached exercises
   const focusMap = useMemo<Record<string, FocusInfo>>(() => {
+    const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
     const map: Record<string, FocusInfo> = {};
-
     for (const giorno of Object.keys(cloud.piano)) {
-      const dateObj = new Date(`${giorno}T00:00:00`);
-      const dayFocus = getFocusForWeekday(dateObj.getDay());
-      const focusLabel = FOCUS_LABELS[dayFocus];
-
-      map[giorno] = {
-        key: dayFocus,
-        label: focusLabel.label,
-        icon: focusLabel.icon,
-      };
+      const cached = allenamentiEsercizi[giorno];
+      if (cached && cached.length > 0 && (cached[0] as any).categoria) {
+        map[giorno] = detectFocus(cached);
+      }
     }
-
     return map;
-  }, [cloud.piano]);
+  }, [cloud.piano, cloud.allenamentiData.esercizi]);
 
   const effectiveView: string = cloud.loading
     ? "loading"
