@@ -38,7 +38,7 @@ import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
-import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, FOCUS_LABELS, DayFocus, DAY_FOCUS_PATTERN, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, FOCUS_LABELS, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey } from "@/data/exercises";
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
@@ -262,18 +262,25 @@ const Index = () => {
     return { completed, total, streak };
   }, [cloud.storicoCal]);
 
-  // Compute focus for each day based on cached exercises
+  // Compute focus for each day from the fixed weekday mapping.
+  // This keeps the home labels aligned with the locked Mon/Wed/Fri structure.
   const focusMap = useMemo<Record<string, FocusInfo>>(() => {
-    const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
     const map: Record<string, FocusInfo> = {};
+
     for (const giorno of Object.keys(cloud.piano)) {
-      const cached = allenamentiEsercizi[giorno];
-      if (cached && cached.length > 0 && (cached[0] as any).categoria) {
-        map[giorno] = detectFocus(cached);
-      }
+      const dateObj = new Date(`${giorno}T00:00:00`);
+      const dayFocus = getFocusForWeekday(dateObj.getDay());
+      const focusLabel = FOCUS_LABELS[dayFocus];
+
+      map[giorno] = {
+        key: dayFocus,
+        label: focusLabel.label,
+        icon: focusLabel.icon,
+      };
     }
+
     return map;
-  }, [cloud.piano, cloud.allenamentiData.esercizi]);
+  }, [cloud.piano]);
 
   const effectiveView: string = cloud.loading
     ? "loading"
