@@ -57,7 +57,7 @@ export function usePremium(): PremiumStatus {
     } finally {
       setLoading(false);
     }
-  }, [user]);
+  }, [user, isAdmin]);
 
   useEffect(() => {
     checkSubscription();
