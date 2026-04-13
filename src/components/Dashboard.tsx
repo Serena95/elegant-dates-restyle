@@ -299,23 +299,37 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
       </div>
 
       {/* Day Cards */}
+      {!isPremium && (
+        <div className="flex items-center gap-2 px-1">
+          <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wide">🆓 Free: 1 allenamento/giorno</span>
+          <span className="text-[10px] text-amber-500 font-bold">•</span>
+          <button onClick={() => onNavigate?.("premium")} className="text-[10px] font-bold text-amber-500 flex items-center gap-1">
+            <Crown size={10} /> Passa a Plus
+          </button>
+        </div>
+      )}
       <div className="space-y-3">
         {sortedDays.length === 0 ? (
           <p className="text-center text-muted-foreground py-8">Il piano della settimana verrà generato automaticamente...</p>
         ) : (
-          sortedDays.map((dateKey, i) => (
-            <DayCard
-              key={dateKey}
-              giorno={dateKey}
-              label={formatDateLabel(dateKey)}
-              dati={piano[dateKey]}
-              livello={livello}
-              index={i}
-              focus={focusMap?.[dateKey]}
-              isToday={dateKey === oggi}
-              onClick={() => onAvviaAllenamento(dateKey)}
-            />
-          ))
+          sortedDays.map((dateKey, i) => {
+            // Free users: only today's workout is accessible
+            const isLocked = !isPremium && dateKey !== oggi;
+            return (
+              <DayCard
+                key={dateKey}
+                giorno={dateKey}
+                label={formatDateLabel(dateKey)}
+                dati={piano[dateKey]}
+                livello={livello}
+                index={i}
+                focus={focusMap?.[dateKey]}
+                isToday={dateKey === oggi}
+                onClick={() => onAvviaAllenamento(dateKey)}
+                locked={isLocked}
+              />
+            );
+          })
         )}
       </div>
     </div>
