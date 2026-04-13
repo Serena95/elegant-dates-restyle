@@ -19,32 +19,27 @@ interface StretchExercise {
 }
 
 const STRETCHING_UPPER: StretchExercise[] = [
-  { nome: "Stretch Schiena (Cat-Cow)", emoji: "🐱", desc: "In quadrupedia, alterna inarcamento e arrotondamento della schiena.", durata: 60 },
-  { nome: "Stretch Spalle", emoji: "🙆", desc: "Porta un braccio al petto e tira col braccio opposto. Alterna.", durata: 45 },
-  { nome: "Stretch Tricipiti", emoji: "💪", desc: "Braccio dietro la testa, spingi il gomito con l'altra mano.", durata: 45 },
-  { nome: "Stretch Petto Apertura", emoji: "🦅", desc: "Braccia dietro la schiena intrecciate, apri il petto e guarda su.", durata: 45 },
-  { nome: "Torsione Spinale", emoji: "🔄", desc: "Seduta, ruota il busto portando la mano al ginocchio opposto.", durata: 60 },
-  { nome: "Rilascio Core", emoji: "🧘", desc: "Posizione del bambino: braccia avanti, fronte a terra, respira.", durata: 60 },
+  { nome: "Stretch Schiena (Cat-Cow)", emoji: "🐱", desc: "In quadrupedia, alterna inarcamento e arrotondamento della schiena.", durata: 30 },
+  { nome: "Stretch Spalle", emoji: "🙆", desc: "Porta un braccio al petto e tira col braccio opposto. Alterna.", durata: 30 },
+  { nome: "Stretch Tricipiti", emoji: "💪", desc: "Braccio dietro la testa, spingi il gomito con l'altra mano.", durata: 30 },
+  { nome: "Stretch Petto Apertura", emoji: "🦅", desc: "Braccia dietro la schiena intrecciate, apri il petto e guarda su.", durata: 30 },
+  { nome: "Rilascio Core", emoji: "🧘", desc: "Posizione del bambino: braccia avanti, fronte a terra, respira.", durata: 30 },
 ];
 
 const STRETCHING_LOWER: StretchExercise[] = [
-  { nome: "Stretch Glutei (Piriforme)", emoji: "🍑", desc: "Supina, caviglia sulla coscia opposta, tira il ginocchio al petto.", durata: 60 },
-  { nome: "Stretch Quadricipiti", emoji: "🦵", desc: "In piedi, porta il tallone al gluteo e tieni. Alterna.", durata: 45 },
-  { nome: "Stretch Femorali", emoji: "🦿", desc: "Seduta, gambe tese, piegati avanti cercando le punte.", durata: 60 },
-  { nome: "Stretch Interno Coscia (Farfalla)", emoji: "🦋", desc: "Seduta, piante dei piedi unite, spingi le ginocchia verso il basso.", durata: 60 },
-  { nome: "Affondo Basso", emoji: "🧎", desc: "Un ginocchio a terra, spingi il bacino avanti per allungare il flessore.", durata: 45 },
-  { nome: "Rilascio Core", emoji: "🧘", desc: "Posizione del bambino: braccia avanti, fronte a terra, respira.", durata: 60 },
+  { nome: "Stretch Glutei (Piriforme)", emoji: "🍑", desc: "Supina, caviglia sulla coscia opposta, tira il ginocchio al petto.", durata: 30 },
+  { nome: "Stretch Quadricipiti", emoji: "🦵", desc: "In piedi, porta il tallone al gluteo e tieni. Alterna.", durata: 30 },
+  { nome: "Stretch Femorali", emoji: "🦿", desc: "Seduta, gambe tese, piegati avanti cercando le punte.", durata: 30 },
+  { nome: "Stretch Interno Coscia (Farfalla)", emoji: "🦋", desc: "Seduta, piante dei piedi unite, spingi le ginocchia verso il basso.", durata: 30 },
+  { nome: "Rilascio Core", emoji: "🧘", desc: "Posizione del bambino: braccia avanti, fronte a terra, respira.", durata: 30 },
 ];
 
 const STRETCHING_TOTAL: StretchExercise[] = [
-  { nome: "Stretch Schiena (Cat-Cow)", emoji: "🐱", desc: "In quadrupedia, alterna inarcamento e arrotondamento della schiena.", durata: 60 },
-  { nome: "Stretch Spalle e Petto", emoji: "🙆", desc: "Braccia intrecciate dietro, apri il petto. Poi braccio al petto, alterna.", durata: 45 },
-  { nome: "Stretch Glutei", emoji: "🍑", desc: "Supina, caviglia sulla coscia opposta, tira al petto.", durata: 60 },
-  { nome: "Stretch Quadricipiti", emoji: "🦵", desc: "In piedi, tallone al gluteo, mantieni l'equilibrio.", durata: 45 },
-  { nome: "Stretch Femorali", emoji: "🦿", desc: "Seduta, gambe tese, piegati avanti cercando le punte.", durata: 60 },
-  { nome: "Farfalla + Core", emoji: "🦋", desc: "Piante dei piedi unite, spingi ginocchia giù, poi piegati avanti.", durata: 60 },
-  { nome: "Torsione Spinale", emoji: "🔄", desc: "Seduta, ruota il busto. Allunga obliqui e colonna.", durata: 45 },
-  { nome: "Rilascio Finale", emoji: "🧘", desc: "Posizione del bambino: braccia avanti, fronte a terra, 5 respiri profondi.", durata: 60 },
+  { nome: "Stretch Schiena (Cat-Cow)", emoji: "🐱", desc: "In quadrupedia, alterna inarcamento e arrotondamento della schiena.", durata: 30 },
+  { nome: "Stretch Spalle e Petto", emoji: "🙆", desc: "Braccia intrecciate dietro, apri il petto. Poi braccio al petto, alterna.", durata: 30 },
+  { nome: "Stretch Glutei", emoji: "🍑", desc: "Supina, caviglia sulla coscia opposta, tira al petto.", durata: 30 },
+  { nome: "Stretch Quadricipiti", emoji: "🦵", desc: "In piedi, tallone al gluteo, mantieni l'equilibrio.", durata: 30 },
+  { nome: "Rilascio Finale", emoji: "🧘", desc: "Posizione del bambino: braccia avanti, fronte a terra, 5 respiri profondi.", durata: 30 },
 ];
 
 function getStretchingForFocus(focus: DayFocus | string): StretchExercise[] {

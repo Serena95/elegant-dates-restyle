@@ -7,6 +7,7 @@ import { toast } from "@/hooks/use-toast";
 interface NutritionPlanViewProps {
   onBack: () => void;
   onSavePlan?: (plan: any) => void;
+  initialPlanId?: string;
 }
 
 interface MealPlan {
@@ -223,8 +224,20 @@ const ATTIVITA_OPTIONS = [
   { value: "intensa", label: "🔥 Intensa", desc: "5+ allenamenti/settimana" },
 ];
 
-export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps) {
-  const [selectedPlan, setSelectedPlan] = useState<NutritionPlan | null>(null);
+export function NutritionPlanView({ onBack, onSavePlan, initialPlanId }: NutritionPlanViewProps) {
+  const [selectedPlan, setSelectedPlan] = useState<NutritionPlan | null>(() => {
+    if (!initialPlanId) return null;
+    // Try to load full saved plan from localStorage
+    try {
+      const savedFull = localStorage.getItem("activeNutritionPlanFull");
+      if (savedFull) {
+        const parsed = JSON.parse(savedFull);
+        if (parsed?.id === initialPlanId) return parsed;
+      }
+    } catch {}
+    // Fall back to preset plans
+    return NUTRITION_PLANS.find(p => p.id === initialPlanId) || null;
+  });
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
@@ -661,6 +674,8 @@ export function NutritionPlanView({ onBack, onSavePlan }: NutritionPlanViewProps
           onClick={() => {
             const planToSave = { nome: selectedPlan.nome, icon: selectedPlan.icon, id: selectedPlan.id, descrizione: selectedPlan.descrizione };
             localStorage.setItem("activeNutritionPlan", JSON.stringify(planToSave));
+            // Save full plan data for direct access from dashboard
+            localStorage.setItem("activeNutritionPlanFull", JSON.stringify(selectedPlan));
             onSavePlan?.(planToSave);
             toast({ title: "Piano salvato! ✅", description: "Lo troverai nella dashboard" });
           }}

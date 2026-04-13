@@ -328,6 +328,8 @@ const Index = () => {
     setGiornoSelezionato(null);
     setShowGuide(false);
     setShowNativeGuide(false);
+    // Scroll to top on navigation
+    window.scrollTo({ top: 0, left: 0 });
   }, []);
 
   const avviaAllenamento = useCallback(async (giorno: string) => {
@@ -706,7 +708,7 @@ const Index = () => {
           />
         );
       case "nutrition" as any:
-        return <NutritionPlanView onBack={() => navigate("more")} onSavePlan={() => setView("dashboard")} />;
+        return <NutritionPlanView onBack={() => navigate("more")} onSavePlan={() => setView("dashboard")} initialPlanId={(() => { try { const s = localStorage.getItem("activeNutritionPlan"); return s ? JSON.parse(s)?.id : undefined; } catch { return undefined; } })()} />;
       case "privacy" as any:
         return <LegalPage type="privacy" onBack={() => setView("settings" as any)} />;
       case "terms" as any:
