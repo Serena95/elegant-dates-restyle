@@ -3,7 +3,8 @@ import { DayCard } from "./DayCard";
 import { ActiveProgramState } from "@/hooks/useActiveProgram";
 import { AICoachCard } from "./AICoachCard";
 import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
-import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap, Utensils, X, Crown, Droplets } from "lucide-react";
+import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap, Utensils, X, Crown, Droplets, Moon } from "lucide-react";
+import { getLunarPhase, getCombinedAdaptationMessage } from "@/utils/lunarPhase";
 import { motion } from "framer-motion";
 import { calculateStreak } from "@/services/streakService";
 import { computeProgress } from "@/services/progressEngine";
@@ -66,6 +67,9 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     try { return JSON.parse(localStorage.getItem("activeNutritionPlan") || "null"); } catch { return null; }
   });
 
+  const lunarPhase = useMemo(() => getLunarPhase(new Date()), []);
+  const combinedMessage = useMemo(() => getCombinedAdaptationMessage(cyclePhase, lunarPhase), [cyclePhase, lunarPhase]);
+
   const aiContext = useMemo<AICoachContext>(() => ({
     level: livello,
     equipment: attrezzi,
@@ -76,6 +80,8 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     lastWorkoutType: Object.values(storicoCal).filter((v: any) => v?.completato).slice(-1)[0]?.attrezzo,
     recentIntensity: progressData.recentIntensity,
     cyclePhase,
+    lunarPhase: lunarPhase.name,
+    lunarEnergy: lunarPhase.energy,
     pregnancyMode,
     pregnancyWeek,
     todayEquipment: todayWorkout?.attrezzo,
@@ -84,7 +90,7 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     isRestDay,
     isAlreadyCompleted,
     nutritionPlan: savedPlan?.nome,
-  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, pregnancyMode, pregnancyWeek, todayWorkout, todayFocusInfo, isRestDay, isAlreadyCompleted, savedPlan]);
+  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, lunarPhase, pregnancyMode, pregnancyWeek, todayWorkout, todayFocusInfo, isRestDay, isAlreadyCompleted, savedPlan]);
 
   const greeting = () => {
     const h = new Date().getHours();
@@ -150,30 +156,51 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
         onStartSuggested={todayWorkout ? () => onAvviaAllenamento(todayWorkout.key) : undefined}
       />
 
-      {/* Cycle Phase Banner */}
-      {cyclePhase && (
+      {/* Cycle + Lunar Phase Banner */}
+      {(cyclePhase || true) && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ delay: 0.15 }}
-          className="bg-gradient-to-r from-pink-500/10 via-rose-500/5 to-violet-500/10 rounded-2xl border border-pink-500/15 p-3 cursor-pointer"
+          className="bg-gradient-to-r from-pink-500/10 via-indigo-500/5 to-violet-500/10 rounded-2xl border border-pink-500/15 p-3 cursor-pointer space-y-2"
           onClick={() => onNavigate?.("cycle")}
         >
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5">
-              <Droplets size={16} className="text-pink-500" />
-              <div>
-                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Fase ciclo</p>
-                <p className="text-sm font-bold text-foreground capitalize">{
-                  cyclePhase === "mestruale" ? "🌙 Mestruale" :
-                  cyclePhase === "follicolare" ? "🌿 Follicolare" :
-                  cyclePhase === "ovulazione" ? "☀️ Ovulazione" :
-                  "🌸 Luteale"
-                }</p>
+            {cyclePhase ? (
+              <div className="flex items-center gap-2.5">
+                <Droplets size={16} className="text-pink-500" />
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Fase ciclo</p>
+                  <p className="text-sm font-bold text-foreground capitalize">{
+                    cyclePhase === "mestruale" ? "🌙 Mestruale" :
+                    cyclePhase === "follicolare" ? "🌿 Follicolare" :
+                    cyclePhase === "ovulazione" ? "☀️ Ovulazione" :
+                    "🌸 Luteale"
+                  }</p>
+                </div>
               </div>
+            ) : (
+              <div className="flex items-center gap-2.5">
+                <Moon size={16} className="text-indigo-400" />
+                <div>
+                  <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Fase Lunare</p>
+                  <p className="text-sm font-bold text-foreground">{lunarPhase.icon} {lunarPhase.name}</p>
+                </div>
+              </div>
+            )}
+            <div className="flex items-center gap-2">
+              {cyclePhase && (
+                <span className="text-lg" title={lunarPhase.name}>{lunarPhase.icon}</span>
+              )}
+              <span className="text-xs text-primary font-bold">Dettagli →</span>
             </div>
-            <span className="text-xs text-primary font-bold">Dettagli →</span>
           </div>
+          {combinedMessage && (
+            <p className="text-[11px] text-muted-foreground leading-snug italic px-0.5">{combinedMessage}</p>
+          )}
+          {!cyclePhase && (
+            <p className="text-[11px] text-muted-foreground leading-snug italic px-0.5">{lunarPhase.workoutModifier}</p>
+          )}
         </motion.div>
       )}
 

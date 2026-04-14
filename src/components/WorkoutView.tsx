@@ -71,6 +71,7 @@ interface WorkoutViewProps {
   initialShowStretching?: boolean;
   onStateChange?: (state: { currentExerciseIdx: number; completati: number[]; showStretching: boolean }) => void;
   dayFocus?: DayFocus;
+  adaptationMessage?: string;
 }
 
 const RISCALDAMENTO_MODES = [
@@ -79,7 +80,7 @@ const RISCALDAMENTO_MODES = [
   { tipo: "CAMMINATA ESTERNA", emoji: "🌳", desc: "25 min • Passo svelto • Braccia attive e rullata del piede completa.", durata: 1500, label: "25 MIN" },
 ];
 
-export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, onStretchingComplete, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], initialShowStretching = false, onStateChange, dayFocus }: WorkoutViewProps) {
+export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, onStretchingComplete, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], initialShowStretching = false, onStateChange, dayFocus, adaptationMessage }: WorkoutViewProps) {
   // Use progression-based config instead of static CONFIG_LIVELLI
   const progressionConfig = useMemo(() => getProgressionConfig(livello), [livello]);
   const config = progressionConfig;
@@ -505,6 +506,13 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
               <TrendingUp size={12} className="text-primary" />
               <span className="text-[10px] font-bold text-primary">{getProgressionLabel(livello)}</span>
             </div>
+            {/* Cycle + Lunar adaptation message */}
+            {adaptationMessage && (
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-pink-500/5 border border-pink-500/10">
+                <span className="text-[10px]">🌙</span>
+                <span className="text-[10px] text-muted-foreground italic">{adaptationMessage}</span>
+              </div>
+            )}
           </>
         );
       })()}

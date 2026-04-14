@@ -17,6 +17,8 @@ export interface AICoachContext {
   equipment: string[];
   preferredFocus?: string;
   cyclePhase?: string;
+  lunarPhase?: string;
+  lunarEnergy?: string;
   pregnancyMode?: boolean;
   pregnancyWeek?: number;
   streak: number;
@@ -51,7 +53,7 @@ const sessionCache = new Map<string, { data: CompleteCoachResponse; timestamp: n
 const CACHE_TTL = 15 * 60 * 1000; // 15 minutes
 
 function getCacheKey(context: AICoachContext): string {
-  return `${context.level}-${(context.equipment || []).sort().join(",")}-${context.streak}-${context.cyclePhase || ""}-${context.pregnancyMode || false}-${context.todayEquipment || "rest"}-${context.todayFocus || ""}-${context.isRestDay}-${context.isAlreadyCompleted}`;
+  return `${context.level}-${(context.equipment || []).sort().join(",")}-${context.streak}-${context.cyclePhase || ""}-${context.lunarPhase || ""}-${context.pregnancyMode || false}-${context.todayEquipment || "rest"}-${context.todayFocus || ""}-${context.isRestDay}-${context.isAlreadyCompleted}`;
 }
 
 export async function generateCompleteCoachData(context: AICoachContext, forceRefresh = false): Promise<CompleteCoachResponse> {

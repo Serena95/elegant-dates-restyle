@@ -16,6 +16,7 @@ import { InstallBanner } from "@/components/InstallBanner";
 import { InstallAppView } from "@/components/InstallAppView";
 import { ProgramsView } from "@/components/ProgramsView";
 import { CycleTracking, getCyclePhaseForDate, CYCLE_PHASES } from "@/components/CycleTracking";
+import { getLunarEnergyPhase, getWorkoutIntensityModifier } from "@/utils/lunarPhase";
 import { PregnancyMonitoring } from "@/components/PregnancyMonitoring";
 import { NutritionPlanView } from "@/components/NutritionPlanView";
 import { MoreView } from "@/components/MoreView";
@@ -305,20 +306,22 @@ const Index = () => {
       const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
       ctx.recentExerciseIds = storici;
 
-      // Cycle-based workout adaptation: adjust level based on cycle phase
+      // Cycle + Lunar workout adaptation: adjust level based on combined phases
       let effectiveLivello = cloud.livello;
       if (!cloud.pregnancySettings.modalita_gravidanza) {
         const phase = getCyclePhase(cloud.cycleEntries, cloud.pregnancySettings);
-        if (phase === "mestruale") {
-          // During menstruation: reduce intensity
+        const lunarEnergy = getLunarEnergyPhase(new Date());
+        const modifier = getWorkoutIntensityModifier(phase, lunarEnergy);
+        
+        if (modifier <= -2) {
+          // Very light: drop two levels
+          effectiveLivello = "BASSO";
+        } else if (modifier === -1) {
+          // Light: drop one level
           if (effectiveLivello === "AVANZATO") effectiveLivello = "MEDIO";
           else if (effectiveLivello === "MEDIO") effectiveLivello = "BASSO";
-        } else if (phase === "luteale") {
-          // Luteal phase: moderate intensity, reduce if advanced
-          if (effectiveLivello === "AVANZATO") effectiveLivello = "MEDIO";
         }
-        // Follicolare: gradual increase (keep current)
-        // Ovulazione: max intensity (keep current or boost handled naturally)
+        // modifier 0 or +1: keep current (boost is handled naturally by progression)
       }
 
       const dayFocus = getFocusForWeekday(new Date(`${giorno}T00:00:00`).getDay());
@@ -432,6 +435,12 @@ const Index = () => {
 
   if (view === "workout" && giornoSelezionato) {
     const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "Corpo Libero";
+    // Compute adaptation message for workout view
+    const cyclePhaseNow = cloud.pregnancySettings.modalita_gravidanza ? undefined : getCyclePhase(cloud.cycleEntries, cloud.pregnancySettings);
+    const lunarNow = getLunarEnergyPhase(new Date());
+    const intensityMod = getWorkoutIntensityModifier(cyclePhaseNow, lunarNow);
+    const adaptMsg = intensityMod !== 0 ? "Allenamento adattato alla tua fase attuale" : undefined;
+
     return (
       <div className="min-h-screen min-h-dvh w-full max-w-full overflow-x-hidden bg-background px-3 sm:px-4 py-4">
         <div className="w-full max-w-4xl mx-auto min-w-0">
@@ -461,6 +470,7 @@ const Index = () => {
               setWorkoutShowStretching(state.showStretching);
             }}
             dayFocus={focusMap[giornoSelezionato]?.key as any}
+            adaptationMessage={adaptMsg}
           />
         </div>
         {showComplete && (

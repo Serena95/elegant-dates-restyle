@@ -22,8 +22,16 @@ serve(async (req) => {
 
     const cycleAdaptation = context.cyclePhase ? `\nFase del ciclo: ${context.cyclePhase}. ${
       context.cyclePhase === "mestruale" ? "Suggerisci mobilità e stretching leggero." :
-      context.cyclePhase === "luteale" ? "Suggerisci allenamenti moderati." :
-      context.cyclePhase === "follicolare" ? "Puoi suggerire allenamenti più intensi." : ""
+      context.cyclePhase === "luteale" ? "Suggerisci allenamenti moderati con focus su tecnica e core." :
+      context.cyclePhase === "follicolare" ? "Puoi suggerire allenamenti più intensi, energia in crescita." :
+      context.cyclePhase === "ovulazione" ? "Massima energia! Suggerisci allenamenti intensi e sfidanti." : ""
+    }` : "";
+
+    const lunarAdaptation = context.lunarPhase ? `\nFase lunare: ${context.lunarPhase} (energia: ${context.lunarEnergy || "normale"}). ${
+      context.lunarEnergy === "bassa" ? "Luna nuova: periodo introspettivo, favorisci recupero." :
+      context.lunarEnergy === "crescente" ? "Luna crescente: energia in aumento, buon momento per progredire." :
+      context.lunarEnergy === "alta" ? "Luna piena: picco energetico, massima performance." :
+      context.lunarEnergy === "calante" ? "Luna calante: rallenta, focus su tecnica e stabilità." : ""
     }` : "";
     
     const pregnancyAdaptation = context.pregnancyMode ? `\nModalità gravidanza attiva (settimana ${context.pregnancyWeek || "?"}). Evita addominali compressivi e movimenti intensi del core. Favorisci mobilità, respirazione e stabilità.` : "";
@@ -72,7 +80,8 @@ Non aggiungere testo fuori dal JSON. Non usare markdown.`;
 - Ultimo focus allenato: ${context.lastFocus || "nessuno"}
 - Gruppi muscolari più allenati questa settimana: ${context.mostTrainedThisWeek || "nessuno"}
 - Ultimo tipo allenamento: ${context.lastWorkoutType || "sconosciuto"}
-- Intensità recente: ${context.recentIntensity || "media"}${todayPlanContext}${cycleAdaptation}${pregnancyAdaptation}${cycleNote}
+- Intensità recente: ${context.recentIntensity || "media"}${todayPlanContext}${cycleAdaptation}${lunarAdaptation}${pregnancyAdaptation}${cycleNote}
+L'allenamento è stato adattato automaticamente alla fase del ciclo e alla fase lunare.
 
 Genera:
 1. Un suggerimento coerente con il piano di oggi
@@ -89,7 +98,7 @@ Rispondi SOLO con il JSON.`;
 - Focus preferito: ${context.preferredFocus || "full body"}
 - Streak allenamenti: ${context.streak || 0} giorni
 - Ultimo focus allenato: ${context.lastFocus || "nessuno"}
-- Gruppi muscolari più allenati questa settimana: ${context.mostTrainedThisWeek || "nessuno"}${todayPlanContext}${cycleAdaptation}${pregnancyAdaptation}
+- Gruppi muscolari più allenati questa settimana: ${context.mostTrainedThisWeek || "nessuno"}${todayPlanContext}${cycleAdaptation}${lunarAdaptation}${pregnancyAdaptation}
 
 Suggerisci un allenamento coerente con il piano di oggi. Rispondi SOLO con il JSON.`;
 
@@ -110,6 +119,7 @@ Obiettivo: ${context.nutritionGoal || "benessere"}
 Livello attività: ${context.level || "MEDIO"}
 Streak allenamenti: ${context.streak || 0}
 ${context.cyclePhase ? `Fase ciclo: ${context.cyclePhase}` : ""}
+${context.lunarPhase ? `Fase lunare: ${context.lunarPhase}` : ""}
 ${context.pregnancyMode ? `Gravidanza settimana ${context.pregnancyWeek}` : ""}
 Fornisci un consiglio nutrizionale personalizzato e coerente con il piano. Rispondi SOLO con il JSON.`;
 

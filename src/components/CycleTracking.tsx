@@ -2,6 +2,7 @@ import { useState, useMemo, useCallback } from "react";
 import { ChevronLeft, ChevronRight, X, Droplets, Settings, Heart, Smile, Frown, Meh, Zap, Moon, Sun, Flower2, Baby, Dumbbell, Utensils } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
+import { getLunarPhase, getCombinedAdaptationMessage, type LunarPhaseInfo } from "@/utils/lunarPhase";
 
 // ============================================================
 // TYPES
@@ -319,7 +320,7 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
         </button>
       </div>
 
-      {/* Current Phase Banner */}
+      {/* Current Phase Banner + Lunar */}
       {currentPhaseInfo && (
         <motion.div
           initial={{ opacity: 0, y: 8 }}
@@ -342,6 +343,32 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
             )}
           </div>
           <p className="text-xs text-muted-foreground leading-relaxed">{currentPhaseInfo.description}</p>
+
+          {/* Lunar Phase Row */}
+          {(() => {
+            const lunar = getLunarPhase(new Date());
+            const combined = getCombinedAdaptationMessage(currentPhase, lunar);
+            return (
+              <div className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-blue-500/10 rounded-xl p-3 border border-indigo-500/10">
+                <div className="flex items-center justify-between mb-1.5">
+                  <div className="flex items-center gap-2">
+                    <span className="text-2xl">{lunar.icon}</span>
+                    <div>
+                      <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1"><Moon size={9} /> Fase Lunare</p>
+                      <p className="text-xs font-bold text-foreground">{lunar.name}</p>
+                    </div>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-sm font-black text-indigo-500">{lunar.illumination}%</p>
+                    <p className="text-[8px] uppercase font-bold text-muted-foreground">Illuminazione</p>
+                  </div>
+                </div>
+                {combined && (
+                  <p className="text-[11px] text-foreground/80 leading-snug mt-1 italic">{combined}</p>
+                )}
+              </div>
+            );
+          })()}
           
           {/* Workout & Nutrition tips */}
           <div className="grid grid-cols-2 gap-2">
