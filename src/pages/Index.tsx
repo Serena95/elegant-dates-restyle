@@ -313,9 +313,12 @@ const Index = () => {
           // During menstruation: reduce intensity
           if (effectiveLivello === "AVANZATO") effectiveLivello = "MEDIO";
           else if (effectiveLivello === "MEDIO") effectiveLivello = "BASSO";
+        } else if (phase === "luteale") {
+          // Luteal phase: moderate intensity, reduce if advanced
+          if (effectiveLivello === "AVANZATO") effectiveLivello = "MEDIO";
         }
-        // Follicolare and ovulazione: keep or boost intensity (normal/high energy)
-        // Luteale: keep normal intensity
+        // Follicolare: gradual increase (keep current)
+        // Ovulazione: max intensity (keep current or boost handled naturally)
       }
 
       const dayFocus = getFocusForWeekday(new Date(`${giorno}T00:00:00`).getDay());
