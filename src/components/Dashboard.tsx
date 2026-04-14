@@ -3,7 +3,7 @@ import { DayCard } from "./DayCard";
 import { ActiveProgramState } from "@/hooks/useActiveProgram";
 import { AICoachCard } from "./AICoachCard";
 import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
-import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap, Utensils, X, Crown } from "lucide-react";
+import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap, Utensils, X, Crown, Droplets } from "lucide-react";
 import { motion } from "framer-motion";
 import { calculateStreak } from "@/services/streakService";
 import { computeProgress } from "@/services/progressEngine";
@@ -149,6 +149,33 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
         progress={progressData}
         onStartSuggested={todayWorkout ? () => onAvviaAllenamento(todayWorkout.key) : undefined}
       />
+
+      {/* Cycle Phase Banner */}
+      {cyclePhase && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ delay: 0.15 }}
+          className="bg-gradient-to-r from-pink-500/10 via-rose-500/5 to-violet-500/10 rounded-2xl border border-pink-500/15 p-3 cursor-pointer"
+          onClick={() => onNavigate?.("cycle")}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2.5">
+              <Droplets size={16} className="text-pink-500" />
+              <div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Fase ciclo</p>
+                <p className="text-sm font-bold text-foreground capitalize">{
+                  cyclePhase === "mestruale" ? "🌙 Mestruale" :
+                  cyclePhase === "follicolare" ? "🌿 Follicolare" :
+                  cyclePhase === "ovulazione" ? "☀️ Ovulazione" :
+                  "🌸 Luteale"
+                }</p>
+              </div>
+            </div>
+            <span className="text-xs text-primary font-bold">Dettagli →</span>
+          </div>
+        </motion.div>
+      )}
 
       {/* Active Program/Challenge Banner */}
       {activeProgram && (

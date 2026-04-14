@@ -1,26 +1,11 @@
-import { useState, useMemo } from "react";
-import { ChevronLeft, ChevronRight, X, Droplets, TrendingUp, Moon } from "lucide-react";
+import { useState, useMemo, useCallback } from "react";
+import { ChevronLeft, ChevronRight, X, Droplets, Settings, Heart, Smile, Frown, Meh, Zap, Moon, Sun, Flower2, Baby, Dumbbell, Utensils } from "lucide-react";
 import { toast } from "sonner";
 import { motion, AnimatePresence } from "framer-motion";
 
-// Lunar phase calculation (based on synodic month ~29.53 days)
-function getLunarPhase(date: Date): { name: string; icon: string; illumination: number } {
-  const knownNewMoon = new Date(2000, 0, 6, 18, 14); // Known new moon
-  const synodicMonth = 29.53058770576;
-  const daysSince = (date.getTime() - knownNewMoon.getTime()) / (1000 * 60 * 60 * 24);
-  const phase = ((daysSince % synodicMonth) + synodicMonth) % synodicMonth;
-  const illumination = Math.round((1 - Math.cos(2 * Math.PI * phase / synodicMonth)) / 2 * 100);
-
-  if (phase < 1.85) return { name: "Luna Nuova", icon: "🌑", illumination };
-  if (phase < 7.38) return { name: "Crescente", icon: "🌒", illumination };
-  if (phase < 9.23) return { name: "Primo Quarto", icon: "🌓", illumination };
-  if (phase < 14.77) return { name: "Gibbosa Crescente", icon: "🌔", illumination };
-  if (phase < 16.61) return { name: "Luna Piena", icon: "🌕", illumination };
-  if (phase < 22.15) return { name: "Gibbosa Calante", icon: "🌖", illumination };
-  if (phase < 24.0) return { name: "Ultimo Quarto", icon: "🌗", illumination };
-  if (phase < 27.69) return { name: "Calante", icon: "🌘", illumination };
-  return { name: "Luna Nuova", icon: "🌑", illumination };
-}
+// ============================================================
+// TYPES
+// ============================================================
 
 interface CycleEntry {
   id?: string;
@@ -40,23 +25,144 @@ interface CycleTrackingProps {
   onBack?: () => void;
 }
 
+// ============================================================
+// CYCLE PHASE LOGIC (exported for reuse)
+// ============================================================
+
+export type CyclePhaseId = "mestruale" | "follicolare" | "ovulazione" | "luteale";
+
+export interface CyclePhaseInfo {
+  id: CyclePhaseId;
+  label: string;
+  icon: string;
+  color: string;
+  bgColor: string;
+  borderColor: string;
+  textColor: string;
+  emoji: string;
+  workoutTip: string;
+  nutritionTip: string;
+  description: string;
+}
+
+export const CYCLE_PHASES: Record<CyclePhaseId, CyclePhaseInfo> = {
+  mestruale: {
+    id: "mestruale",
+    label: "Mestruale",
+    icon: "🩸",
+    color: "bg-rose-500",
+    bgColor: "bg-rose-500/10",
+    borderColor: "border-rose-500/20",
+    textColor: "text-rose-500",
+    emoji: "🌙",
+    workoutTip: "Allenamenti leggeri: stretching, yoga, camminate dolci",
+    nutritionTip: "Aumenta ferro e vitamina C. Cibi caldi e nutrienti.",
+    description: "Periodo di riposo e rigenerazione. Ascolta il tuo corpo.",
+  },
+  follicolare: {
+    id: "follicolare",
+    label: "Follicolare",
+    icon: "🌱",
+    color: "bg-emerald-500",
+    bgColor: "bg-emerald-500/10",
+    borderColor: "border-emerald-500/20",
+    textColor: "text-emerald-500",
+    emoji: "🌿",
+    workoutTip: "Aumenta gradualmente l'intensità. Ottimo per nuovi esercizi.",
+    nutritionTip: "Proteine magre e verdure fresche. Energia in crescita!",
+    description: "Energia in aumento. Fase ideale per spingerti un po' oltre.",
+  },
+  ovulazione: {
+    id: "ovulazione",
+    label: "Ovulazione",
+    icon: "✨",
+    color: "bg-amber-500",
+    bgColor: "bg-amber-500/10",
+    borderColor: "border-amber-500/20",
+    textColor: "text-amber-500",
+    emoji: "☀️",
+    workoutTip: "Massima intensità! HIIT, forza, finisher impegnativi.",
+    nutritionTip: "Antiossidanti, omega-3 e cibi anti-infiammatori.",
+    description: "Picco di energia e forza. Sfrutta al massimo!",
+  },
+  luteale: {
+    id: "luteale",
+    label: "Luteale",
+    icon: "🍂",
+    color: "bg-violet-500",
+    bgColor: "bg-violet-500/10",
+    borderColor: "border-violet-500/20",
+    textColor: "text-violet-500",
+    emoji: "🌸",
+    workoutTip: "Intensità moderata. Focus su controllo e stabilità.",
+    nutritionTip: "Magnesio, carboidrati complessi. Evita eccesso di sale.",
+    description: "Fase di transizione. Mantieni costanza con moderazione.",
+  },
+};
+
+export function getCyclePhaseForDate(
+  dateStr: string,
+  entries: CycleEntry[],
+  durataCiclo: number,
+  durataMestruazione: number
+): CyclePhaseId | null {
+  const lastPeriod = entries
+    .filter(e => e.tipo === "mestruazione")
+    .sort((a, b) => b.data.localeCompare(a.data))[0];
+
+  if (!lastPeriod) return null;
+
+  const lastDate = new Date(lastPeriod.data + "T00:00:00");
+  const target = new Date(dateStr + "T00:00:00");
+  const daysSince = Math.floor((target.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+
+  if (daysSince < 0) return null;
+
+  // Normalize to current cycle position
+  const dayInCycle = daysSince % durataCiclo;
+
+  if (dayInCycle < durataMestruazione) return "mestruale";
+  if (dayInCycle < Math.floor(durataCiclo / 2) - 1) return "follicolare";
+  if (dayInCycle < Math.floor(durataCiclo / 2) + 2) return "ovulazione";
+  return "luteale";
+}
+
+// ============================================================
+// SYMPTOM & MOOD DATA
+// ============================================================
+
 const SINTOMI_OPTIONS = [
   { id: "crampi", label: "Crampi", icon: "😣" },
   { id: "mal_di_testa", label: "Mal di testa", icon: "🤕" },
   { id: "stanchezza", label: "Stanchezza", icon: "😴" },
   { id: "gonfiore", label: "Gonfiore", icon: "🫧" },
-  { id: "umore_basso", label: "Umore basso", icon: "😔" },
-  { id: "energia", label: "Piena di energia", icon: "⚡" },
   { id: "dolore_schiena", label: "Mal di schiena", icon: "🔙" },
   { id: "nausea", label: "Nausea", icon: "🤢" },
+  { id: "acne", label: "Acne", icon: "😖" },
+  { id: "tensione_seno", label: "Tensione seno", icon: "💢" },
+  { id: "insonnia", label: "Insonnia", icon: "🌙" },
+  { id: "appetito", label: "Appetito alto", icon: "🍽️" },
+];
+
+const MOOD_OPTIONS = [
+  { id: "felice", label: "Felice", icon: "😊", color: "text-amber-500" },
+  { id: "energica", label: "Energica", icon: "⚡", color: "text-emerald-500" },
+  { id: "tranquilla", label: "Tranquilla", icon: "😌", color: "text-sky-500" },
+  { id: "stressata", label: "Stressata", icon: "😰", color: "text-orange-500" },
+  { id: "triste", label: "Triste", icon: "😢", color: "text-blue-500" },
+  { id: "irritabile", label: "Irritabile", icon: "😤", color: "text-rose-500" },
+  { id: "ansiosa", label: "Ansiosa", icon: "😟", color: "text-violet-500" },
+  { id: "sensibile", label: "Sensibile", icon: "🥺", color: "text-pink-500" },
 ];
 
 const TIPO_OPTIONS = [
-  { id: "mestruazione", label: "Mestruazione", color: "bg-rose-500", lightBg: "bg-rose-500/15", border: "border-rose-400/30", icon: "🔴", textColor: "text-rose-500" },
+  { id: "mestruazione", label: "Ciclo", color: "bg-rose-500", lightBg: "bg-rose-500/15", border: "border-rose-400/30", icon: "🩸", textColor: "text-rose-500" },
   { id: "spotting", label: "Spotting", color: "bg-orange-400", lightBg: "bg-orange-400/15", border: "border-orange-300/30", icon: "🟠", textColor: "text-orange-400" },
-  { id: "fertile", label: "Fertile", color: "bg-emerald-500", lightBg: "bg-emerald-500/15", border: "border-emerald-400/30", icon: "🟢", textColor: "text-emerald-500" },
-  { id: "ovulazione", label: "Ovulazione", color: "bg-violet-500", lightBg: "bg-violet-500/15", border: "border-violet-400/30", icon: "🟣", textColor: "text-violet-500" },
 ];
+
+// ============================================================
+// COMPONENT
+// ============================================================
 
 export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo, durataMestruazione, onUpdateSettings, onBack }: CycleTrackingProps) {
   const [meseCorrente, setMeseCorrente] = useState(new Date().getMonth());
@@ -65,8 +171,10 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
   const [selectedDate, setSelectedDate] = useState<string | null>(null);
   const [newTipo, setNewTipo] = useState("mestruazione");
   const [newSintomi, setNewSintomi] = useState<string[]>([]);
+  const [newMood, setNewMood] = useState<string>("");
   const [newNote, setNewNote] = useState("");
   const [showSettings, setShowSettings] = useState(false);
+  const [activeTab, setActiveTab] = useState<"calendario" | "diario">("calendario");
 
   const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
   const giorniLabel = ["L", "M", "M", "G", "V", "S", "D"];
@@ -85,8 +193,15 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
     return map;
   }, [entries]);
 
-  // Predict next period + fertile window
-  const { periodPredictions, fertilePredictions } = useMemo(() => {
+  // Current phase
+  const currentPhase = useMemo(() => {
+    return getCyclePhaseForDate(todayKey, entries, durataCiclo, durataMestruazione);
+  }, [todayKey, entries, durataCiclo, durataMestruazione]);
+
+  const currentPhaseInfo = currentPhase ? CYCLE_PHASES[currentPhase] : null;
+
+  // Predictions
+  const predictions = useMemo(() => {
     const periodDates = entries
       .filter(e => e.tipo === "mestruazione")
       .map(e => e.data)
@@ -95,54 +210,45 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
 
     const periodSet = new Set<string>();
     const fertileSet = new Set<string>();
+    const ovulationSet = new Set<string>();
 
-    if (periodDates.length === 0) return { periodPredictions: periodSet, fertilePredictions: fertileSet };
+    if (periodDates.length === 0) return { periodSet, fertileSet, ovulationSet };
 
-    const lastPeriod = new Date(periodDates[0]);
+    const lastPeriod = new Date(periodDates[0] + "T00:00:00");
 
-    for (let cycle = 1; cycle <= 3; cycle++) {
+    for (let cycle = 1; cycle <= 6; cycle++) {
       const nextStart = new Date(lastPeriod);
       nextStart.setDate(nextStart.getDate() + durataCiclo * cycle);
+      
+      // Period days
       for (let d = 0; d < durataMestruazione; d++) {
         const day = new Date(nextStart);
         day.setDate(day.getDate() + d);
         periodSet.add(day.toISOString().split("T")[0]);
       }
-      // Fertile window: ~5 days before ovulation (day 14 of cycle)
-      const ovulationDay = new Date(nextStart);
-      ovulationDay.setDate(ovulationDay.getDate() + Math.round(durataCiclo / 2) - 1);
-      for (let d = -4; d <= 1; d++) {
-        const day = new Date(ovulationDay);
+      
+      // Ovulation day (~day 14 of cycle)
+      const ovDay = new Date(nextStart);
+      ovDay.setDate(ovDay.getDate() + Math.floor(durataCiclo / 2) - 1);
+      ovulationSet.add(ovDay.toISOString().split("T")[0]);
+      
+      // Fertile window: 5 days before ovulation + ovulation day
+      for (let d = -5; d <= 0; d++) {
+        const day = new Date(ovDay);
         day.setDate(day.getDate() + d);
         fertileSet.add(day.toISOString().split("T")[0]);
       }
     }
-    return { periodPredictions: periodSet, fertilePredictions: fertileSet };
+    return { periodSet, fertileSet, ovulationSet };
   }, [entries, durataCiclo, durataMestruazione]);
-
-  // Current phase
-  const currentPhase = useMemo(() => {
-    const entry = entryMap[todayKey];
-    if (entry) {
-      const tipo = TIPO_OPTIONS.find(t => t.id === entry.tipo);
-      return { label: tipo?.label || "—", color: tipo?.textColor || "text-foreground", icon: tipo?.icon || "📅" };
-    }
-    if (periodPredictions.has(todayKey)) return { label: "Mestruazione (prev.)", color: "text-rose-400", icon: "🔮" };
-    if (fertilePredictions.has(todayKey)) return { label: "Finestra fertile (prev.)", color: "text-emerald-400", icon: "🌿" };
-    return { label: "Nessuna fase", color: "text-muted-foreground", icon: "✨" };
-  }, [todayKey, entryMap, periodPredictions, fertilePredictions]);
 
   // Days until next period
   const daysUntilNext = useMemo(() => {
-    const sorted = [...periodPredictions].sort();
+    const sorted = [...predictions.periodSet].sort();
     const future = sorted.find(d => d > todayKey);
     if (!future) return null;
-    const diff = Math.round((new Date(future).getTime() - new Date(todayKey).getTime()) / 86400000);
-    return diff;
-  }, [periodPredictions, todayKey]);
-
-  // Lunar phase for today
-  const lunarPhase = useMemo(() => getLunarPhase(new Date()), []);
+    return Math.round((new Date(future + "T00:00:00").getTime() - new Date(todayKey + "T00:00:00").getTime()) / 86400000);
+  }, [predictions.periodSet, todayKey]);
 
   const cambiaMese = (d: number) => {
     let m = meseCorrente + d;
@@ -155,10 +261,19 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
 
   const handleAddEntry = async () => {
     if (!selectedDate) return;
-    await onAddEntry({ data: selectedDate, tipo: newTipo, sintomi: newSintomi, note: newNote });
+    // Encode mood in sintomi array for persistence (prefix with "mood:")
+    const allSintomi = [...newSintomi];
+    if (newMood) allSintomi.push(`mood:${newMood}`);
+    await onAddEntry({ data: selectedDate, tipo: newTipo, sintomi: allSintomi, note: newNote });
+    toast.success("Registrato! 📝");
     setShowAddModal(false);
+    resetForm();
+  };
+
+  const resetForm = () => {
     setNewTipo("mestruazione");
     setNewSintomi([]);
+    setNewMood("");
     setNewNote("");
   };
 
@@ -166,76 +281,119 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
     setNewSintomi(prev => prev.includes(id) ? prev.filter(s => s !== id) : [...prev, id]);
   };
 
+  // Extract mood from entry's sintomi
+  const getMood = (entry: CycleEntry) => {
+    const moodEntry = entry.sintomi.find(s => s.startsWith("mood:"));
+    return moodEntry ? moodEntry.replace("mood:", "") : null;
+  };
+
+  const getSymptoms = (entry: CycleEntry) => {
+    return entry.sintomi.filter(s => !s.startsWith("mood:"));
+  };
+
+  // Get phase info for a given date key
+  const getPhaseForDate = useCallback((dateKey: string) => {
+    return getCyclePhaseForDate(dateKey, entries, durataCiclo, durataMestruazione);
+  }, [entries, durataCiclo, durataMestruazione]);
+
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       {/* Header */}
       <div className="flex items-center gap-2">
         {onBack && (
-          <button onClick={onBack} className="text-primary">
+          <button onClick={onBack} className="text-primary p-1">
             <ChevronLeft size={24} />
           </button>
         )}
         <div className="flex-1">
-          <h2 className="text-xl font-bold text-foreground flex items-center gap-2">
-            <Droplets size={22} className="text-pink-500" /> Ciclo Mestruale
+          <h2 className="text-xl font-black text-foreground flex items-center gap-2">
+            <Droplets size={22} className="text-pink-500" /> Il Mio Ciclo
           </h2>
-          <p className="text-xs text-muted-foreground mt-0.5">Monitora il tuo ciclo e i sintomi</p>
+          <p className="text-xs text-muted-foreground mt-0.5">Il tuo diario personale</p>
         </div>
-        <button onClick={() => setShowSettings(!showSettings)} className="text-xs text-primary font-bold px-3 py-1.5 rounded-full bg-primary/10 transition hover:bg-primary/20">
-          ⚙️ Config
+        <button
+          onClick={() => setShowSettings(!showSettings)}
+          className="p-2 rounded-full bg-muted/50 hover:bg-muted transition"
+        >
+          <Settings size={16} className="text-muted-foreground" />
         </button>
       </div>
 
-      {/* Phase + Countdown Banner */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="bg-gradient-to-r from-pink-500/10 via-rose-500/5 to-violet-500/10 rounded-2xl border border-pink-500/15 p-4"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-2xl">{currentPhase.icon}</span>
-            <div>
-              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Oggi</p>
-              <p className={`text-sm font-bold ${currentPhase.color}`}>{currentPhase.label}</p>
+      {/* Current Phase Banner */}
+      {currentPhaseInfo && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className={`rounded-2xl border ${currentPhaseInfo.borderColor} ${currentPhaseInfo.bgColor} p-4 space-y-3`}
+        >
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <span className="text-3xl">{currentPhaseInfo.emoji}</span>
+              <div>
+                <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">Fase attuale</p>
+                <p className={`text-base font-black ${currentPhaseInfo.textColor}`}>{currentPhaseInfo.label}</p>
+              </div>
+            </div>
+            {daysUntilNext !== null && (
+              <div className="text-right">
+                <p className="text-2xl font-black text-rose-500">{daysUntilNext}</p>
+                <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">giorni al ciclo</p>
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-muted-foreground leading-relaxed">{currentPhaseInfo.description}</p>
+          
+          {/* Workout & Nutrition tips */}
+          <div className="grid grid-cols-2 gap-2">
+            <div className="bg-card/60 rounded-xl p-2.5 border border-border/50">
+              <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1 mb-1">
+                <Dumbbell size={10} /> Allenamento
+              </p>
+              <p className="text-[11px] text-foreground leading-snug">{currentPhaseInfo.workoutTip}</p>
+            </div>
+            <div className="bg-card/60 rounded-xl p-2.5 border border-border/50">
+              <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1 mb-1">
+                <Utensils size={10} /> Nutrizione
+              </p>
+              <p className="text-[11px] text-foreground leading-snug">{currentPhaseInfo.nutritionTip}</p>
             </div>
           </div>
-          {daysUntilNext !== null && (
-            <div className="text-right">
-              <p className="text-2xl font-black text-rose-500">{daysUntilNext}</p>
-              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider">giorni al ciclo</p>
-            </div>
-          )}
-        </div>
-      </motion.div>
+        </motion.div>
+      )}
 
-      {/* Lunar Phase */}
-      <motion.div
-        initial={{ opacity: 0, y: 8 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ delay: 0.1 }}
-        className="bg-gradient-to-r from-indigo-500/10 via-purple-500/5 to-blue-500/10 rounded-2xl border border-indigo-500/15 p-4"
-      >
-        <div className="flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <span className="text-3xl">{lunarPhase.icon}</span>
-            <div>
-              <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider flex items-center gap-1"><Moon size={10} /> Fase Lunare</p>
-              <p className="text-sm font-bold text-foreground">{lunarPhase.name}</p>
+      {/* No data prompt */}
+      {!currentPhaseInfo && entries.filter(e => e.tipo === "mestruazione").length === 0 && (
+        <motion.div
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="rounded-2xl border border-dashed border-pink-300/30 bg-pink-500/5 p-5 text-center space-y-2"
+        >
+          <span className="text-3xl">📅</span>
+          <p className="text-sm font-bold text-foreground">Inizia a tracciare il tuo ciclo</p>
+          <p className="text-xs text-muted-foreground">Tocca un giorno nel calendario per registrare l'inizio del ciclo. Le previsioni saranno calcolate automaticamente!</p>
+        </motion.div>
+      )}
+
+      {/* Phase Progress Bar */}
+      {currentPhase && (
+        <div className="flex gap-1">
+          {(["mestruale", "follicolare", "ovulazione", "luteale"] as CyclePhaseId[]).map(phase => (
+            <div key={phase} className="flex-1 flex flex-col items-center gap-1">
+              <div className={`h-1.5 w-full rounded-full transition-all ${currentPhase === phase ? CYCLE_PHASES[phase].color : "bg-muted"}`} />
+              <span className={`text-[9px] font-bold ${currentPhase === phase ? CYCLE_PHASES[phase].textColor : "text-muted-foreground/50"}`}>
+                {CYCLE_PHASES[phase].icon}
+              </span>
             </div>
-          </div>
-          <div className="text-right">
-            <p className="text-lg font-black text-indigo-500">{lunarPhase.illumination}%</p>
-            <p className="text-[10px] uppercase font-bold text-muted-foreground">Illuminazione</p>
-          </div>
+          ))}
         </div>
-      </motion.div>
+      )}
 
       {/* Settings */}
       <AnimatePresence>
         {showSettings && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
             <div className="bg-card rounded-2xl border border-border p-4 space-y-3">
+              <p className="text-xs font-bold uppercase text-muted-foreground tracking-wider">Impostazioni Ciclo</p>
               <div className="flex items-center justify-between">
                 <label className="text-sm font-semibold text-foreground">Durata ciclo</label>
                 <div className="flex items-center gap-2">
@@ -257,124 +415,206 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
         )}
       </AnimatePresence>
 
-      {/* Calendar */}
-      <div className="bg-card rounded-2xl border border-border overflow-hidden">
-        <div className="flex justify-between items-center px-4 py-3 border-b border-border">
-          <button onClick={() => cambiaMese(-1)} className="p-1.5 rounded-full hover:bg-muted transition"><ChevronLeft size={18} className="text-foreground" /></button>
-          <h3 className="text-sm font-bold text-foreground">{mesi[meseCorrente]} {annoCorrente}</h3>
-          <button onClick={() => cambiaMese(1)} className="p-1.5 rounded-full hover:bg-muted transition"><ChevronRight size={18} className="text-foreground" /></button>
-        </div>
-
-        <div className="p-3">
-          <div className="grid grid-cols-7 text-center mb-2">
-            {giorniLabel.map((g, i) => (
-              <div key={i} className="text-[10px] font-bold text-muted-foreground uppercase py-1">{g}</div>
-            ))}
-          </div>
-
-          <div className="grid grid-cols-7 gap-[3px]">
-            {Array.from({ length: primoGiorno }, (_, i) => <div key={`e-${i}`} />)}
-            {Array.from({ length: giorniNelMese }, (_, i) => {
-              const g = i + 1;
-              const key = `${annoCorrente}-${String(meseCorrente + 1).padStart(2, "0")}-${String(g).padStart(2, "0")}`;
-              const isToday = key === todayKey;
-              const entry = entryMap[key];
-              const isPeriodPred = periodPredictions.has(key);
-              const isFertilePred = fertilePredictions.has(key);
-              const tipo = entry?.tipo;
-
-              let dotColor = "";
-              let cellBg = "";
-              if (tipo === "mestruazione") { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/10"; }
-              else if (tipo === "spotting") { dotColor = "bg-orange-400"; cellBg = "bg-orange-400/10"; }
-              else if (tipo === "fertile") { dotColor = "bg-emerald-500"; cellBg = "bg-emerald-500/10"; }
-              else if (tipo === "ovulazione") { dotColor = "bg-violet-500"; cellBg = "bg-violet-500/10"; }
-              else if (isPeriodPred) { cellBg = "bg-rose-500/5"; }
-              else if (isFertilePred) { cellBg = "bg-emerald-500/5"; }
-
-              return (
-                <button
-                  key={g}
-                  onClick={() => { setSelectedDate(key); setShowAddModal(true); }}
-                  className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs transition-all relative ${cellBg} ${
-                    isToday ? "ring-2 ring-primary ring-offset-1 ring-offset-card font-black" : "font-medium"
-                  }`}
-                >
-                  <span className={isToday ? "text-primary" : "text-foreground"}>{g}</span>
-                  {dotColor && <span className={`w-1.5 h-1.5 rounded-full ${dotColor} absolute bottom-1`} />}
-                  {!entry && isPeriodPred && <span className={`w-1.5 h-1.5 rounded-full bg-rose-400/50 absolute bottom-1 border border-dashed border-rose-400`} />}
-                  {!entry && isFertilePred && !isPeriodPred && <span className={`w-1.5 h-1.5 rounded-full bg-emerald-400/50 absolute bottom-1`} />}
-                </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Legend */}
-        <div className="px-4 py-3 border-t border-border flex flex-wrap gap-x-4 gap-y-1">
-          {TIPO_OPTIONS.map(t => (
-            <div key={t.id} className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-              <span className={`w-2 h-2 rounded-full ${t.color}`} />
-              <span>{t.label}</span>
-            </div>
-          ))}
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <span className="w-2 h-2 rounded-full bg-rose-400/50 border border-dashed border-rose-400" />
-            <span>Previsione</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-            <span className="w-2 h-2 rounded-full bg-emerald-400/50" />
-            <span>Fertile (prev.)</span>
-          </div>
-        </div>
+      {/* Tab selector */}
+      <div className="flex gap-1 p-1 bg-muted/50 rounded-xl">
+        <button
+          onClick={() => setActiveTab("calendario")}
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === "calendario" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+        >
+          📅 Calendario
+        </button>
+        <button
+          onClick={() => setActiveTab("diario")}
+          className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${activeTab === "diario" ? "bg-card text-foreground shadow-sm" : "text-muted-foreground"}`}
+        >
+          📖 Diario
+        </button>
       </div>
 
-      {/* Recent entries */}
-      {entries.length > 0 && (
-        <div className="space-y-2">
-          <h3 className="text-xs font-bold uppercase text-muted-foreground tracking-wider px-1">Registri recenti</h3>
-          {entries
-            .sort((a, b) => b.data.localeCompare(a.data))
-            .slice(0, 5)
-            .map(entry => {
-              const tipo = TIPO_OPTIONS.find(t => t.id === entry.tipo);
-              return (
-                <motion.div
-                  key={entry.id || entry.data}
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 1 }}
-                  className={`rounded-2xl border ${tipo?.border || "border-border"} ${tipo?.lightBg || "bg-card"} p-3 flex items-center gap-3`}
-                >
-                  <div className={`w-10 h-10 rounded-xl ${tipo?.lightBg || "bg-muted"} flex items-center justify-center flex-shrink-0`}>
-                    <span className="text-lg">{tipo?.icon || "📅"}</span>
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2">
-                      <p className={`text-sm font-bold ${tipo?.textColor || "text-foreground"}`}>{tipo?.label}</p>
-                      <span className="text-[10px] text-muted-foreground">•</span>
-                      <p className="text-[11px] text-muted-foreground font-medium">{formatDateNice(entry.data)}</p>
+      {/* Calendar Tab */}
+      {activeTab === "calendario" && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }}>
+          <div className="bg-card rounded-2xl border border-border overflow-hidden">
+            <div className="flex justify-between items-center px-4 py-3 border-b border-border">
+              <button onClick={() => cambiaMese(-1)} className="p-1.5 rounded-full hover:bg-muted transition"><ChevronLeft size={18} className="text-foreground" /></button>
+              <h3 className="text-sm font-bold text-foreground">{mesi[meseCorrente]} {annoCorrente}</h3>
+              <button onClick={() => cambiaMese(1)} className="p-1.5 rounded-full hover:bg-muted transition"><ChevronRight size={18} className="text-foreground" /></button>
+            </div>
+
+            <div className="p-3">
+              <div className="grid grid-cols-7 text-center mb-2">
+                {giorniLabel.map((g, i) => (
+                  <div key={i} className="text-[10px] font-bold text-muted-foreground uppercase py-1">{g}</div>
+                ))}
+              </div>
+
+              <div className="grid grid-cols-7 gap-[3px]">
+                {Array.from({ length: primoGiorno }, (_, i) => <div key={`e-${i}`} />)}
+                {Array.from({ length: giorniNelMese }, (_, i) => {
+                  const g = i + 1;
+                  const key = `${annoCorrente}-${String(meseCorrente + 1).padStart(2, "0")}-${String(g).padStart(2, "0")}`;
+                  const isToday = key === todayKey;
+                  const entry = entryMap[key];
+                  const isPeriodPred = predictions.periodSet.has(key);
+                  const isFertilePred = predictions.fertileSet.has(key);
+                  const isOvulationPred = predictions.ovulationSet.has(key);
+                  const tipo = entry?.tipo;
+                  const phase = getPhaseForDate(key);
+
+                  let cellBg = "";
+                  let dotColor = "";
+                  let dotStyle = "";
+
+                  if (tipo === "mestruazione") { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/15"; }
+                  else if (tipo === "spotting") { dotColor = "bg-orange-400"; cellBg = "bg-orange-400/10"; }
+                  else if (isOvulationPred && !entry) { cellBg = "bg-amber-500/10"; dotColor = "bg-amber-500/60"; dotStyle = "ring-1 ring-amber-400"; }
+                  else if (isPeriodPred && !entry) { cellBg = "bg-rose-500/5"; dotColor = "bg-rose-400/40"; dotStyle = "border border-dashed border-rose-400"; }
+                  else if (isFertilePred && !entry) { cellBg = "bg-emerald-500/5"; dotColor = "bg-emerald-400/40"; }
+
+                  // Subtle phase stripe
+                  const phaseStripe = !entry && !isPeriodPred && !isFertilePred && !isOvulationPred && phase
+                    ? `border-b-2 ${CYCLE_PHASES[phase].borderColor.replace("border-", "border-b-")}`
+                    : "";
+
+                  return (
+                    <button
+                      key={g}
+                      onClick={() => { setSelectedDate(key); setShowAddModal(true); }}
+                      className={`aspect-square rounded-xl flex flex-col items-center justify-center text-xs transition-all relative ${cellBg} ${phaseStripe} ${
+                        isToday ? "ring-2 ring-primary ring-offset-1 ring-offset-card font-black" : "font-medium"
+                      }`}
+                    >
+                      <span className={isToday ? "text-primary" : "text-foreground"}>{g}</span>
+                      {dotColor && (
+                        <span className={`w-1.5 h-1.5 rounded-full ${dotColor} ${dotStyle} absolute bottom-1`} />
+                      )}
+                      {/* Mood emoji for entries with mood */}
+                      {entry && getMood(entry) && (
+                        <span className="absolute top-0 right-0.5 text-[8px]">
+                          {MOOD_OPTIONS.find(m => m.id === getMood(entry))?.icon}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Legend */}
+            <div className="px-4 py-3 border-t border-border">
+              <div className="flex flex-wrap gap-x-3 gap-y-1.5">
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className="w-2 h-2 rounded-full bg-rose-500" /> Ciclo
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className="w-2 h-2 rounded-full bg-orange-400" /> Spotting
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className="w-2 h-2 rounded-full bg-amber-500/60 ring-1 ring-amber-400" /> Ovulazione
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className="w-2 h-2 rounded-full bg-emerald-400/40" /> Fertile
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className="w-2 h-2 rounded-full bg-rose-400/40 border border-dashed border-rose-400" /> Previsione
+                </div>
+              </div>
+            </div>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Diary Tab */}
+      {activeTab === "diario" && (
+        <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className="space-y-3">
+          {entries.length === 0 ? (
+            <div className="text-center py-10 text-muted-foreground">
+              <span className="text-4xl block mb-3">📖</span>
+              <p className="text-sm font-bold">Il tuo diario è vuoto</p>
+              <p className="text-xs mt-1">Tocca un giorno nel calendario per iniziare</p>
+            </div>
+          ) : (
+            entries
+              .sort((a, b) => b.data.localeCompare(a.data))
+              .slice(0, 15)
+              .map(entry => {
+                const tipo = TIPO_OPTIONS.find(t => t.id === entry.tipo);
+                const mood = getMood(entry);
+                const moodInfo = MOOD_OPTIONS.find(m => m.id === mood);
+                const symptoms = getSymptoms(entry);
+                const phase = getPhaseForDate(entry.data);
+                const phaseInfo = phase ? CYCLE_PHASES[phase] : null;
+
+                return (
+                  <motion.div
+                    key={entry.id || entry.data}
+                    initial={{ opacity: 0, y: 5 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    className="bg-card rounded-2xl border border-border p-4 space-y-2.5"
+                  >
+                    {/* Date & Type row */}
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                        <span className="text-lg">{tipo?.icon || "📅"}</span>
+                        <div>
+                          <p className="text-sm font-bold text-foreground">{formatDateNice(entry.data)}</p>
+                          <div className="flex items-center gap-2">
+                            <span className={`text-[10px] font-bold ${tipo?.textColor || "text-foreground"}`}>{tipo?.label || entry.tipo}</span>
+                            {phaseInfo && (
+                              <span className={`text-[9px] font-bold ${phaseInfo.textColor} bg-muted/50 px-1.5 py-0.5 rounded-full`}>
+                                {phaseInfo.icon} {phaseInfo.label}
+                              </span>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {moodInfo && (
+                          <span className="text-xl" title={moodInfo.label}>{moodInfo.icon}</span>
+                        )}
+                        {entry.id && (
+                          <button onClick={() => onDeleteEntry(entry.id!)} className="text-muted-foreground hover:text-destructive p-1.5 rounded-lg hover:bg-destructive/10 transition">
+                            <X size={14} />
+                          </button>
+                        )}
+                      </div>
                     </div>
-                    {entry.sintomi.length > 0 && (
-                      <div className="flex gap-1 mt-1 flex-wrap">
-                        {entry.sintomi.map(s => {
+
+                    {/* Symptoms */}
+                    {symptoms.length > 0 && (
+                      <div className="flex gap-1.5 flex-wrap">
+                        {symptoms.map(s => {
                           const sint = SINTOMI_OPTIONS.find(so => so.id === s);
-                          return <span key={s} className="text-[10px] bg-card px-1.5 py-0.5 rounded-full border border-border">{sint?.icon} {sint?.label}</span>;
+                          return sint ? (
+                            <span key={s} className="text-[10px] bg-muted px-2 py-1 rounded-full border border-border">
+                              {sint.icon} {sint.label}
+                            </span>
+                          ) : null;
                         })}
                       </div>
                     )}
-                  </div>
-                  {entry.id && (
-                    <button onClick={() => onDeleteEntry(entry.id!)} className="text-muted-foreground hover:text-destructive p-1.5 rounded-lg hover:bg-destructive/10 transition">
-                      <X size={14} />
-                    </button>
-                  )}
-                </motion.div>
-              );
-            })}
-        </div>
+
+                    {/* Note */}
+                    {entry.note && (
+                      <p className="text-xs text-muted-foreground italic pl-1">"{entry.note}"</p>
+                    )}
+                  </motion.div>
+                );
+              })
+          )}
+        </motion.div>
       )}
 
-      {/* Add entry modal */}
+      {/* Quick add button (FAB) */}
+      <motion.button
+        whileTap={{ scale: 0.9 }}
+        onClick={() => { setSelectedDate(todayKey); setShowAddModal(true); }}
+        className="fixed bottom-24 right-4 w-14 h-14 rounded-full bg-pink-500 text-white shadow-lg shadow-pink-500/30 flex items-center justify-center z-40"
+      >
+        <span className="text-2xl">+</span>
+      </motion.button>
+
+      {/* Add Entry Modal */}
       <AnimatePresence>
         {showAddModal && selectedDate && (
           <motion.div
@@ -382,44 +622,46 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
             className="fixed inset-0 bg-foreground/40 backdrop-blur-sm z-50 flex items-end sm:items-center justify-center p-0 sm:p-4"
-            onClick={() => setShowAddModal(false)}
+            onClick={() => { setShowAddModal(false); resetForm(); }}
           >
             <motion.div
               initial={{ y: 100 }}
               animate={{ y: 0 }}
               exit={{ y: 100 }}
-              className="bg-card rounded-t-3xl sm:rounded-3xl border border-border shadow-2xl p-6 max-w-sm w-full space-y-5 max-h-[90vh] overflow-y-auto"
+              className="bg-card rounded-t-3xl sm:rounded-3xl border border-border shadow-2xl p-5 max-w-sm w-full space-y-4 max-h-[90vh] overflow-y-auto"
               onClick={e => e.stopPropagation()}
             >
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="font-bold text-lg text-foreground">{formatDateNice(selectedDate)}</h3>
-                  <p className="text-xs text-muted-foreground">Registra il tuo giorno</p>
+                  <p className="text-xs text-muted-foreground">Come stai oggi?</p>
                 </div>
-                <button onClick={() => setShowAddModal(false)} className="text-muted-foreground p-2 rounded-full hover:bg-muted transition"><X size={20} /></button>
+                <button onClick={() => { setShowAddModal(false); resetForm(); }} className="text-muted-foreground p-2 rounded-full hover:bg-muted transition"><X size={20} /></button>
               </div>
 
-              {/* Existing entry warning */}
+              {/* Existing entry */}
               {entryMap[selectedDate] && (
                 <div className={`${TIPO_OPTIONS.find(t => t.id === entryMap[selectedDate].tipo)?.lightBg || "bg-muted"} rounded-xl p-3`}>
-                  <p className="text-sm font-bold text-foreground">{TIPO_OPTIONS.find(t => t.id === entryMap[selectedDate].tipo)?.icon} {TIPO_OPTIONS.find(t => t.id === entryMap[selectedDate].tipo)?.label} — già registrato</p>
+                  <p className="text-sm font-bold text-foreground">
+                    {TIPO_OPTIONS.find(t => t.id === entryMap[selectedDate].tipo)?.icon} Già registrato
+                  </p>
                   {entryMap[selectedDate].id && (
-                    <button onClick={async () => { await onDeleteEntry(entryMap[selectedDate].id!); setShowAddModal(false); }} className="text-xs text-destructive font-bold mt-2 hover:underline">
+                    <button onClick={async () => { await onDeleteEntry(entryMap[selectedDate].id!); setShowAddModal(false); resetForm(); }} className="text-xs text-destructive font-bold mt-2 hover:underline">
                       Rimuovi registro
                     </button>
                   )}
                 </div>
               )}
 
-              {/* Type selection */}
+              {/* Type */}
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase mb-2 block tracking-wider">Tipo</label>
-                <div className="grid grid-cols-2 gap-2">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block tracking-wider">Tipo</label>
+                <div className="flex gap-2">
                   {TIPO_OPTIONS.map(t => (
                     <button
                       key={t.id}
                       onClick={() => setNewTipo(t.id)}
-                      className={`p-3 rounded-xl border-2 text-sm font-bold text-center transition-all ${
+                      className={`flex-1 py-3 rounded-xl border-2 text-sm font-bold text-center transition-all ${
                         newTipo === t.id
                           ? `${t.border} ${t.lightBg} ${t.textColor}`
                           : "border-border text-foreground hover:bg-muted/50"
@@ -431,10 +673,31 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
                 </div>
               </div>
 
+              {/* Mood */}
+              <div>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block tracking-wider">Umore</label>
+                <div className="grid grid-cols-4 gap-2">
+                  {MOOD_OPTIONS.map(m => (
+                    <button
+                      key={m.id}
+                      onClick={() => setNewMood(prev => prev === m.id ? "" : m.id)}
+                      className={`flex flex-col items-center gap-1 py-2.5 rounded-xl text-center transition-all ${
+                        newMood === m.id
+                          ? "bg-primary/10 border-2 border-primary/30 scale-105"
+                          : "bg-muted/30 border-2 border-transparent hover:bg-muted/50"
+                      }`}
+                    >
+                      <span className="text-xl">{m.icon}</span>
+                      <span className="text-[9px] font-bold text-muted-foreground">{m.label}</span>
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               {/* Symptoms */}
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase mb-2 block tracking-wider">Come ti senti?</label>
-                <div className="flex flex-wrap gap-2">
+                <label className="text-[10px] font-bold text-muted-foreground uppercase mb-2 block tracking-wider">Sintomi</label>
+                <div className="flex flex-wrap gap-1.5">
                   {SINTOMI_OPTIONS.map(s => (
                     <button
                       key={s.id}
@@ -451,23 +714,23 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
                 </div>
               </div>
 
-              {/* Notes */}
+              {/* Note */}
               <div>
-                <label className="text-xs font-bold text-muted-foreground uppercase mb-1 block tracking-wider">Note</label>
+                <label className="text-[10px] font-bold text-muted-foreground uppercase mb-1 block tracking-wider">Note personali</label>
                 <textarea
                   value={newNote}
                   onChange={e => setNewNote(e.target.value)}
                   className="w-full p-3 rounded-xl border border-border bg-background text-foreground text-sm resize-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition"
                   rows={2}
-                  placeholder="Note aggiuntive..."
+                  placeholder="Come ti senti oggi..."
                 />
               </div>
 
               <button
                 onClick={handleAddEntry}
-                className="w-full py-3.5 rounded-xl bg-primary text-primary-foreground font-bold text-sm shadow-lg shadow-primary/20 active:scale-[0.98] transition"
+                className="w-full py-3.5 rounded-xl bg-pink-500 text-white font-bold text-sm shadow-lg shadow-pink-500/20 active:scale-[0.98] transition"
               >
-                Salva Registro
+                📝 Salva nel Diario
               </button>
             </motion.div>
           </motion.div>
@@ -479,7 +742,7 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
 
 function formatDateNice(dateStr: string): string {
   const d = new Date(dateStr + "T00:00:00");
-  const giorni = ["Dom", "Lun", "Mar", "Mer", "Gio", "Ven", "Sab"];
-  const mesi = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
+  const giorni = ["Domenica", "Lunedì", "Martedì", "Mercoledì", "Giovedì", "Venerdì", "Sabato"];
+  const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
   return `${giorni[d.getDay()]} ${d.getDate()} ${mesi[d.getMonth()]}`;
 }
