@@ -119,6 +119,7 @@ Obiettivo: ${context.nutritionGoal || "benessere"}
 Livello attività: ${context.level || "MEDIO"}
 Streak allenamenti: ${context.streak || 0}
 ${context.cyclePhase ? `Fase ciclo: ${context.cyclePhase}` : ""}
+${context.lunarPhase ? `Fase lunare: ${context.lunarPhase}` : ""}
 ${context.pregnancyMode ? `Gravidanza settimana ${context.pregnancyWeek}` : ""}
 Fornisci un consiglio nutrizionale personalizzato e coerente con il piano. Rispondi SOLO con il JSON.`;
 
