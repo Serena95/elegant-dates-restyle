@@ -506,6 +506,13 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
               <TrendingUp size={12} className="text-primary" />
               <span className="text-[10px] font-bold text-primary">{getProgressionLabel(livello)}</span>
             </div>
+            {/* Cycle + Lunar adaptation message */}
+            {adaptationMessage && (
+              <div className="flex items-center gap-2 px-2 py-1.5 rounded-lg bg-pink-500/5 border border-pink-500/10">
+                <span className="text-[10px]">🌙</span>
+                <span className="text-[10px] text-muted-foreground italic">{adaptationMessage}</span>
+              </div>
+            )}
           </>
         );
       })()}
