@@ -3,7 +3,8 @@ import { DayCard } from "./DayCard";
 import { ActiveProgramState } from "@/hooks/useActiveProgram";
 import { AICoachCard } from "./AICoachCard";
 import { WeekPlan, CONFIG_LIVELLI, ATTREZZO_ICONS, FocusInfo, formatDateLabel, getLocalDateKey } from "@/data/exercises";
-import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap, Utensils, X, Crown, Droplets } from "lucide-react";
+import { CalendarDays, BarChart3, Flame, Dumbbell, Target, Zap, Utensils, X, Crown, Droplets, Moon } from "lucide-react";
+import { getLunarPhase, getCombinedAdaptationMessage } from "@/utils/lunarPhase";
 import { motion } from "framer-motion";
 import { calculateStreak } from "@/services/streakService";
 import { computeProgress } from "@/services/progressEngine";
@@ -66,6 +67,9 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     try { return JSON.parse(localStorage.getItem("activeNutritionPlan") || "null"); } catch { return null; }
   });
 
+  const lunarPhase = useMemo(() => getLunarPhase(new Date()), []);
+  const combinedMessage = useMemo(() => getCombinedAdaptationMessage(cyclePhase, lunarPhase), [cyclePhase, lunarPhase]);
+
   const aiContext = useMemo<AICoachContext>(() => ({
     level: livello,
     equipment: attrezzi,
@@ -76,6 +80,8 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     lastWorkoutType: Object.values(storicoCal).filter((v: any) => v?.completato).slice(-1)[0]?.attrezzo,
     recentIntensity: progressData.recentIntensity,
     cyclePhase,
+    lunarPhase: lunarPhase.name,
+    lunarEnergy: lunarPhase.energy,
     pregnancyMode,
     pregnancyWeek,
     todayEquipment: todayWorkout?.attrezzo,
@@ -84,7 +90,7 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     isRestDay,
     isAlreadyCompleted,
     nutritionPlan: savedPlan?.nome,
-  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, pregnancyMode, pregnancyWeek, todayWorkout, todayFocusInfo, isRestDay, isAlreadyCompleted, savedPlan]);
+  }), [livello, attrezzi, streakData, progressData, storicoCal, cyclePhase, lunarPhase, pregnancyMode, pregnancyWeek, todayWorkout, todayFocusInfo, isRestDay, isAlreadyCompleted, savedPlan]);
 
   const greeting = () => {
     const h = new Date().getHours();
