@@ -71,6 +71,7 @@ interface WorkoutViewProps {
   initialShowStretching?: boolean;
   onStateChange?: (state: { currentExerciseIdx: number; completati: number[]; showStretching: boolean }) => void;
   dayFocus?: DayFocus;
+  adaptationMessage?: string;
 }
 
 const RISCALDAMENTO_MODES = [
@@ -79,7 +80,7 @@ const RISCALDAMENTO_MODES = [
   { tipo: "CAMMINATA ESTERNA", emoji: "🌳", desc: "25 min • Passo svelto • Braccia attive e rullata del piede completa.", durata: 1500, label: "25 MIN" },
 ];
 
-export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, onStretchingComplete, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], initialShowStretching = false, onStateChange, dayFocus }: WorkoutViewProps) {
+export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, onSegnaRound, onBack, onStretchingComplete, voiceEnabled = true, aiGenerated = false, initialExerciseIdx = 0, initialCompletati = [], initialShowStretching = false, onStateChange, dayFocus, adaptationMessage }: WorkoutViewProps) {
   // Use progression-based config instead of static CONFIG_LIVELLI
   const progressionConfig = useMemo(() => getProgressionConfig(livello), [livello]);
   const config = progressionConfig;
