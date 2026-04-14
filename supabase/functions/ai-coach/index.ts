@@ -80,7 +80,8 @@ Non aggiungere testo fuori dal JSON. Non usare markdown.`;
 - Ultimo focus allenato: ${context.lastFocus || "nessuno"}
 - Gruppi muscolari più allenati questa settimana: ${context.mostTrainedThisWeek || "nessuno"}
 - Ultimo tipo allenamento: ${context.lastWorkoutType || "sconosciuto"}
-- Intensità recente: ${context.recentIntensity || "media"}${todayPlanContext}${cycleAdaptation}${pregnancyAdaptation}${cycleNote}
+- Intensità recente: ${context.recentIntensity || "media"}${todayPlanContext}${cycleAdaptation}${lunarAdaptation}${pregnancyAdaptation}${cycleNote}
+L'allenamento è stato adattato automaticamente alla fase del ciclo e alla fase lunare.
 
 Genera:
 1. Un suggerimento coerente con il piano di oggi
@@ -97,7 +98,7 @@ Rispondi SOLO con il JSON.`;
 - Focus preferito: ${context.preferredFocus || "full body"}
 - Streak allenamenti: ${context.streak || 0} giorni
 - Ultimo focus allenato: ${context.lastFocus || "nessuno"}
-- Gruppi muscolari più allenati questa settimana: ${context.mostTrainedThisWeek || "nessuno"}${todayPlanContext}${cycleAdaptation}${pregnancyAdaptation}
+- Gruppi muscolari più allenati questa settimana: ${context.mostTrainedThisWeek || "nessuno"}${todayPlanContext}${cycleAdaptation}${lunarAdaptation}${pregnancyAdaptation}
 
 Suggerisci un allenamento coerente con il piano di oggi. Rispondi SOLO con il JSON.`;
 
