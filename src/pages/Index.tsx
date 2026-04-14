@@ -15,7 +15,7 @@ import { WorkoutComplete } from "@/components/WorkoutComplete";
 import { InstallBanner } from "@/components/InstallBanner";
 import { InstallAppView } from "@/components/InstallAppView";
 import { ProgramsView } from "@/components/ProgramsView";
-import { CycleTracking } from "@/components/CycleTracking";
+import { CycleTracking, getCyclePhaseForDate, CYCLE_PHASES } from "@/components/CycleTracking";
 import { PregnancyMonitoring } from "@/components/PregnancyMonitoring";
 import { NutritionPlanView } from "@/components/NutritionPlanView";
 import { MoreView } from "@/components/MoreView";
@@ -48,26 +48,9 @@ import { useActiveProgram } from "@/hooks/useActiveProgram";
 import { saveOfflineCache, loadOfflineCache, getStoredGenerationKey, setStoredGenerationKey, isOnline } from "@/hooks/useOfflineCache";
 
 function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): string | undefined {
-  if (!entries || entries.length === 0) return undefined;
-  
-  const lastPeriod = entries
-    .filter(e => e.tipo === "mestruazione")
-    .sort((a, b) => b.data.localeCompare(a.data))[0];
-  
-  if (!lastPeriod) return undefined;
-  
-  const lastDate = new Date(lastPeriod.data + "T00:00:00");
   const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  const daysSince = Math.floor((today.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
-  
-  const cycleLength = settings.durata_ciclo || 28;
-  const periodLength = settings.durata_mestruazione || 5;
-  
-  if (daysSince < periodLength) return "mestruale";
-  if (daysSince < cycleLength / 2) return "follicolare";
-  if (daysSince < cycleLength / 2 + 2) return "ovulazione";
-  return "luteale";
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  return getCyclePhaseForDate(todayKey, entries, settings.durata_ciclo || 28, settings.durata_mestruazione || 5) || undefined;
 }
 
 function isWorkoutAlignedWithDayFocus(dateKey: string, exercises: Exercise[]): boolean {
