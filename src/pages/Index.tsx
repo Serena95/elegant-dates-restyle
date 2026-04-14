@@ -435,6 +435,12 @@ const Index = () => {
 
   if (view === "workout" && giornoSelezionato) {
     const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "Corpo Libero";
+    // Compute adaptation message for workout view
+    const cyclePhaseNow = cloud.pregnancySettings.modalita_gravidanza ? undefined : getCyclePhase(cloud.cycleEntries, cloud.pregnancySettings);
+    const lunarNow = getLunarEnergyPhase(new Date());
+    const intensityMod = getWorkoutIntensityModifier(cyclePhaseNow, lunarNow);
+    const adaptMsg = intensityMod !== 0 ? "Allenamento adattato alla tua fase attuale" : undefined;
+
     return (
       <div className="min-h-screen min-h-dvh w-full max-w-full overflow-x-hidden bg-background px-3 sm:px-4 py-4">
         <div className="w-full max-w-4xl mx-auto min-w-0">
@@ -464,6 +470,7 @@ const Index = () => {
               setWorkoutShowStretching(state.showStretching);
             }}
             dayFocus={focusMap[giornoSelezionato]?.key as any}
+            adaptationMessage={adaptMsg}
           />
         </div>
         {showComplete && (
