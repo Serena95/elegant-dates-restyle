@@ -85,6 +85,10 @@ export function useCloudData() {
     durata_ciclo: 28,
     durata_mestruazione: 5,
   });
+  const [nutritionProfile, setNutritionProfileState] = useState<NutritionProfile>({
+    peso: null, altezza: null, eta: null,
+    attivita_livello: "moderata", obiettivo_nutrizionale: "mantenimento", calorie_target: null,
+  });
   const sfidaRef = useRef<Sfida | null>(null);
 
   useEffect(() => {
