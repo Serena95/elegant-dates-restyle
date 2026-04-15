@@ -177,11 +177,109 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendario" | "diario">("calendario");
 
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
+  // ============================================================
+  // CYCLE START/END LOGIC
+  // ============================================================
+  
+  // Determine if a cycle is currently active (started but not ended)
+  const cycleStatus = useMemo(() => {
+    const startEntries = entries
+      .filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo")
+      .sort((a, b) => b.data.localeCompare(a.data));
+    const endEntries = entries
+      .filter(e => e.tipo === "fine_ciclo")
+      .sort((a, b) => b.data.localeCompare(a.data));
+
+    const lastStart = startEntries[0];
+    const lastEnd = endEntries[0];
+
+    if (!lastStart) return { active: false, startDate: null, endDate: null, duration: null };
+
+    // Cycle is active if there's a start with no end after it
+    const isActive = !lastEnd || lastStart.data > lastEnd.data;
+    
+    // Calculate last completed cycle duration
+    let duration: number | null = null;
+    if (lastEnd && lastStart) {
+      // Find the start that corresponds to this end
+      const correspondingStart = startEntries.find(s => s.data <= lastEnd.data);
+      if (correspondingStart) {
+        const startD = new Date(correspondingStart.data + "T00:00:00");
+        const endD = new Date(lastEnd.data + "T00:00:00");
+        duration = Math.round((endD.getTime() - startD.getTime()) / 86400000) + 1;
+      }
+    }
+
+    return {
+      active: isActive,
+      startDate: isActive ? lastStart.data : null,
+      endDate: lastEnd?.data || null,
+      duration,
+      lastStartDate: lastStart.data,
+    };
+  }, [entries]);
+
+  // Days the cycle has been active
+  const activeCycleDays = useMemo(() => {
+    if (!cycleStatus.active || !cycleStatus.startDate) return 0;
+    const start = new Date(cycleStatus.startDate + "T00:00:00");
+    const now = new Date(todayKey + "T00:00:00");
+    return Math.round((now.getTime() - start.getTime()) / 86400000) + 1;
+  }, [cycleStatus]);
+
+  // Dates covered by active cycle (for calendar highlighting)
+  const activeCycleDates = useMemo(() => {
+    const dates = new Set<string>();
+    if (!cycleStatus.active || !cycleStatus.startDate) return dates;
+    const start = new Date(cycleStatus.startDate + "T00:00:00");
+    const now = new Date(todayKey + "T00:00:00");
+    const d = new Date(start);
+    while (d <= now) {
+      dates.add(d.toISOString().split("T")[0]);
+      d.setDate(d.getDate() + 1);
+    }
+    return dates;
+  }, [cycleStatus, todayKey]);
+
+  // Past completed cycles date ranges for calendar
+  const completedCycleDates = useMemo(() => {
+    const dates = new Set<string>();
+    const starts = entries.filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo").sort((a, b) => a.data.localeCompare(b.data));
+    const ends = entries.filter(e => e.tipo === "fine_ciclo").sort((a, b) => a.data.localeCompare(b.data));
+    
+    for (const end of ends) {
+      const correspondingStart = [...starts].reverse().find(s => s.data <= end.data);
+      if (correspondingStart) {
+        const startD = new Date(correspondingStart.data + "T00:00:00");
+        const endD = new Date(end.data + "T00:00:00");
+        const d = new Date(startD);
+        while (d <= endD) {
+          dates.add(d.toISOString().split("T")[0]);
+          d.setDate(d.getDate() + 1);
+        }
+      }
+    }
+    return dates;
+  }, [entries]);
+
+  const handleStartCycle = async () => {
+    await onAddEntry({ data: todayKey, tipo: "inizio_ciclo", sintomi: [], note: "" });
+    // Also add a mestruazione entry so phase calculation works
+    await onAddEntry({ data: todayKey, tipo: "mestruazione", sintomi: [], note: "Inizio ciclo" });
+    toast.success("Ciclo iniziato! 🩸");
+  };
+
+  const handleEndCycle = async () => {
+    await onAddEntry({ data: todayKey, tipo: "fine_ciclo", sintomi: [], note: "" });
+    toast.success("Ciclo terminato! ✨");
+  };
+
   const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
   const giorniLabel = ["L", "M", "M", "G", "V", "S", "D"];
 
-  const today = new Date();
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   const { primoGiorno, giorniNelMese } = useMemo(() => {
     const primo = new Date(annoCorrente, meseCorrente, 1).getDay();
@@ -319,6 +417,69 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
           <Settings size={16} className="text-muted-foreground" />
         </button>
       </div>
+
+      {/* Quick Action Buttons: Start/End Cycle */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex gap-3"
+      >
+        {!cycleStatus.active ? (
+          <button
+            onClick={handleStartCycle}
+            className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-bold text-sm shadow-lg shadow-rose-500/25 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+          >
+            <Droplets size={18} />
+            Inizia Ciclo
+          </button>
+        ) : (
+          <button
+            onClick={handleEndCycle}
+            className="flex-1 py-4 rounded-2xl bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+          >
+            <Heart size={18} />
+            Fine Ciclo
+          </button>
+        )}
+      </motion.div>
+
+      {/* Active cycle status */}
+      {cycleStatus.active && cycleStatus.startDate && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-4 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🩸</span>
+            <div>
+              <p className="text-sm font-bold text-foreground">Ciclo in corso</p>
+              <p className="text-xs text-muted-foreground">
+                Iniziato il {formatDateNice(cycleStatus.startDate)}
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-black text-rose-500">{activeCycleDays}</p>
+            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">
+              {activeCycleDays === 1 ? "giorno" : "giorni"}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Last cycle info */}
+      {!cycleStatus.active && cycleStatus.duration && (
+        <div className="rounded-2xl border border-border bg-card p-3 flex items-center gap-3">
+          <span className="text-lg">📊</span>
+          <div className="flex-1">
+            <p className="text-xs font-bold text-foreground">Ultimo ciclo</p>
+            <p className="text-[11px] text-muted-foreground">
+              Durata: <span className="font-bold text-foreground">{cycleStatus.duration} giorni</span>
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* Current Phase Banner + Lunar */}
       {currentPhaseInfo && (
@@ -487,12 +648,18 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
                   const isOvulationPred = predictions.ovulationSet.has(key);
                   const tipo = entry?.tipo;
                   const phase = getPhaseForDate(key);
+                  const isActiveCycleDay = activeCycleDates.has(key);
+                  const isCompletedCycleDay = completedCycleDates.has(key);
 
                   let cellBg = "";
                   let dotColor = "";
                   let dotStyle = "";
 
-                  if (tipo === "mestruazione") { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/15"; }
+                  // Active or completed cycle days get strong highlight
+                  if (isActiveCycleDay) { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/20"; }
+                  else if (isCompletedCycleDay) { dotColor = "bg-rose-400"; cellBg = "bg-rose-500/10"; }
+                  else if (tipo === "mestruazione" || tipo === "inizio_ciclo") { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/15"; }
+                  else if (tipo === "fine_ciclo") { dotColor = "bg-emerald-500"; cellBg = "bg-emerald-500/10"; }
                   else if (tipo === "spotting") { dotColor = "bg-orange-400"; cellBg = "bg-orange-400/10"; }
                   else if (isOvulationPred && !entry) { cellBg = "bg-amber-500/10"; dotColor = "bg-amber-500/60"; dotStyle = "ring-1 ring-amber-400"; }
                   else if (isPeriodPred && !entry) { cellBg = "bg-rose-500/5"; dotColor = "bg-rose-400/40"; dotStyle = "border border-dashed border-rose-400"; }
