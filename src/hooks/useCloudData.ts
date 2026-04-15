@@ -434,6 +434,19 @@ export function useCloudData() {
     await upsertUserSettings(dbUpdates);
   }, [user, upsertUserSettings]);
 
+  const updateNutritionProfile = useCallback(async (updates: Partial<NutritionProfile>) => {
+    if (!user) return;
+    setNutritionProfileState(prev => ({ ...prev, ...updates }));
+    const dbUpdates: any = {};
+    if (updates.peso !== undefined) dbUpdates.peso = updates.peso;
+    if (updates.altezza !== undefined) dbUpdates.altezza = updates.altezza;
+    if (updates.eta !== undefined) dbUpdates.eta = updates.eta;
+    if (updates.attivita_livello !== undefined) dbUpdates.attivita_livello = updates.attivita_livello;
+    if (updates.obiettivo_nutrizionale !== undefined) dbUpdates.obiettivo_nutrizionale = updates.obiettivo_nutrizionale;
+    if (updates.calorie_target !== undefined) dbUpdates.calorie_target = updates.calorie_target;
+    await upsertUserSettings(dbUpdates);
+  }, [user, upsertUserSettings]);
+
   return {
     loading,
     attrezzi, setAttrezzi,
@@ -451,5 +464,6 @@ export function useCloudData() {
     cycleEntries, addCycleEntry, deleteCycleEntry,
     pregnancySettings, updatePregnancySettings,
     giorniAllenamento, setGiorniAllenamento,
+    nutritionProfile, updateNutritionProfile,
   };
 }
