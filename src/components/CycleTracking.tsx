@@ -643,7 +643,38 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
         </div>
       )}
 
-      {/* Settings */}
+      {/* Predictions Summary */}
+      {entries.filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo").length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-card rounded-xl border border-border p-3 text-center">
+            <p className="text-lg font-black text-rose-500">{daysUntilNext ?? "—"}</p>
+            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">Prossimo ciclo</p>
+          </div>
+          <div className="bg-card rounded-xl border border-border p-3 text-center">
+            <p className="text-lg font-black text-amber-500">{daysUntilOvulation ?? "—"}</p>
+            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">Ovulazione</p>
+          </div>
+          <div className={`rounded-xl border p-3 text-center ${isHighPregnancyToday ? "bg-pink-500/10 border-pink-400/30" : isFertileToday ? "bg-emerald-500/10 border-emerald-400/30" : "bg-card border-border"}`}>
+            <p className="text-lg font-black">{isHighPregnancyToday ? "🤰" : isFertileToday ? "💚" : "—"}</p>
+            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">
+              {isHighPregnancyToday ? "Alta prob." : isFertileToday ? "Fertile" : "Fertilità"}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Smart cycle info */}
+      {entries.filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo").length >= 2 && (
+        <div className="rounded-xl border border-border bg-card/50 p-3 flex items-center gap-2">
+          <span className="text-sm">🧠</span>
+          <p className="text-[11px] text-muted-foreground">
+            Ciclo medio: <span className="font-bold text-foreground">{smartCycleLength} giorni</span> · 
+            Mestruazione: <span className="font-bold text-foreground">{smartPeriodLength} giorni</span>
+            <span className="text-[9px] ml-1 opacity-60">(calcolato dai tuoi dati)</span>
+          </p>
+        </div>
+      )}
+
       <AnimatePresence>
         {showSettings && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
