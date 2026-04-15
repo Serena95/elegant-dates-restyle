@@ -418,6 +418,69 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
         </button>
       </div>
 
+      {/* Quick Action Buttons: Start/End Cycle */}
+      <motion.div
+        initial={{ opacity: 0, y: 8 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="flex gap-3"
+      >
+        {!cycleStatus.active ? (
+          <button
+            onClick={handleStartCycle}
+            className="flex-1 py-4 rounded-2xl bg-rose-500 text-white font-bold text-sm shadow-lg shadow-rose-500/25 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+          >
+            <Droplets size={18} />
+            Inizia Ciclo
+          </button>
+        ) : (
+          <button
+            onClick={handleEndCycle}
+            className="flex-1 py-4 rounded-2xl bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-500/25 active:scale-[0.97] transition-all flex items-center justify-center gap-2"
+          >
+            <Heart size={18} />
+            Fine Ciclo
+          </button>
+        )}
+      </motion.div>
+
+      {/* Active cycle status */}
+      {cycleStatus.active && cycleStatus.startDate && (
+        <motion.div
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          className="rounded-2xl border border-rose-400/20 bg-rose-500/10 p-4 flex items-center justify-between"
+        >
+          <div className="flex items-center gap-3">
+            <span className="text-2xl">🩸</span>
+            <div>
+              <p className="text-sm font-bold text-foreground">Ciclo in corso</p>
+              <p className="text-xs text-muted-foreground">
+                Iniziato il {formatDateNice(cycleStatus.startDate)}
+              </p>
+            </div>
+          </div>
+          <div className="text-right">
+            <p className="text-2xl font-black text-rose-500">{activeCycleDays}</p>
+            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">
+              {activeCycleDays === 1 ? "giorno" : "giorni"}
+            </p>
+          </div>
+        </motion.div>
+      )}
+
+      {/* Last cycle info */}
+      {!cycleStatus.active && cycleStatus.duration && (
+        <div className="rounded-2xl border border-border bg-card p-3 flex items-center gap-3">
+          <span className="text-lg">📊</span>
+          <div className="flex-1">
+            <p className="text-xs font-bold text-foreground">Ultimo ciclo</p>
+            <p className="text-[11px] text-muted-foreground">
+              Durata: <span className="font-bold text-foreground">{cycleStatus.duration} giorni</span>
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Current Phase Banner + Lunar */}
       {currentPhaseInfo && (
         <motion.div
