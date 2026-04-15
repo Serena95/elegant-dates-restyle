@@ -177,6 +177,9 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendario" | "diario">("calendario");
 
+  const today = new Date();
+  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+
   // ============================================================
   // CYCLE START/END LOGIC
   // ============================================================
