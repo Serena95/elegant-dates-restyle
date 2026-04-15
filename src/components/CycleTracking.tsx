@@ -398,13 +398,23 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
     return { periodSet, fertileSet, ovulationSet, highPregnancySet };
   }, [entries, smartCycleLength, smartPeriodLength]);
 
-  // Days until next period
+  // Days until next events
   const daysUntilNext = useMemo(() => {
     const sorted = [...predictions.periodSet].sort();
     const future = sorted.find(d => d > todayKey);
     if (!future) return null;
     return Math.round((new Date(future + "T00:00:00").getTime() - new Date(todayKey + "T00:00:00").getTime()) / 86400000);
   }, [predictions.periodSet, todayKey]);
+
+  const daysUntilOvulation = useMemo(() => {
+    const sorted = [...predictions.ovulationSet].sort();
+    const future = sorted.find(d => d > todayKey);
+    if (!future) return null;
+    return Math.round((new Date(future + "T00:00:00").getTime() - new Date(todayKey + "T00:00:00").getTime()) / 86400000);
+  }, [predictions.ovulationSet, todayKey]);
+
+  const isFertileToday = predictions.fertileSet.has(todayKey);
+  const isHighPregnancyToday = predictions.highPregnancySet.has(todayKey);
 
   const cambiaMese = (d: number) => {
     let m = meseCorrente + d;
