@@ -648,12 +648,18 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
                   const isOvulationPred = predictions.ovulationSet.has(key);
                   const tipo = entry?.tipo;
                   const phase = getPhaseForDate(key);
+                  const isActiveCycleDay = activeCycleDates.has(key);
+                  const isCompletedCycleDay = completedCycleDates.has(key);
 
                   let cellBg = "";
                   let dotColor = "";
                   let dotStyle = "";
 
-                  if (tipo === "mestruazione") { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/15"; }
+                  // Active or completed cycle days get strong highlight
+                  if (isActiveCycleDay) { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/20"; }
+                  else if (isCompletedCycleDay) { dotColor = "bg-rose-400"; cellBg = "bg-rose-500/10"; }
+                  else if (tipo === "mestruazione" || tipo === "inizio_ciclo") { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/15"; }
+                  else if (tipo === "fine_ciclo") { dotColor = "bg-emerald-500"; cellBg = "bg-emerald-500/10"; }
                   else if (tipo === "spotting") { dotColor = "bg-orange-400"; cellBg = "bg-orange-400/10"; }
                   else if (isOvulationPred && !entry) { cellBg = "bg-amber-500/10"; dotColor = "bg-amber-500/60"; dotStyle = "ring-1 ring-amber-400"; }
                   else if (isPeriodPred && !entry) { cellBg = "bg-rose-500/5"; dotColor = "bg-rose-400/40"; dotStyle = "border border-dashed border-rose-400"; }
