@@ -53,6 +53,15 @@ export interface PregnancySettings {
   durata_mestruazione: number;
 }
 
+export interface NutritionProfile {
+  peso: number | null;
+  altezza: number | null;
+  eta: number | null;
+  attivita_livello: string;
+  obiettivo_nutrizionale: string;
+  calorie_target: number | null;
+}
+
 export function useCloudData() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
