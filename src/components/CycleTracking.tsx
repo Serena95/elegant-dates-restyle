@@ -703,27 +703,33 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
                   const isPeriodPred = predictions.periodSet.has(key);
                   const isFertilePred = predictions.fertileSet.has(key);
                   const isOvulationPred = predictions.ovulationSet.has(key);
+                  const isHighPregnancy = predictions.highPregnancySet.has(key);
                   const tipo = entry?.tipo;
                   const phase = getPhaseForDate(key);
                   const isActiveCycleDay = activeCycleDates.has(key);
                   const isCompletedCycleDay = completedCycleDates.has(key);
 
+                  // Lunar phase for this date
+                  const cellDate = new Date(annoCorrente, meseCorrente, g);
+                  const lunar = getLunarPhase(cellDate);
+                  // Show lunar icon only on key phases (new, first quarter, full, last quarter)
+                  const showLunar = ["Luna Nuova", "Primo Quarto", "Luna Piena", "Ultimo Quarto"].includes(lunar.name);
+
                   let cellBg = "";
                   let dotColor = "";
                   let dotStyle = "";
 
-                  // Active or completed cycle days get strong highlight
                   if (isActiveCycleDay) { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/20"; }
                   else if (isCompletedCycleDay) { dotColor = "bg-rose-400"; cellBg = "bg-rose-500/10"; }
                   else if (tipo === "mestruazione" || tipo === "inizio_ciclo") { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/15"; }
                   else if (tipo === "fine_ciclo") { dotColor = "bg-emerald-500"; cellBg = "bg-emerald-500/10"; }
                   else if (tipo === "spotting") { dotColor = "bg-orange-400"; cellBg = "bg-orange-400/10"; }
-                  else if (isOvulationPred && !entry) { cellBg = "bg-amber-500/10"; dotColor = "bg-amber-500/60"; dotStyle = "ring-1 ring-amber-400"; }
-                  else if (isPeriodPred && !entry) { cellBg = "bg-rose-500/5"; dotColor = "bg-rose-400/40"; dotStyle = "border border-dashed border-rose-400"; }
-                  else if (isFertilePred && !entry) { cellBg = "bg-emerald-500/5"; dotColor = "bg-emerald-400/40"; }
+                  else if (isOvulationPred) { cellBg = "bg-amber-500/15"; dotColor = "bg-amber-500"; dotStyle = "ring-1 ring-amber-400"; }
+                  else if (isHighPregnancy) { cellBg = "bg-pink-500/10"; dotColor = "bg-pink-500/70"; }
+                  else if (isPeriodPred) { cellBg = "bg-rose-500/5"; dotColor = "bg-rose-400/40"; dotStyle = "border border-dashed border-rose-400"; }
+                  else if (isFertilePred) { cellBg = "bg-emerald-500/8"; dotColor = "bg-emerald-400/50"; }
 
-                  // Subtle phase stripe
-                  const phaseStripe = !entry && !isPeriodPred && !isFertilePred && !isOvulationPred && phase
+                  const phaseStripe = !entry && !isPeriodPred && !isFertilePred && !isOvulationPred && !isHighPregnancy && phase
                     ? `border-b-2 ${CYCLE_PHASES[phase].borderColor.replace("border-", "border-b-")}`
                     : "";
 
@@ -739,8 +745,16 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
                       {dotColor && (
                         <span className={`w-1.5 h-1.5 rounded-full ${dotColor} ${dotStyle} absolute bottom-1`} />
                       )}
-                      {/* Mood emoji for entries with mood */}
-                      {entry && getMood(entry) && (
+                      {/* Lunar phase icon */}
+                      {showLunar && (
+                        <span className="absolute top-0 left-0.5 text-[7px] opacity-60">{lunar.icon}</span>
+                      )}
+                      {/* High pregnancy indicator */}
+                      {isHighPregnancy && !isActiveCycleDay && !isCompletedCycleDay && (
+                        <span className="absolute top-0 right-0.5 text-[7px]">🤰</span>
+                      )}
+                      {/* Mood emoji */}
+                      {entry && getMood(entry) && !isHighPregnancy && (
                         <span className="absolute top-0 right-0.5 text-[8px]">
                           {MOOD_OPTIONS.find(m => m.id === getMood(entry))?.icon}
                         </span>
@@ -758,16 +772,19 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
                   <span className="w-2 h-2 rounded-full bg-rose-500" /> Ciclo
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full bg-orange-400" /> Spotting
+                  <span className="w-2 h-2 rounded-full bg-amber-500 ring-1 ring-amber-400" /> Ovulazione
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full bg-amber-500/60 ring-1 ring-amber-400" /> Ovulazione
+                  <span className="w-2 h-2 rounded-full bg-pink-500/70" /> 🤰 Alta probabilità
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400/40" /> Fertile
+                  <span className="w-2 h-2 rounded-full bg-emerald-400/50" /> Fertile
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   <span className="w-2 h-2 rounded-full bg-rose-400/40 border border-dashed border-rose-400" /> Previsione
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className="text-[8px]">🌕</span> Fase lunare
                 </div>
               </div>
             </div>
