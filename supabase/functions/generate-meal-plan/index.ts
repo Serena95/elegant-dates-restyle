@@ -91,7 +91,14 @@ Genera il piano completo in JSON.`;
           status: 429, headers: { ...corsHeaders, "Content-Type": "application/json" },
         });
       }
-      throw new Error("AI gateway error");
+      if (response.status === 402) {
+        return new Response(JSON.stringify({ error: "Crediti AI esauriti. Ricarica il saldo in Settings → Workspace → Usage.", fallback: true }), {
+          status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+      return new Response(JSON.stringify({ error: "Servizio AI temporaneamente non disponibile, riprova più tardi.", fallback: true }), {
+        status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
     }
 
     const data = await response.json();

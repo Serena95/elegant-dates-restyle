@@ -312,6 +312,11 @@ export function NutritionPlanView({ onBack, onSavePlan, initialPlanId }: Nutriti
       });
 
       if (error) throw error;
+      if (data?.fallback || data?.error) {
+        toast({ title: "⚠️ Servizio non disponibile", description: data.error || "Riprova più tardi", variant: "destructive" });
+        setIsGenerating(false);
+        return;
+      }
       if (!data?.result) throw new Error("Nessun piano generato");
 
       const plan = data.result;
