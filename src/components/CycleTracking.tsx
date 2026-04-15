@@ -280,8 +280,6 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
   const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
   const giorniLabel = ["L", "M", "M", "G", "V", "S", "D"];
 
-  const today = new Date();
-  const todayKey = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
 
   const { primoGiorno, giorniNelMese } = useMemo(() => {
     const primo = new Date(annoCorrente, meseCorrente, 1).getDay();
