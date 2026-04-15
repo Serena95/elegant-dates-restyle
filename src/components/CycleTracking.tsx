@@ -177,6 +177,103 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
   const [showSettings, setShowSettings] = useState(false);
   const [activeTab, setActiveTab] = useState<"calendario" | "diario">("calendario");
 
+  // ============================================================
+  // CYCLE START/END LOGIC
+  // ============================================================
+  
+  // Determine if a cycle is currently active (started but not ended)
+  const cycleStatus = useMemo(() => {
+    const startEntries = entries
+      .filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo")
+      .sort((a, b) => b.data.localeCompare(a.data));
+    const endEntries = entries
+      .filter(e => e.tipo === "fine_ciclo")
+      .sort((a, b) => b.data.localeCompare(a.data));
+
+    const lastStart = startEntries[0];
+    const lastEnd = endEntries[0];
+
+    if (!lastStart) return { active: false, startDate: null, endDate: null, duration: null };
+
+    // Cycle is active if there's a start with no end after it
+    const isActive = !lastEnd || lastStart.data > lastEnd.data;
+    
+    // Calculate last completed cycle duration
+    let duration: number | null = null;
+    if (lastEnd && lastStart) {
+      // Find the start that corresponds to this end
+      const correspondingStart = startEntries.find(s => s.data <= lastEnd.data);
+      if (correspondingStart) {
+        const startD = new Date(correspondingStart.data + "T00:00:00");
+        const endD = new Date(lastEnd.data + "T00:00:00");
+        duration = Math.round((endD.getTime() - startD.getTime()) / 86400000) + 1;
+      }
+    }
+
+    return {
+      active: isActive,
+      startDate: isActive ? lastStart.data : null,
+      endDate: lastEnd?.data || null,
+      duration,
+      lastStartDate: lastStart.data,
+    };
+  }, [entries]);
+
+  // Days the cycle has been active
+  const activeCycleDays = useMemo(() => {
+    if (!cycleStatus.active || !cycleStatus.startDate) return 0;
+    const start = new Date(cycleStatus.startDate + "T00:00:00");
+    const now = new Date(todayKey + "T00:00:00");
+    return Math.round((now.getTime() - start.getTime()) / 86400000) + 1;
+  }, [cycleStatus]);
+
+  // Dates covered by active cycle (for calendar highlighting)
+  const activeCycleDates = useMemo(() => {
+    const dates = new Set<string>();
+    if (!cycleStatus.active || !cycleStatus.startDate) return dates;
+    const start = new Date(cycleStatus.startDate + "T00:00:00");
+    const now = new Date(todayKey + "T00:00:00");
+    const d = new Date(start);
+    while (d <= now) {
+      dates.add(d.toISOString().split("T")[0]);
+      d.setDate(d.getDate() + 1);
+    }
+    return dates;
+  }, [cycleStatus, todayKey]);
+
+  // Past completed cycles date ranges for calendar
+  const completedCycleDates = useMemo(() => {
+    const dates = new Set<string>();
+    const starts = entries.filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo").sort((a, b) => a.data.localeCompare(b.data));
+    const ends = entries.filter(e => e.tipo === "fine_ciclo").sort((a, b) => a.data.localeCompare(b.data));
+    
+    for (const end of ends) {
+      const correspondingStart = [...starts].reverse().find(s => s.data <= end.data);
+      if (correspondingStart) {
+        const startD = new Date(correspondingStart.data + "T00:00:00");
+        const endD = new Date(end.data + "T00:00:00");
+        const d = new Date(startD);
+        while (d <= endD) {
+          dates.add(d.toISOString().split("T")[0]);
+          d.setDate(d.getDate() + 1);
+        }
+      }
+    }
+    return dates;
+  }, [entries]);
+
+  const handleStartCycle = async () => {
+    await onAddEntry({ data: todayKey, tipo: "inizio_ciclo", sintomi: [], note: "" });
+    // Also add a mestruazione entry so phase calculation works
+    await onAddEntry({ data: todayKey, tipo: "mestruazione", sintomi: [], note: "Inizio ciclo" });
+    toast.success("Ciclo iniziato! 🩸");
+  };
+
+  const handleEndCycle = async () => {
+    await onAddEntry({ data: todayKey, tipo: "fine_ciclo", sintomi: [], note: "" });
+    toast.success("Ciclo terminato! ✨");
+  };
+
   const mesi = ["Gennaio", "Febbraio", "Marzo", "Aprile", "Maggio", "Giugno", "Luglio", "Agosto", "Settembre", "Ottobre", "Novembre", "Dicembre"];
   const giorniLabel = ["L", "M", "M", "G", "V", "S", "D"];
 
