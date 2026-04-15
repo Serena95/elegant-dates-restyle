@@ -681,7 +681,7 @@ const Index = () => {
         );
       case "nutrition" as any: {
         const planId = (() => { try { const s = localStorage.getItem("activeNutritionPlan"); return s ? JSON.parse(s)?.id : undefined; } catch { return undefined; } })();
-        return <NutritionPlanView key={`nutrition-${planId || 'browse'}`} onBack={() => navigate("more")} onSavePlan={() => setView("dashboard")} initialPlanId={planId} />;
+        return <NutritionPlanView key={`nutrition-${planId || 'browse'}`} onBack={() => navigate("more")} onSavePlan={() => setView("dashboard")} initialPlanId={planId} nutritionProfile={cloud.nutritionProfile} onUpdateNutritionProfile={cloud.updateNutritionProfile} />;
       }
       case "privacy" as any:
         return <LegalPage type="privacy" onBack={() => setView("settings" as any)} />;
