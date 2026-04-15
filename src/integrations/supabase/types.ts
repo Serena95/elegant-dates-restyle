@@ -492,10 +492,14 @@ export type Database = {
       }
       user_settings: {
         Row: {
+          altezza: number | null
+          attivita_livello: string | null
           attrezzi_selezionati: string[] | null
+          calorie_target: number | null
           created_at: string
           durata_ciclo: number | null
           durata_mestruazione: number | null
+          eta: number | null
           fuso_orario: string | null
           giorni_allenamento: number[] | null
           id: string
@@ -503,16 +507,22 @@ export type Database = {
           modalita_gravidanza: boolean | null
           notifica_orario: string | null
           notifiche_abilitate: boolean | null
+          obiettivo_nutrizionale: string | null
+          peso: number | null
           settimana_gestazionale: number | null
           ultimi_attrezzi: string[] | null
           updated_at: string
           user_id: string
         }
         Insert: {
+          altezza?: number | null
+          attivita_livello?: string | null
           attrezzi_selezionati?: string[] | null
+          calorie_target?: number | null
           created_at?: string
           durata_ciclo?: number | null
           durata_mestruazione?: number | null
+          eta?: number | null
           fuso_orario?: string | null
           giorni_allenamento?: number[] | null
           id?: string
@@ -520,16 +530,22 @@ export type Database = {
           modalita_gravidanza?: boolean | null
           notifica_orario?: string | null
           notifiche_abilitate?: boolean | null
+          obiettivo_nutrizionale?: string | null
+          peso?: number | null
           settimana_gestazionale?: number | null
           ultimi_attrezzi?: string[] | null
           updated_at?: string
           user_id: string
         }
         Update: {
+          altezza?: number | null
+          attivita_livello?: string | null
           attrezzi_selezionati?: string[] | null
+          calorie_target?: number | null
           created_at?: string
           durata_ciclo?: number | null
           durata_mestruazione?: number | null
+          eta?: number | null
           fuso_orario?: string | null
           giorni_allenamento?: number[] | null
           id?: string
@@ -537,6 +553,8 @@ export type Database = {
           modalita_gravidanza?: boolean | null
           notifica_orario?: string | null
           notifiche_abilitate?: boolean | null
+          obiettivo_nutrizionale?: string | null
+          peso?: number | null
           settimana_gestazionale?: number | null
           ultimi_attrezzi?: string[] | null
           updated_at?: string

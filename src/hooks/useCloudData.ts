@@ -53,6 +53,15 @@ export interface PregnancySettings {
   durata_mestruazione: number;
 }
 
+export interface NutritionProfile {
+  peso: number | null;
+  altezza: number | null;
+  eta: number | null;
+  attivita_livello: string;
+  obiettivo_nutrizionale: string;
+  calorie_target: number | null;
+}
+
 export function useCloudData() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -75,6 +84,10 @@ export function useCloudData() {
     settimana_gestazionale: 0,
     durata_ciclo: 28,
     durata_mestruazione: 5,
+  });
+  const [nutritionProfile, setNutritionProfileState] = useState<NutritionProfile>({
+    peso: null, altezza: null, eta: null,
+    attivita_livello: "moderata", obiettivo_nutrizionale: "mantenimento", calorie_target: null,
   });
   const sfidaRef = useRef<Sfida | null>(null);
 
@@ -163,6 +176,14 @@ export function useCloudData() {
         settimana_gestazionale: (settingsRes.data as any).settimana_gestazionale || 0,
         durata_ciclo: (settingsRes.data as any).durata_ciclo || 28,
         durata_mestruazione: (settingsRes.data as any).durata_mestruazione || 5,
+      });
+      setNutritionProfileState({
+        peso: (settingsRes.data as any).peso || null,
+        altezza: (settingsRes.data as any).altezza || null,
+        eta: (settingsRes.data as any).eta || null,
+        attivita_livello: (settingsRes.data as any).attivita_livello || "moderata",
+        obiettivo_nutrizionale: (settingsRes.data as any).obiettivo_nutrizionale || "mantenimento",
+        calorie_target: (settingsRes.data as any).calorie_target || null,
       });
     } else {
       setAttrezziState(fallbackAttrezzi);
@@ -413,6 +434,19 @@ export function useCloudData() {
     await upsertUserSettings(dbUpdates);
   }, [user, upsertUserSettings]);
 
+  const updateNutritionProfile = useCallback(async (updates: Partial<NutritionProfile>) => {
+    if (!user) return;
+    setNutritionProfileState(prev => ({ ...prev, ...updates }));
+    const dbUpdates: any = {};
+    if (updates.peso !== undefined) dbUpdates.peso = updates.peso;
+    if (updates.altezza !== undefined) dbUpdates.altezza = updates.altezza;
+    if (updates.eta !== undefined) dbUpdates.eta = updates.eta;
+    if (updates.attivita_livello !== undefined) dbUpdates.attivita_livello = updates.attivita_livello;
+    if (updates.obiettivo_nutrizionale !== undefined) dbUpdates.obiettivo_nutrizionale = updates.obiettivo_nutrizionale;
+    if (updates.calorie_target !== undefined) dbUpdates.calorie_target = updates.calorie_target;
+    await upsertUserSettings(dbUpdates);
+  }, [user, upsertUserSettings]);
+
   return {
     loading,
     attrezzi, setAttrezzi,
@@ -430,5 +464,6 @@ export function useCloudData() {
     cycleEntries, addCycleEntry, deleteCycleEntry,
     pregnancySettings, updatePregnancySettings,
     giorniAllenamento, setGiorniAllenamento,
+    nutritionProfile, updateNutritionProfile,
   };
 }

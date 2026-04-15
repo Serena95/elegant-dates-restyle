@@ -1,13 +1,16 @@
-import { useState } from "react";
-import { ChevronLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Utensils, Sparkles, ArrowRight, Loader2, RefreshCw, Lightbulb } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { ChevronLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Utensils, Sparkles, ArrowRight, Loader2, RefreshCw, Lightbulb, User, Calculator } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { NutritionProfile } from "@/hooks/useCloudData";
 
 interface NutritionPlanViewProps {
   onBack: () => void;
   onSavePlan?: (plan: any) => void;
   initialPlanId?: string;
+  nutritionProfile?: NutritionProfile;
+  onUpdateNutritionProfile?: (updates: Partial<NutritionProfile>) => Promise<void>;
 }
 
 interface MealPlan {
@@ -224,10 +227,48 @@ const ATTIVITA_OPTIONS = [
   { value: "intensa", label: "🔥 Intensa", desc: "5+ allenamenti/settimana" },
 ];
 
-export function NutritionPlanView({ onBack, onSavePlan, initialPlanId }: NutritionPlanViewProps) {
+// ============================================================
+// TDEE CALCULATION (Mifflin-St Jeor)
+// ============================================================
+
+function calculateTDEE(peso: number, altezza: number, eta: number, attivita: string, obiettivo: string): { tdee: number; target: number; macros: { proteine: string; carboidrati: string; grassi: string }; bmr: number } {
+  // Mifflin-St Jeor for women (default for Pilates app)
+  const bmr = 10 * peso + 6.25 * altezza - 5 * eta - 161;
+  
+  const activityMultiplier: Record<string, number> = {
+    sedentario: 1.2,
+    leggera: 1.375,
+    moderata: 1.55,
+    intensa: 1.725,
+  };
+  
+  const tdee = Math.round(bmr * (activityMultiplier[attivita] || 1.55));
+  
+  let target = tdee;
+  let macros = { proteine: "25%", carboidrati: "45%", grassi: "30%" };
+  
+  if (obiettivo === "dimagrimento") {
+    target = Math.round(tdee * 0.8); // -20%
+    macros = { proteine: "30%", carboidrati: "40%", grassi: "30%" };
+  } else if (obiettivo === "massa") {
+    target = Math.round(tdee * 1.15); // +15%
+    macros = { proteine: "30%", carboidrati: "45%", grassi: "25%" };
+  }
+  
+  return { tdee, target, macros, bmr };
+}
+
+function adjustPlanPortions(plan: NutritionPlan, calorieTarget: number, macros: { proteine: string; carboidrati: string; grassi: string }): NutritionPlan {
+  return {
+    ...plan,
+    calorie_giornaliere: calorieTarget,
+    macros,
+  };
+}
+
+export function NutritionPlanView({ onBack, onSavePlan, initialPlanId, nutritionProfile, onUpdateNutritionProfile }: NutritionPlanViewProps) {
   const [selectedPlan, setSelectedPlan] = useState<NutritionPlan | null>(() => {
     if (!initialPlanId) return null;
-    // Try to load full saved plan from localStorage
     try {
       const savedFull = localStorage.getItem("activeNutritionPlanFull");
       if (savedFull) {
@@ -235,12 +276,60 @@ export function NutritionPlanView({ onBack, onSavePlan, initialPlanId }: Nutriti
         if (parsed?.id === initialPlanId) return parsed;
       }
     } catch {}
-    // Fall back to preset plans
     return NUTRITION_PLANS.find(p => p.id === initialPlanId) || null;
   });
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [showBodyDataForm, setShowBodyDataForm] = useState(false);
+
+  // Local body data form state
+  const [bodyPeso, setBodyPeso] = useState<string>(nutritionProfile?.peso?.toString() || "");
+  const [bodyAltezza, setBodyAltezza] = useState<string>(nutritionProfile?.altezza?.toString() || "");
+  const [bodyEta, setBodyEta] = useState<string>(nutritionProfile?.eta?.toString() || "");
+  const [bodyAttivita, setBodyAttivita] = useState(nutritionProfile?.attivita_livello || "moderata");
+  const [bodyObiettivo, setBodyObiettivo] = useState(nutritionProfile?.obiettivo_nutrizionale || "mantenimento");
+
+  // Sync from props
+  useEffect(() => {
+    if (nutritionProfile) {
+      if (nutritionProfile.peso) setBodyPeso(nutritionProfile.peso.toString());
+      if (nutritionProfile.altezza) setBodyAltezza(nutritionProfile.altezza.toString());
+      if (nutritionProfile.eta) setBodyEta(nutritionProfile.eta.toString());
+      if (nutritionProfile.attivita_livello) setBodyAttivita(nutritionProfile.attivita_livello);
+      if (nutritionProfile.obiettivo_nutrizionale) setBodyObiettivo(nutritionProfile.obiettivo_nutrizionale);
+    }
+  }, [nutritionProfile]);
+
+  // Computed TDEE
+  const tdeeData = useMemo(() => {
+    const peso = parseFloat(bodyPeso);
+    const altezza = parseFloat(bodyAltezza);
+    const eta = parseInt(bodyEta);
+    if (!peso || !altezza || !eta) return null;
+    return calculateTDEE(peso, altezza, eta, bodyAttivita, bodyObiettivo);
+  }, [bodyPeso, bodyAltezza, bodyEta, bodyAttivita, bodyObiettivo]);
+
+  const hasBodyData = !!(nutritionProfile?.peso && nutritionProfile?.altezza && nutritionProfile?.eta);
+
+  const saveBodyData = async () => {
+    const peso = parseFloat(bodyPeso);
+    const altezza = parseFloat(bodyAltezza);
+    const eta = parseInt(bodyEta);
+    if (!peso || !altezza || !eta) {
+      toast({ title: "Completa tutti i campi", variant: "destructive" });
+      return;
+    }
+    const td = calculateTDEE(peso, altezza, eta, bodyAttivita, bodyObiettivo);
+    await onUpdateNutritionProfile?.({
+      peso, altezza, eta,
+      attivita_livello: bodyAttivita,
+      obiettivo_nutrizionale: bodyObiettivo,
+      calorie_target: td.target,
+    });
+    setShowBodyDataForm(false);
+    toast({ title: "Profilo nutrizionale salvato! ✅", description: `Fabbisogno: ${td.target} kcal/giorno` });
+  };
 
   // Questionnaire state
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
@@ -304,7 +393,7 @@ export function NutritionPlanView({ onBack, onSavePlan, initialPlanId }: Nutriti
           preferenze: formData.preferenze,
           restrizioni: restrizioniText || "Nessuna",
           attivita: formData.attivita,
-          calorie: formData.calorie || null,
+          calorie: tdeeData?.target?.toString() || formData.calorie || null,
           durata: formData.durata,
           tipo_dieta: formData.tipo_dieta,
           pasto_saltato: formData.pasto_saltato || null,
@@ -761,6 +850,120 @@ export function NutritionPlanView({ onBack, onSavePlan, initialPlanId }: Nutriti
       </div>
       <p className="text-sm text-muted-foreground">Scegli un piano alimentare o creane uno personalizzato</p>
 
+      {/* Body Data Card */}
+      {showBodyDataForm ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card rounded-2xl border border-border p-5 space-y-4"
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-foreground flex items-center gap-2"><User size={16} className="text-primary" /> I tuoi dati</h3>
+            <button onClick={() => setShowBodyDataForm(false)} className="text-xs text-muted-foreground">Chiudi</button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Peso (kg)</label>
+              <input type="number" value={bodyPeso} onChange={e => setBodyPeso(e.target.value)} className="w-full p-2.5 rounded-xl border border-border bg-background text-foreground text-sm text-center font-bold focus:ring-2 focus:ring-primary/30" placeholder="65" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Altezza (cm)</label>
+              <input type="number" value={bodyAltezza} onChange={e => setBodyAltezza(e.target.value)} className="w-full p-2.5 rounded-xl border border-border bg-background text-foreground text-sm text-center font-bold focus:ring-2 focus:ring-primary/30" placeholder="165" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Età</label>
+              <input type="number" value={bodyEta} onChange={e => setBodyEta(e.target.value)} className="w-full p-2.5 rounded-xl border border-border bg-background text-foreground text-sm text-center font-bold focus:ring-2 focus:ring-primary/30" placeholder="30" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-2">Livello attività</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { v: "sedentario", l: "🪑 Sedentario" },
+                { v: "leggera", l: "🚶 Leggera" },
+                { v: "moderata", l: "🏃 Moderata" },
+                { v: "intensa", l: "🔥 Intensa" },
+              ].map(a => (
+                <button key={a.v} onClick={() => setBodyAttivita(a.v)}
+                  className={`p-2.5 rounded-xl border-2 text-xs font-bold transition ${bodyAttivita === a.v ? "border-primary bg-primary/5 text-foreground" : "border-border text-muted-foreground"}`}
+                >{a.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-2">Obiettivo</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { v: "dimagrimento", l: "🔥 Dimagrire" },
+                { v: "mantenimento", l: "⚖️ Mantenere" },
+                { v: "massa", l: "💪 Massa" },
+              ].map(o => (
+                <button key={o.v} onClick={() => setBodyObiettivo(o.v)}
+                  className={`p-2.5 rounded-xl border-2 text-xs font-bold transition ${bodyObiettivo === o.v ? "border-primary bg-primary/5 text-foreground" : "border-border text-muted-foreground"}`}
+                >{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Live TDEE preview */}
+          {tdeeData && (
+            <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl p-3 border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Fabbisogno giornaliero</p>
+                  <p className="text-xl font-black text-foreground">{tdeeData.target} <span className="text-xs font-bold text-muted-foreground">kcal</span></p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-muted-foreground">TDEE: {tdeeData.tdee} kcal</p>
+                  <p className="text-[9px] text-muted-foreground">BMR: {tdeeData.bmr} kcal</p>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <span className="text-[10px] bg-blue-500/10 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold">🥩 {tdeeData.macros.proteine}</span>
+                <span className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold">🌾 {tdeeData.macros.carboidrati}</span>
+                <span className="text-[10px] bg-green-500/10 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-bold">🥑 {tdeeData.macros.grassi}</span>
+              </div>
+            </div>
+          )}
+
+          <button onClick={saveBodyData} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm">
+            💾 Salva Profilo Nutrizionale
+          </button>
+        </motion.div>
+      ) : (
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => setShowBodyDataForm(true)}
+          className={`w-full rounded-2xl border p-4 text-left transition ${hasBodyData ? "border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5" : "border-dashed border-primary/30 bg-primary/5"}`}
+        >
+          <div className="flex items-center gap-3">
+            <Calculator size={20} className="text-primary flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              {hasBodyData ? (
+                <>
+                  <p className="text-[10px] font-bold uppercase text-primary tracking-wide">Profilo Nutrizionale</p>
+                  <p className="text-sm font-bold text-foreground">{nutritionProfile?.calorie_target} kcal/giorno</p>
+                  <p className="text-[11px] text-muted-foreground">{nutritionProfile?.peso}kg · {nutritionProfile?.altezza}cm · {nutritionProfile?.eta} anni · {
+                    nutritionProfile?.obiettivo_nutrizionale === "dimagrimento" ? "🔥 Dimagrimento" :
+                    nutritionProfile?.obiettivo_nutrizionale === "massa" ? "💪 Massa" : "⚖️ Mantenimento"
+                  }</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-bold text-foreground">Inserisci i tuoi dati</p>
+                  <p className="text-xs text-muted-foreground">Peso, altezza, età per calcolare il fabbisogno</p>
+                </>
+              )}
+            </div>
+            <ArrowRight size={16} className="text-primary flex-shrink-0" />
+          </div>
+        </motion.button>
+      )}
+
       {/* Custom plan CTA */}
       <motion.button
         initial={{ opacity: 0, y: 10 }}
@@ -783,28 +986,32 @@ export function NutritionPlanView({ onBack, onSavePlan, initialPlanId }: Nutriti
       {/* Preset plans */}
       <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Oppure scegli un piano predefinito</p>
       <div className="space-y-3">
-        {NUTRITION_PLANS.map((plan, i) => (
-          <motion.button
-            key={plan.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            onClick={() => setSelectedPlan(plan)}
-            className={`w-full bg-gradient-to-r ${plan.color} rounded-2xl border border-border p-5 text-left hover:shadow-md transition`}
-          >
-            <div className="flex items-center gap-4">
-              <span className="text-4xl">{plan.icon}</span>
-              <div className="flex-1">
-                <h3 className="font-bold text-foreground">{plan.nome}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">{plan.descrizione}</p>
-                <div className="flex gap-3 mt-1.5">
-                  <span className="text-[10px] text-muted-foreground font-bold">{plan.durata}</span>
-                  <span className="text-[10px] text-muted-foreground font-bold">{plan.obiettivo}</span>
+        {NUTRITION_PLANS.map((plan, i) => {
+          const adjusted = tdeeData ? adjustPlanPortions(plan, tdeeData.target, tdeeData.macros) : plan;
+          return (
+            <motion.button
+              key={plan.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              onClick={() => setSelectedPlan(adjusted)}
+              className={`w-full bg-gradient-to-r ${plan.color} rounded-2xl border border-border p-5 text-left hover:shadow-md transition`}
+            >
+              <div className="flex items-center gap-4">
+                <span className="text-4xl">{plan.icon}</span>
+                <div className="flex-1">
+                  <h3 className="font-bold text-foreground">{plan.nome}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{plan.descrizione}</p>
+                  <div className="flex gap-3 mt-1.5">
+                    <span className="text-[10px] text-muted-foreground font-bold">{plan.durata}</span>
+                    <span className="text-[10px] text-muted-foreground font-bold">{plan.obiettivo}</span>
+                    {tdeeData && <span className="text-[10px] text-primary font-bold">{tdeeData.target} kcal</span>}
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.button>
-        ))}
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );
