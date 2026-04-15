@@ -227,10 +227,48 @@ const ATTIVITA_OPTIONS = [
   { value: "intensa", label: "🔥 Intensa", desc: "5+ allenamenti/settimana" },
 ];
 
-export function NutritionPlanView({ onBack, onSavePlan, initialPlanId }: NutritionPlanViewProps) {
+// ============================================================
+// TDEE CALCULATION (Mifflin-St Jeor)
+// ============================================================
+
+function calculateTDEE(peso: number, altezza: number, eta: number, attivita: string, obiettivo: string): { tdee: number; target: number; macros: { proteine: string; carboidrati: string; grassi: string }; bmr: number } {
+  // Mifflin-St Jeor for women (default for Pilates app)
+  const bmr = 10 * peso + 6.25 * altezza - 5 * eta - 161;
+  
+  const activityMultiplier: Record<string, number> = {
+    sedentario: 1.2,
+    leggera: 1.375,
+    moderata: 1.55,
+    intensa: 1.725,
+  };
+  
+  const tdee = Math.round(bmr * (activityMultiplier[attivita] || 1.55));
+  
+  let target = tdee;
+  let macros = { proteine: "25%", carboidrati: "45%", grassi: "30%" };
+  
+  if (obiettivo === "dimagrimento") {
+    target = Math.round(tdee * 0.8); // -20%
+    macros = { proteine: "30%", carboidrati: "40%", grassi: "30%" };
+  } else if (obiettivo === "massa") {
+    target = Math.round(tdee * 1.15); // +15%
+    macros = { proteine: "30%", carboidrati: "45%", grassi: "25%" };
+  }
+  
+  return { tdee, target, macros, bmr };
+}
+
+function adjustPlanPortions(plan: NutritionPlan, calorieTarget: number, macros: { proteine: string; carboidrati: string; grassi: string }): NutritionPlan {
+  return {
+    ...plan,
+    calorie_giornaliere: calorieTarget,
+    macros,
+  };
+}
+
+export function NutritionPlanView({ onBack, onSavePlan, initialPlanId, nutritionProfile, onUpdateNutritionProfile }: NutritionPlanViewProps) {
   const [selectedPlan, setSelectedPlan] = useState<NutritionPlan | null>(() => {
     if (!initialPlanId) return null;
-    // Try to load full saved plan from localStorage
     try {
       const savedFull = localStorage.getItem("activeNutritionPlanFull");
       if (savedFull) {
@@ -238,12 +276,60 @@ export function NutritionPlanView({ onBack, onSavePlan, initialPlanId }: Nutriti
         if (parsed?.id === initialPlanId) return parsed;
       }
     } catch {}
-    // Fall back to preset plans
     return NUTRITION_PLANS.find(p => p.id === initialPlanId) || null;
   });
   const [expandedDay, setExpandedDay] = useState<string | null>(null);
   const [showShoppingList, setShowShoppingList] = useState(false);
   const [checkedItems, setCheckedItems] = useState<Set<string>>(new Set());
+  const [showBodyDataForm, setShowBodyDataForm] = useState(false);
+
+  // Local body data form state
+  const [bodyPeso, setBodyPeso] = useState<string>(nutritionProfile?.peso?.toString() || "");
+  const [bodyAltezza, setBodyAltezza] = useState<string>(nutritionProfile?.altezza?.toString() || "");
+  const [bodyEta, setBodyEta] = useState<string>(nutritionProfile?.eta?.toString() || "");
+  const [bodyAttivita, setBodyAttivita] = useState(nutritionProfile?.attivita_livello || "moderata");
+  const [bodyObiettivo, setBodyObiettivo] = useState(nutritionProfile?.obiettivo_nutrizionale || "mantenimento");
+
+  // Sync from props
+  useEffect(() => {
+    if (nutritionProfile) {
+      if (nutritionProfile.peso) setBodyPeso(nutritionProfile.peso.toString());
+      if (nutritionProfile.altezza) setBodyAltezza(nutritionProfile.altezza.toString());
+      if (nutritionProfile.eta) setBodyEta(nutritionProfile.eta.toString());
+      if (nutritionProfile.attivita_livello) setBodyAttivita(nutritionProfile.attivita_livello);
+      if (nutritionProfile.obiettivo_nutrizionale) setBodyObiettivo(nutritionProfile.obiettivo_nutrizionale);
+    }
+  }, [nutritionProfile]);
+
+  // Computed TDEE
+  const tdeeData = useMemo(() => {
+    const peso = parseFloat(bodyPeso);
+    const altezza = parseFloat(bodyAltezza);
+    const eta = parseInt(bodyEta);
+    if (!peso || !altezza || !eta) return null;
+    return calculateTDEE(peso, altezza, eta, bodyAttivita, bodyObiettivo);
+  }, [bodyPeso, bodyAltezza, bodyEta, bodyAttivita, bodyObiettivo]);
+
+  const hasBodyData = !!(nutritionProfile?.peso && nutritionProfile?.altezza && nutritionProfile?.eta);
+
+  const saveBodyData = async () => {
+    const peso = parseFloat(bodyPeso);
+    const altezza = parseFloat(bodyAltezza);
+    const eta = parseInt(bodyEta);
+    if (!peso || !altezza || !eta) {
+      toast({ title: "Completa tutti i campi", variant: "destructive" });
+      return;
+    }
+    const td = calculateTDEE(peso, altezza, eta, bodyAttivita, bodyObiettivo);
+    await onUpdateNutritionProfile?.({
+      peso, altezza, eta,
+      attivita_livello: bodyAttivita,
+      obiettivo_nutrizionale: bodyObiettivo,
+      calorie_target: td.target,
+    });
+    setShowBodyDataForm(false);
+    toast({ title: "Profilo nutrizionale salvato! ✅", description: `Fabbisogno: ${td.target} kcal/giorno` });
+  };
 
   // Questionnaire state
   const [showQuestionnaire, setShowQuestionnaire] = useState(false);
