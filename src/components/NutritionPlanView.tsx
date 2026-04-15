@@ -393,7 +393,7 @@ export function NutritionPlanView({ onBack, onSavePlan, initialPlanId, nutrition
           preferenze: formData.preferenze,
           restrizioni: restrizioniText || "Nessuna",
           attivita: formData.attivita,
-          calorie: formData.calorie || null,
+          calorie: tdeeData?.target?.toString() || formData.calorie || null,
           durata: formData.durata,
           tipo_dieta: formData.tipo_dieta,
           pasto_saltato: formData.pasto_saltato || null,
