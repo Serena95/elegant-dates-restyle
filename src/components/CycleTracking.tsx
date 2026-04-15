@@ -299,10 +299,55 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
 
   const currentPhaseInfo = currentPhase ? CYCLE_PHASES[currentPhase] : null;
 
-  // Predictions
+  // Smart predictions based on real cycle data (start/end entries)
+  const smartCycleLength = useMemo(() => {
+    const starts = entries
+      .filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo")
+      .map(e => e.data)
+      .sort();
+    const ends = entries
+      .filter(e => e.tipo === "fine_ciclo")
+      .map(e => e.data)
+      .sort();
+
+    // Calculate average cycle length from consecutive starts
+    if (starts.length >= 2) {
+      const gaps: number[] = [];
+      const uniqueStarts = [...new Set(starts)].sort();
+      for (let i = 1; i < uniqueStarts.length; i++) {
+        const diff = Math.round((new Date(uniqueStarts[i] + "T00:00:00").getTime() - new Date(uniqueStarts[i - 1] + "T00:00:00").getTime()) / 86400000);
+        if (diff >= 15 && diff <= 50) gaps.push(diff); // filter outliers
+      }
+      if (gaps.length > 0) return Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length);
+    }
+    return durataCiclo;
+  }, [entries, durataCiclo]);
+
+  // Calculate average period duration from start/end pairs
+  const smartPeriodLength = useMemo(() => {
+    const starts = entries
+      .filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo")
+      .sort((a, b) => a.data.localeCompare(b.data));
+    const ends = entries
+      .filter(e => e.tipo === "fine_ciclo")
+      .sort((a, b) => a.data.localeCompare(b.data));
+
+    const durations: number[] = [];
+    for (const end of ends) {
+      const correspondingStart = [...starts].reverse().find(s => s.data <= end.data);
+      if (correspondingStart) {
+        const d = Math.round((new Date(end.data + "T00:00:00").getTime() - new Date(correspondingStart.data + "T00:00:00").getTime()) / 86400000) + 1;
+        if (d >= 2 && d <= 10) durations.push(d);
+      }
+    }
+    if (durations.length > 0) return Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
+    return durataMestruazione;
+  }, [entries, durataMestruazione]);
+
+  // Predictions using smart values
   const predictions = useMemo(() => {
     const periodDates = entries
-      .filter(e => e.tipo === "mestruazione")
+      .filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo")
       .map(e => e.data)
       .sort()
       .reverse();
@@ -310,44 +355,66 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
     const periodSet = new Set<string>();
     const fertileSet = new Set<string>();
     const ovulationSet = new Set<string>();
+    const highPregnancySet = new Set<string>();
 
-    if (periodDates.length === 0) return { periodSet, fertileSet, ovulationSet };
+    if (periodDates.length === 0) return { periodSet, fertileSet, ovulationSet, highPregnancySet };
 
     const lastPeriod = new Date(periodDates[0] + "T00:00:00");
+    const cycleLen = smartCycleLength;
+    const periodLen = smartPeriodLength;
 
-    for (let cycle = 1; cycle <= 6; cycle++) {
-      const nextStart = new Date(lastPeriod);
-      nextStart.setDate(nextStart.getDate() + durataCiclo * cycle);
+    for (let cycle = 0; cycle <= 6; cycle++) {
+      const cycleStart = new Date(lastPeriod);
+      cycleStart.setDate(cycleStart.getDate() + cycleLen * cycle);
       
-      // Period days
-      for (let d = 0; d < durataMestruazione; d++) {
-        const day = new Date(nextStart);
-        day.setDate(day.getDate() + d);
-        periodSet.add(day.toISOString().split("T")[0]);
+      // Period days (skip cycle 0 = current/past, only predict future)
+      if (cycle > 0) {
+        for (let d = 0; d < periodLen; d++) {
+          const day = new Date(cycleStart);
+          day.setDate(day.getDate() + d);
+          periodSet.add(day.toISOString().split("T")[0]);
+        }
       }
       
-      // Ovulation day (~day 14 of cycle)
-      const ovDay = new Date(nextStart);
-      ovDay.setDate(ovDay.getDate() + Math.floor(durataCiclo / 2) - 1);
+      // Ovulation day (~14 days before end of cycle)
+      const ovDay = new Date(cycleStart);
+      ovDay.setDate(ovDay.getDate() + cycleLen - 14);
       ovulationSet.add(ovDay.toISOString().split("T")[0]);
       
-      // Fertile window: 5 days before ovulation + ovulation day
-      for (let d = -5; d <= 0; d++) {
+      // Fertile window: 5 days before ovulation + ovulation day + 1 day after
+      for (let d = -5; d <= 1; d++) {
         const day = new Date(ovDay);
         day.setDate(day.getDate() + d);
         fertileSet.add(day.toISOString().split("T")[0]);
       }
-    }
-    return { periodSet, fertileSet, ovulationSet };
-  }, [entries, durataCiclo, durataMestruazione]);
 
-  // Days until next period
+      // High pregnancy probability: 2 days before ovulation + ovulation day
+      for (let d = -2; d <= 0; d++) {
+        const day = new Date(ovDay);
+        day.setDate(day.getDate() + d);
+        highPregnancySet.add(day.toISOString().split("T")[0]);
+      }
+    }
+    return { periodSet, fertileSet, ovulationSet, highPregnancySet };
+  }, [entries, smartCycleLength, smartPeriodLength]);
+
+  // Days until next events
   const daysUntilNext = useMemo(() => {
     const sorted = [...predictions.periodSet].sort();
     const future = sorted.find(d => d > todayKey);
     if (!future) return null;
     return Math.round((new Date(future + "T00:00:00").getTime() - new Date(todayKey + "T00:00:00").getTime()) / 86400000);
   }, [predictions.periodSet, todayKey]);
+
+  const daysUntilOvulation = useMemo(() => {
+    const sorted = [...predictions.ovulationSet].sort();
+    const future = sorted.find(d => d > todayKey);
+    if (!future) return null;
+    return Math.round((new Date(future + "T00:00:00").getTime() - new Date(todayKey + "T00:00:00").getTime()) / 86400000);
+  }, [predictions.ovulationSet, todayKey]);
+
+  const isFertileToday = predictions.fertileSet.has(todayKey);
+  const isHighPregnancyToday = predictions.highPregnancySet.has(todayKey);
 
   const cambiaMese = (d: number) => {
     let m = meseCorrente + d;
@@ -576,7 +643,38 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
         </div>
       )}
 
-      {/* Settings */}
+      {/* Predictions Summary */}
+      {entries.filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo").length > 0 && (
+        <div className="grid grid-cols-3 gap-2">
+          <div className="bg-card rounded-xl border border-border p-3 text-center">
+            <p className="text-lg font-black text-rose-500">{daysUntilNext ?? "—"}</p>
+            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">Prossimo ciclo</p>
+          </div>
+          <div className="bg-card rounded-xl border border-border p-3 text-center">
+            <p className="text-lg font-black text-amber-500">{daysUntilOvulation ?? "—"}</p>
+            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">Ovulazione</p>
+          </div>
+          <div className={`rounded-xl border p-3 text-center ${isHighPregnancyToday ? "bg-pink-500/10 border-pink-400/30" : isFertileToday ? "bg-emerald-500/10 border-emerald-400/30" : "bg-card border-border"}`}>
+            <p className="text-lg font-black">{isHighPregnancyToday ? "🤰" : isFertileToday ? "💚" : "—"}</p>
+            <p className="text-[9px] uppercase font-bold text-muted-foreground tracking-wider">
+              {isHighPregnancyToday ? "Alta prob." : isFertileToday ? "Fertile" : "Fertilità"}
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Smart cycle info */}
+      {entries.filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo").length >= 2 && (
+        <div className="rounded-xl border border-border bg-card/50 p-3 flex items-center gap-2">
+          <span className="text-sm">🧠</span>
+          <p className="text-[11px] text-muted-foreground">
+            Ciclo medio: <span className="font-bold text-foreground">{smartCycleLength} giorni</span> · 
+            Mestruazione: <span className="font-bold text-foreground">{smartPeriodLength} giorni</span>
+            <span className="text-[9px] ml-1 opacity-60">(calcolato dai tuoi dati)</span>
+          </p>
+        </div>
+      )}
+
       <AnimatePresence>
         {showSettings && (
           <motion.div initial={{ height: 0, opacity: 0 }} animate={{ height: "auto", opacity: 1 }} exit={{ height: 0, opacity: 0 }} className="overflow-hidden">
@@ -646,27 +744,33 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
                   const isPeriodPred = predictions.periodSet.has(key);
                   const isFertilePred = predictions.fertileSet.has(key);
                   const isOvulationPred = predictions.ovulationSet.has(key);
+                  const isHighPregnancy = predictions.highPregnancySet.has(key);
                   const tipo = entry?.tipo;
                   const phase = getPhaseForDate(key);
                   const isActiveCycleDay = activeCycleDates.has(key);
                   const isCompletedCycleDay = completedCycleDates.has(key);
 
+                  // Lunar phase for this date
+                  const cellDate = new Date(annoCorrente, meseCorrente, g);
+                  const lunar = getLunarPhase(cellDate);
+                  // Show lunar icon only on key phases (new, first quarter, full, last quarter)
+                  const showLunar = ["Luna Nuova", "Primo Quarto", "Luna Piena", "Ultimo Quarto"].includes(lunar.name);
+
                   let cellBg = "";
                   let dotColor = "";
                   let dotStyle = "";
 
-                  // Active or completed cycle days get strong highlight
                   if (isActiveCycleDay) { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/20"; }
                   else if (isCompletedCycleDay) { dotColor = "bg-rose-400"; cellBg = "bg-rose-500/10"; }
                   else if (tipo === "mestruazione" || tipo === "inizio_ciclo") { dotColor = "bg-rose-500"; cellBg = "bg-rose-500/15"; }
                   else if (tipo === "fine_ciclo") { dotColor = "bg-emerald-500"; cellBg = "bg-emerald-500/10"; }
                   else if (tipo === "spotting") { dotColor = "bg-orange-400"; cellBg = "bg-orange-400/10"; }
-                  else if (isOvulationPred && !entry) { cellBg = "bg-amber-500/10"; dotColor = "bg-amber-500/60"; dotStyle = "ring-1 ring-amber-400"; }
-                  else if (isPeriodPred && !entry) { cellBg = "bg-rose-500/5"; dotColor = "bg-rose-400/40"; dotStyle = "border border-dashed border-rose-400"; }
-                  else if (isFertilePred && !entry) { cellBg = "bg-emerald-500/5"; dotColor = "bg-emerald-400/40"; }
+                  else if (isOvulationPred) { cellBg = "bg-amber-500/15"; dotColor = "bg-amber-500"; dotStyle = "ring-1 ring-amber-400"; }
+                  else if (isHighPregnancy) { cellBg = "bg-pink-500/10"; dotColor = "bg-pink-500/70"; }
+                  else if (isPeriodPred) { cellBg = "bg-rose-500/5"; dotColor = "bg-rose-400/40"; dotStyle = "border border-dashed border-rose-400"; }
+                  else if (isFertilePred) { cellBg = "bg-emerald-500/8"; dotColor = "bg-emerald-400/50"; }
 
-                  // Subtle phase stripe
-                  const phaseStripe = !entry && !isPeriodPred && !isFertilePred && !isOvulationPred && phase
+                  const phaseStripe = !entry && !isPeriodPred && !isFertilePred && !isOvulationPred && !isHighPregnancy && phase
                     ? `border-b-2 ${CYCLE_PHASES[phase].borderColor.replace("border-", "border-b-")}`
                     : "";
 
@@ -682,8 +786,16 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
                       {dotColor && (
                         <span className={`w-1.5 h-1.5 rounded-full ${dotColor} ${dotStyle} absolute bottom-1`} />
                       )}
-                      {/* Mood emoji for entries with mood */}
-                      {entry && getMood(entry) && (
+                      {/* Lunar phase icon */}
+                      {showLunar && (
+                        <span className="absolute top-0 left-0.5 text-[7px] opacity-60">{lunar.icon}</span>
+                      )}
+                      {/* High pregnancy indicator */}
+                      {isHighPregnancy && !isActiveCycleDay && !isCompletedCycleDay && (
+                        <span className="absolute top-0 right-0.5 text-[7px]">🤰</span>
+                      )}
+                      {/* Mood emoji */}
+                      {entry && getMood(entry) && !isHighPregnancy && (
                         <span className="absolute top-0 right-0.5 text-[8px]">
                           {MOOD_OPTIONS.find(m => m.id === getMood(entry))?.icon}
                         </span>
@@ -701,16 +813,19 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
                   <span className="w-2 h-2 rounded-full bg-rose-500" /> Ciclo
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full bg-orange-400" /> Spotting
+                  <span className="w-2 h-2 rounded-full bg-amber-500 ring-1 ring-amber-400" /> Ovulazione
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full bg-amber-500/60 ring-1 ring-amber-400" /> Ovulazione
+                  <span className="w-2 h-2 rounded-full bg-pink-500/70" /> 🤰 Alta probabilità
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-                  <span className="w-2 h-2 rounded-full bg-emerald-400/40" /> Fertile
+                  <span className="w-2 h-2 rounded-full bg-emerald-400/50" /> Fertile
                 </div>
                 <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
                   <span className="w-2 h-2 rounded-full bg-rose-400/40 border border-dashed border-rose-400" /> Previsione
+                </div>
+                <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
+                  <span className="text-[8px]">🌕</span> Fase lunare
                 </div>
               </div>
             </div>
