@@ -594,7 +594,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                 category={es.categoria}
                 muscles={es.muscoli}
                 equipment={es.attrezzo}
-                className="w-full h-36 mt-2"
+                className="w-full mt-2"
                 showGenerateButton={true}
               />
 
