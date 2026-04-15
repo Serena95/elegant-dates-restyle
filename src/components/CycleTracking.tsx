@@ -299,10 +299,55 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
 
   const currentPhaseInfo = currentPhase ? CYCLE_PHASES[currentPhase] : null;
 
-  // Predictions
+  // Smart predictions based on real cycle data (start/end entries)
+  const smartCycleLength = useMemo(() => {
+    const starts = entries
+      .filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo")
+      .map(e => e.data)
+      .sort();
+    const ends = entries
+      .filter(e => e.tipo === "fine_ciclo")
+      .map(e => e.data)
+      .sort();
+
+    // Calculate average cycle length from consecutive starts
+    if (starts.length >= 2) {
+      const gaps: number[] = [];
+      const uniqueStarts = [...new Set(starts)].sort();
+      for (let i = 1; i < uniqueStarts.length; i++) {
+        const diff = Math.round((new Date(uniqueStarts[i] + "T00:00:00").getTime() - new Date(uniqueStarts[i - 1] + "T00:00:00").getTime()) / 86400000);
+        if (diff >= 15 && diff <= 50) gaps.push(diff); // filter outliers
+      }
+      if (gaps.length > 0) return Math.round(gaps.reduce((a, b) => a + b, 0) / gaps.length);
+    }
+    return durataCiclo;
+  }, [entries, durataCiclo]);
+
+  // Calculate average period duration from start/end pairs
+  const smartPeriodLength = useMemo(() => {
+    const starts = entries
+      .filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo")
+      .sort((a, b) => a.data.localeCompare(b.data));
+    const ends = entries
+      .filter(e => e.tipo === "fine_ciclo")
+      .sort((a, b) => a.data.localeCompare(b.data));
+
+    const durations: number[] = [];
+    for (const end of ends) {
+      const correspondingStart = [...starts].reverse().find(s => s.data <= end.data);
+      if (correspondingStart) {
+        const d = Math.round((new Date(end.data + "T00:00:00").getTime() - new Date(correspondingStart.data + "T00:00:00").getTime()) / 86400000) + 1;
+        if (d >= 2 && d <= 10) durations.push(d);
+      }
+    }
+    if (durations.length > 0) return Math.round(durations.reduce((a, b) => a + b, 0) / durations.length);
+    return durataMestruazione;
+  }, [entries, durataMestruazione]);
+
+  // Predictions using smart values
   const predictions = useMemo(() => {
     const periodDates = entries
-      .filter(e => e.tipo === "mestruazione")
+      .filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo")
       .map(e => e.data)
       .sort()
       .reverse();
@@ -310,36 +355,48 @@ export function CycleTracking({ entries, onAddEntry, onDeleteEntry, durataCiclo,
     const periodSet = new Set<string>();
     const fertileSet = new Set<string>();
     const ovulationSet = new Set<string>();
+    const highPregnancySet = new Set<string>();
 
-    if (periodDates.length === 0) return { periodSet, fertileSet, ovulationSet };
+    if (periodDates.length === 0) return { periodSet, fertileSet, ovulationSet, highPregnancySet };
 
     const lastPeriod = new Date(periodDates[0] + "T00:00:00");
+    const cycleLen = smartCycleLength;
+    const periodLen = smartPeriodLength;
 
-    for (let cycle = 1; cycle <= 6; cycle++) {
-      const nextStart = new Date(lastPeriod);
-      nextStart.setDate(nextStart.getDate() + durataCiclo * cycle);
+    for (let cycle = 0; cycle <= 6; cycle++) {
+      const cycleStart = new Date(lastPeriod);
+      cycleStart.setDate(cycleStart.getDate() + cycleLen * cycle);
       
-      // Period days
-      for (let d = 0; d < durataMestruazione; d++) {
-        const day = new Date(nextStart);
-        day.setDate(day.getDate() + d);
-        periodSet.add(day.toISOString().split("T")[0]);
+      // Period days (skip cycle 0 = current/past, only predict future)
+      if (cycle > 0) {
+        for (let d = 0; d < periodLen; d++) {
+          const day = new Date(cycleStart);
+          day.setDate(day.getDate() + d);
+          periodSet.add(day.toISOString().split("T")[0]);
+        }
       }
       
-      // Ovulation day (~day 14 of cycle)
-      const ovDay = new Date(nextStart);
-      ovDay.setDate(ovDay.getDate() + Math.floor(durataCiclo / 2) - 1);
+      // Ovulation day (~14 days before end of cycle)
+      const ovDay = new Date(cycleStart);
+      ovDay.setDate(ovDay.getDate() + cycleLen - 14);
       ovulationSet.add(ovDay.toISOString().split("T")[0]);
       
-      // Fertile window: 5 days before ovulation + ovulation day
-      for (let d = -5; d <= 0; d++) {
+      // Fertile window: 5 days before ovulation + ovulation day + 1 day after
+      for (let d = -5; d <= 1; d++) {
         const day = new Date(ovDay);
         day.setDate(day.getDate() + d);
         fertileSet.add(day.toISOString().split("T")[0]);
       }
+
+      // High pregnancy probability: 2 days before ovulation + ovulation day
+      for (let d = -2; d <= 0; d++) {
+        const day = new Date(ovDay);
+        day.setDate(day.getDate() + d);
+        highPregnancySet.add(day.toISOString().split("T")[0]);
+      }
     }
-    return { periodSet, fertileSet, ovulationSet };
-  }, [entries, durataCiclo, durataMestruazione]);
+    return { periodSet, fertileSet, ovulationSet, highPregnancySet };
+  }, [entries, smartCycleLength, smartPeriodLength]);
 
   // Days until next period
   const daysUntilNext = useMemo(() => {
