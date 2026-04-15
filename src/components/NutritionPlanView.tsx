@@ -1,13 +1,16 @@
-import { useState } from "react";
-import { ChevronLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Utensils, Sparkles, ArrowRight, Loader2, RefreshCw, Lightbulb } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
+import { ChevronLeft, ShoppingCart, Check, ChevronDown, ChevronUp, Utensils, Sparkles, ArrowRight, Loader2, RefreshCw, Lightbulb, User, Calculator } from "lucide-react";
 import { motion, AnimatePresence } from "framer-motion";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { NutritionProfile } from "@/hooks/useCloudData";
 
 interface NutritionPlanViewProps {
   onBack: () => void;
   onSavePlan?: (plan: any) => void;
   initialPlanId?: string;
+  nutritionProfile?: NutritionProfile;
+  onUpdateNutritionProfile?: (updates: Partial<NutritionProfile>) => Promise<void>;
 }
 
 interface MealPlan {
