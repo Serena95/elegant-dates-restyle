@@ -177,6 +177,14 @@ export function useCloudData() {
         durata_ciclo: (settingsRes.data as any).durata_ciclo || 28,
         durata_mestruazione: (settingsRes.data as any).durata_mestruazione || 5,
       });
+      setNutritionProfileState({
+        peso: (settingsRes.data as any).peso || null,
+        altezza: (settingsRes.data as any).altezza || null,
+        eta: (settingsRes.data as any).eta || null,
+        attivita_livello: (settingsRes.data as any).attivita_livello || "moderata",
+        obiettivo_nutrizionale: (settingsRes.data as any).obiettivo_nutrizionale || "mantenimento",
+        calorie_target: (settingsRes.data as any).calorie_target || null,
+      });
     } else {
       setAttrezziState(fallbackAttrezzi);
       setLivelloState("MEDIO");
