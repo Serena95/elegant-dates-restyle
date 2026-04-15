@@ -850,6 +850,120 @@ export function NutritionPlanView({ onBack, onSavePlan, initialPlanId, nutrition
       </div>
       <p className="text-sm text-muted-foreground">Scegli un piano alimentare o creane uno personalizzato</p>
 
+      {/* Body Data Card */}
+      {showBodyDataForm ? (
+        <motion.div
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="bg-card rounded-2xl border border-border p-5 space-y-4"
+        >
+          <div className="flex items-center justify-between">
+            <h3 className="font-bold text-foreground flex items-center gap-2"><User size={16} className="text-primary" /> I tuoi dati</h3>
+            <button onClick={() => setShowBodyDataForm(false)} className="text-xs text-muted-foreground">Chiudi</button>
+          </div>
+
+          <div className="grid grid-cols-3 gap-3">
+            <div>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Peso (kg)</label>
+              <input type="number" value={bodyPeso} onChange={e => setBodyPeso(e.target.value)} className="w-full p-2.5 rounded-xl border border-border bg-background text-foreground text-sm text-center font-bold focus:ring-2 focus:ring-primary/30" placeholder="65" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Altezza (cm)</label>
+              <input type="number" value={bodyAltezza} onChange={e => setBodyAltezza(e.target.value)} className="w-full p-2.5 rounded-xl border border-border bg-background text-foreground text-sm text-center font-bold focus:ring-2 focus:ring-primary/30" placeholder="165" />
+            </div>
+            <div>
+              <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-1">Età</label>
+              <input type="number" value={bodyEta} onChange={e => setBodyEta(e.target.value)} className="w-full p-2.5 rounded-xl border border-border bg-background text-foreground text-sm text-center font-bold focus:ring-2 focus:ring-primary/30" placeholder="30" />
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-2">Livello attività</label>
+            <div className="grid grid-cols-2 gap-2">
+              {[
+                { v: "sedentario", l: "🪑 Sedentario" },
+                { v: "leggera", l: "🚶 Leggera" },
+                { v: "moderata", l: "🏃 Moderata" },
+                { v: "intensa", l: "🔥 Intensa" },
+              ].map(a => (
+                <button key={a.v} onClick={() => setBodyAttivita(a.v)}
+                  className={`p-2.5 rounded-xl border-2 text-xs font-bold transition ${bodyAttivita === a.v ? "border-primary bg-primary/5 text-foreground" : "border-border text-muted-foreground"}`}
+                >{a.l}</button>
+              ))}
+            </div>
+          </div>
+
+          <div>
+            <label className="text-[10px] font-bold text-muted-foreground uppercase block mb-2">Obiettivo</label>
+            <div className="grid grid-cols-3 gap-2">
+              {[
+                { v: "dimagrimento", l: "🔥 Dimagrire" },
+                { v: "mantenimento", l: "⚖️ Mantenere" },
+                { v: "massa", l: "💪 Massa" },
+              ].map(o => (
+                <button key={o.v} onClick={() => setBodyObiettivo(o.v)}
+                  className={`p-2.5 rounded-xl border-2 text-xs font-bold transition ${bodyObiettivo === o.v ? "border-primary bg-primary/5 text-foreground" : "border-border text-muted-foreground"}`}
+                >{o.l}</button>
+              ))}
+            </div>
+          </div>
+
+          {/* Live TDEE preview */}
+          {tdeeData && (
+            <div className="bg-gradient-to-r from-primary/5 to-accent/5 rounded-xl p-3 border border-primary/20">
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="text-[10px] font-bold text-muted-foreground uppercase">Fabbisogno giornaliero</p>
+                  <p className="text-xl font-black text-foreground">{tdeeData.target} <span className="text-xs font-bold text-muted-foreground">kcal</span></p>
+                </div>
+                <div className="text-right">
+                  <p className="text-[9px] text-muted-foreground">TDEE: {tdeeData.tdee} kcal</p>
+                  <p className="text-[9px] text-muted-foreground">BMR: {tdeeData.bmr} kcal</p>
+                </div>
+              </div>
+              <div className="flex gap-2 mt-2">
+                <span className="text-[10px] bg-blue-500/10 text-blue-700 dark:text-blue-300 px-2 py-0.5 rounded-full font-bold">🥩 {tdeeData.macros.proteine}</span>
+                <span className="text-[10px] bg-amber-500/10 text-amber-700 dark:text-amber-300 px-2 py-0.5 rounded-full font-bold">🌾 {tdeeData.macros.carboidrati}</span>
+                <span className="text-[10px] bg-green-500/10 text-green-700 dark:text-green-300 px-2 py-0.5 rounded-full font-bold">🥑 {tdeeData.macros.grassi}</span>
+              </div>
+            </div>
+          )}
+
+          <button onClick={saveBodyData} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-bold text-sm">
+            💾 Salva Profilo Nutrizionale
+          </button>
+        </motion.div>
+      ) : (
+        <motion.button
+          initial={{ opacity: 0, y: 10 }}
+          animate={{ opacity: 1, y: 0 }}
+          onClick={() => setShowBodyDataForm(true)}
+          className={`w-full rounded-2xl border p-4 text-left transition ${hasBodyData ? "border-primary/20 bg-gradient-to-r from-primary/5 to-accent/5" : "border-dashed border-primary/30 bg-primary/5"}`}
+        >
+          <div className="flex items-center gap-3">
+            <Calculator size={20} className="text-primary flex-shrink-0" />
+            <div className="flex-1 min-w-0">
+              {hasBodyData ? (
+                <>
+                  <p className="text-[10px] font-bold uppercase text-primary tracking-wide">Profilo Nutrizionale</p>
+                  <p className="text-sm font-bold text-foreground">{nutritionProfile?.calorie_target} kcal/giorno</p>
+                  <p className="text-[11px] text-muted-foreground">{nutritionProfile?.peso}kg · {nutritionProfile?.altezza}cm · {nutritionProfile?.eta} anni · {
+                    nutritionProfile?.obiettivo_nutrizionale === "dimagrimento" ? "🔥 Dimagrimento" :
+                    nutritionProfile?.obiettivo_nutrizionale === "massa" ? "💪 Massa" : "⚖️ Mantenimento"
+                  }</p>
+                </>
+              ) : (
+                <>
+                  <p className="text-sm font-bold text-foreground">Inserisci i tuoi dati</p>
+                  <p className="text-xs text-muted-foreground">Peso, altezza, età per calcolare il fabbisogno</p>
+                </>
+              )}
+            </div>
+            <ArrowRight size={16} className="text-primary flex-shrink-0" />
+          </div>
+        </motion.button>
+      )}
+
       {/* Custom plan CTA */}
       <motion.button
         initial={{ opacity: 0, y: 10 }}
@@ -872,28 +986,32 @@ export function NutritionPlanView({ onBack, onSavePlan, initialPlanId, nutrition
       {/* Preset plans */}
       <p className="text-xs font-bold text-muted-foreground uppercase tracking-wide">Oppure scegli un piano predefinito</p>
       <div className="space-y-3">
-        {NUTRITION_PLANS.map((plan, i) => (
-          <motion.button
-            key={plan.id}
-            initial={{ opacity: 0, y: 10 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ delay: i * 0.08 }}
-            onClick={() => setSelectedPlan(plan)}
-            className={`w-full bg-gradient-to-r ${plan.color} rounded-2xl border border-border p-5 text-left hover:shadow-md transition`}
-          >
-            <div className="flex items-center gap-4">
-              <span className="text-4xl">{plan.icon}</span>
-              <div className="flex-1">
-                <h3 className="font-bold text-foreground">{plan.nome}</h3>
-                <p className="text-xs text-muted-foreground mt-0.5">{plan.descrizione}</p>
-                <div className="flex gap-3 mt-1.5">
-                  <span className="text-[10px] text-muted-foreground font-bold">{plan.durata}</span>
-                  <span className="text-[10px] text-muted-foreground font-bold">{plan.obiettivo}</span>
+        {NUTRITION_PLANS.map((plan, i) => {
+          const adjusted = tdeeData ? adjustPlanPortions(plan, tdeeData.target, tdeeData.macros) : plan;
+          return (
+            <motion.button
+              key={plan.id}
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ delay: i * 0.08 }}
+              onClick={() => setSelectedPlan(adjusted)}
+              className={`w-full bg-gradient-to-r ${plan.color} rounded-2xl border border-border p-5 text-left hover:shadow-md transition`}
+            >
+              <div className="flex items-center gap-4">
+                <span className="text-4xl">{plan.icon}</span>
+                <div className="flex-1">
+                  <h3 className="font-bold text-foreground">{plan.nome}</h3>
+                  <p className="text-xs text-muted-foreground mt-0.5">{plan.descrizione}</p>
+                  <div className="flex gap-3 mt-1.5">
+                    <span className="text-[10px] text-muted-foreground font-bold">{plan.durata}</span>
+                    <span className="text-[10px] text-muted-foreground font-bold">{plan.obiettivo}</span>
+                    {tdeeData && <span className="text-[10px] text-primary font-bold">{tdeeData.target} kcal</span>}
+                  </div>
                 </div>
               </div>
-            </div>
-          </motion.button>
-        ))}
+            </motion.button>
+          );
+        })}
       </div>
     </div>
   );
