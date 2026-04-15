@@ -91,7 +91,7 @@ export function ExerciseLibrary({ onBack }: ExerciseLibraryProps) {
                           category={e.categoria}
                           muscles={e.muscoli}
                           equipment={e.attrezzo}
-                          className="w-full h-40"
+                          className="w-full"
                           showGenerateButton={true}
                         />
                         <p>{e.descrizione}</p>
