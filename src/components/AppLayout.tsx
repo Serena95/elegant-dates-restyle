@@ -11,6 +11,11 @@ import {
   ClipboardList,
   MoreHorizontal,
   Users,
+  Crown,
+  Droplets,
+  Baby,
+  Trophy,
+  Utensils,
 } from "lucide-react";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { ProfileData } from "@/hooks/useCloudData";
@@ -41,11 +46,16 @@ const NAV_ITEMS: { view: AppView; label: string; icon: React.ElementType }[] = [
   { view: "dashboard", label: "Home", icon: LayoutDashboard },
   { view: "programs", label: "Allenamenti", icon: ClipboardList },
   { view: "calendar", label: "Calendario", icon: CalendarDays },
-  { view: "community", label: "Community", icon: Users },
-  { view: "profile", label: "Profilo", icon: UserCircle },
   { view: "progress", label: "Progressi", icon: BarChart3 },
-  { view: "food", label: "Alimentazione", icon: Apple },
-  { view: "library", label: "Libreria", icon: BookOpen },
+  { view: "community", label: "Community", icon: Users },
+  { view: "nutrition" as AppView, label: "Piani Nutrizionali", icon: Utensils },
+  { view: "food", label: "Diario Alimentare", icon: Apple },
+  { view: "cycle" as AppView, label: "Monitoraggio Ciclo", icon: Droplets },
+  { view: "pregnancy" as AppView, label: "Gravidanza", icon: Baby },
+  { view: "challenges" as AppView, label: "Challenge", icon: Trophy },
+  { view: "library", label: "Libreria Esercizi", icon: BookOpen },
+  { view: "premium" as AppView, label: "Premium", icon: Crown },
+  { view: "profile", label: "Profilo", icon: UserCircle },
   { view: "settings", label: "Impostazioni", icon: Settings },
 ];
 
