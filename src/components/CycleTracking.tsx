@@ -107,22 +107,37 @@ export function getCyclePhaseForDate(
   durataCiclo: number,
   durataMestruazione: number
 ): CyclePhaseId | null {
-  const lastPeriod = entries
-    .filter(e => e.tipo === "mestruazione")
+  // Find most recent cycle start (mestruazione or inizio_ciclo)
+  const lastStart = entries
+    .filter(e => e.tipo === "mestruazione" || e.tipo === "inizio_ciclo")
     .sort((a, b) => b.data.localeCompare(a.data))[0];
 
-  if (!lastPeriod) return null;
+  if (!lastStart) return null;
 
-  const lastDate = new Date(lastPeriod.data + "T00:00:00");
+  const lastDate = new Date(lastStart.data + "T00:00:00");
   const target = new Date(dateStr + "T00:00:00");
   const daysSince = Math.floor((target.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
 
   if (daysSince < 0) return null;
 
+  // Check if user has explicitly ended the current cycle
+  const lastEnd = entries
+    .filter(e => e.tipo === "fine_ciclo" && e.data >= lastStart.data)
+    .sort((a, b) => b.data.localeCompare(a.data))[0];
+
+  // Effective menstruation duration: explicit end overrides default
+  let effectiveMenstruation = durataMestruazione;
+  if (lastEnd) {
+    const endDate = new Date(lastEnd.data + "T00:00:00");
+    const endDays = Math.floor((endDate.getTime() - lastDate.getTime()) / (1000 * 60 * 60 * 24));
+    // Days 0..endDays inclusive are menstrual; from endDays+1 onward not menstrual
+    effectiveMenstruation = Math.max(1, endDays + 1);
+  }
+
   // Normalize to current cycle position
   const dayInCycle = daysSince % durataCiclo;
 
-  if (dayInCycle < durataMestruazione) return "mestruale";
+  if (dayInCycle < effectiveMenstruation) return "mestruale";
   if (dayInCycle < Math.floor(durataCiclo / 2) - 1) return "follicolare";
   if (dayInCycle < Math.floor(durataCiclo / 2) + 2) return "ovulazione";
   return "luteale";

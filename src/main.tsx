@@ -8,7 +8,10 @@ type InstallWindow = Window & {
   __installPromptInitialized?: boolean;
 };
 
-registerSW({ immediate: true });
+// Register SW WITHOUT auto-reloading the page when a new version is found.
+// The new SW will activate next time the user opens the app, avoiding
+// disruptive automatic refreshes during use.
+registerSW({ immediate: true, onNeedRefresh() {}, onOfflineReady() {} });
 
 const installWindow = window as InstallWindow;
 if (!installWindow.__installPromptInitialized) {
