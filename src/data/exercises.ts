@@ -297,6 +297,22 @@ function getOrderedWeeklyEquipment(
   return [...shuffle(fresh), ...shuffle(stale)];
 }
 
+/**
+ * Returns true when the user has enough equipment to guarantee
+ * no overlap between the current week and the previous one.
+ * Requires: total selected equipment >= trainingDays * 2.
+ */
+function canFullyAvoidLastWeek(
+  attrezziUtente: string[],
+  lastWeekEquipment: string[],
+  trainingDays: number
+): boolean {
+  const normalized = new Set(attrezziUtente.map(a => a === "Pesi(da 1 a 4kg)" ? "Pesi" : a));
+  const lastNormalized = new Set(lastWeekEquipment.map(a => a === "Pesi(da 1 a 4kg)" ? "Pesi" : a));
+  const fresh = [...normalized].filter(a => !lastNormalized.has(a));
+  return fresh.length >= trainingDays;
+}
+
 function getEquipmentCategoryCounts(attrezzo: string, livello: string) {
   const disponibili = EXERCISE_LIBRARY.filter(e =>
     e.attrezzo === attrezzo && livelloAccessibile(e.livello, livello)
@@ -329,18 +345,33 @@ function selectEquipmentForFocus(
   orderedEquipment: string[],
   livello: string,
   focus: DayFocus,
-  usedEquipment: string[] = []
+  usedEquipment: string[] = [],
+  forbiddenEquipment: string[] = []
 ): string {
-  const compatible = orderedEquipment.filter(attrezzo => equipmentSupportsFocus(attrezzo, livello, focus));
-  const unusedCompatible = compatible.filter(attrezzo => !usedEquipment.includes(attrezzo));
+  const forbidden = new Set(forbiddenEquipment);
+  const used = new Set(usedEquipment);
 
+  const compatible = orderedEquipment.filter(a => equipmentSupportsFocus(a, livello, focus));
+
+  // 1st choice: compatible, not used this week, not used last week
+  const ideal = compatible.filter(a => !used.has(a) && !forbidden.has(a));
+  if (ideal.length > 0) return ideal[0];
+
+  // 2nd: compatible, not used this week (allow last week if needed)
+  const unusedCompatible = compatible.filter(a => !used.has(a));
   if (unusedCompatible.length > 0) return unusedCompatible[0];
+
+  // 3rd: any compatible, preferring those not used last week
+  const compatibleFresh = compatible.filter(a => !forbidden.has(a));
+  if (compatibleFresh.length > 0) return compatibleFresh[0];
   if (compatible.length > 0) return compatible[0];
+
+  // 4th: Corpo Libero fallback if available
   if (!orderedEquipment.includes("Corpo Libero") && equipmentSupportsFocus("Corpo Libero", livello, focus)) {
     return "Corpo Libero";
   }
 
-  const unusedAny = orderedEquipment.filter(attrezzo => !usedEquipment.includes(attrezzo));
+  const unusedAny = orderedEquipment.filter(a => !used.has(a));
   return unusedAny[0] || orderedEquipment[0] || "Corpo Libero";
 }
 
@@ -500,6 +531,12 @@ export function generaSettimanaIntelligente(
   const dateKeys = getWeekDates(giorniSettimana);
   const orderedEquipment = getOrderedWeeklyEquipment(attrezziUtente, lastWeekEquipment);
 
+  // If user has enough equipment, forbid any equipment used last week.
+  const enforceFreshWeek = canFullyAvoidLastWeek(attrezziUtente, lastWeekEquipment, dateKeys.length);
+  const forbidden = enforceFreshWeek
+    ? Array.from(new Set(lastWeekEquipment.map(a => a === "Pesi(da 1 a 4kg)" ? "Pesi" : a)))
+    : [];
+
   const piano: Record<string, { attrezzo: string; round: number }> = {};
   const esercizi: Record<string, Exercise[]> = {};
   const focusPerDay: Record<string, DayFocus> = {};
@@ -510,7 +547,7 @@ export function generaSettimanaIntelligente(
     // Use fixed weekday-based focus: Mon→Upper, Wed→Lower, Fri→Total
     const dateObj = new Date(dateKey + "T00:00:00");
     const dayFocus = getFocusForWeekday(dateObj.getDay(), i);
-    const attrezzo = selectEquipmentForFocus(orderedEquipment, livello, dayFocus, usedEquipment);
+    const attrezzo = selectEquipmentForFocus(orderedEquipment, livello, dayFocus, usedEquipment, forbidden);
 
     ctx.recentExerciseIds = runningStorico;
 
