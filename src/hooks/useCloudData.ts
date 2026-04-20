@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
 import { WeekPlan, Exercise } from "@/data/exercises";
@@ -26,6 +26,8 @@ export interface Sfida {
   nome: string;
   streak: number;
   ultimaData: string | null;
+  completedDates: string[]; // Array of YYYY-MM-DD or locale dates marked as completed (supports retroactive)
+  completed?: boolean;
 }
 
 export interface AllenamentiData {
@@ -74,7 +76,7 @@ export function useCloudData() {
   const [misure, setMisureState] = useState<Misura[]>([]);
   const [pasti, setPastiState] = useState<Pasto[]>([]);
   const [acqua, setAcquaState] = useState(0);
-  const [sfida, setSfidaState] = useState<Sfida | null>(null);
+  const [sfide, setSfideState] = useState<Sfida[]>([]);
   const [ultimiAttrezzi, setUltimiAttrezziState] = useState<string[]>([]);
   const [profile, setProfileState] = useState<ProfileData>({ display_name: null, avatar_url: null });
   const [cycleEntries, setCycleEntriesState] = useState<CycleEntry[]>([]);
@@ -89,11 +91,6 @@ export function useCloudData() {
     peso: null, altezza: null, eta: null,
     attivita_livello: "moderata", obiettivo_nutrizionale: "mantenimento", calorie_target: null,
   });
-  const sfidaRef = useRef<Sfida | null>(null);
-
-  useEffect(() => {
-    sfidaRef.current = sfida;
-  }, [sfida]);
 
   useEffect(() => {
     if (user) loadAll();
@@ -139,7 +136,7 @@ export function useCloudData() {
         if (cache.misure) setMisureState(cache.misure);
         if (cache.pasti) setPastiState(cache.pasti);
         if (cache.acqua) setAcquaState(cache.acqua);
-        if (cache.sfida) { setSfidaState(cache.sfida); sfidaRef.current = cache.sfida; }
+        if (cache.sfide) setSfideState(cache.sfide);
         if (cache.cycleEntries) setCycleEntriesState(cache.cycleEntries);
         if (cache.pregnancySettings) setPregnancySettingsState(cache.pregnancySettings);
         setLoading(false);
@@ -157,7 +154,7 @@ export function useCloudData() {
       supabase.from("measurements").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("food_diary").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("water_tracking").select("*").eq("user_id", user.id).eq("data", new Date().toISOString().split("T")[0]).maybeSingle(),
-      supabase.from("challenges").select("*").eq("user_id", user.id).order("created_at", { ascending: false }).limit(1).maybeSingle(),
+      supabase.from("challenges").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
       supabase.from("cycle_tracking").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
@@ -227,13 +224,14 @@ export function useCloudData() {
 
     if (waterRes.data) setAcquaState(waterRes.data.bicchieri);
 
-    if (challengeRes.data) {
-      const s = {
-        id: challengeRes.data.id, nome: challengeRes.data.nome,
-        streak: challengeRes.data.streak, ultimaData: challengeRes.data.ultima_data
-      };
-      setSfidaState(s);
-      sfidaRef.current = s;
+    if (challengeRes.data && Array.isArray(challengeRes.data)) {
+      setSfideState(challengeRes.data.map((c: any) => ({
+        id: c.id,
+        nome: c.nome,
+        streak: c.streak,
+        ultimaData: c.ultima_data,
+        completedDates: c.completed_dates || [],
+      })));
     }
 
     if (profileRes.data) {
@@ -366,30 +364,68 @@ export function useCloudData() {
     }
   }, [user]);
 
-  const setSfida = useCallback(async (newSfida: Sfida | null) => {
-    if (!user) return;
-    const currentSfida = sfidaRef.current;
-    setSfidaState(newSfida);
-    sfidaRef.current = newSfida;
+  // Add a new food challenge (each user can have many concurrent ones)
+  const addSfida = useCallback(async (nome: string): Promise<Sfida | null> => {
+    if (!user) return null;
+    const { data, error } = await supabase.from("challenges").insert({
+      user_id: user.id,
+      nome,
+      streak: 0,
+      ultima_data: null,
+      completed_dates: [],
+    } as any).select().single();
+    if (error || !data) return null;
+    const created: Sfida = {
+      id: data.id,
+      nome: data.nome,
+      streak: data.streak,
+      ultimaData: data.ultima_data,
+      completedDates: (data as any).completed_dates || [],
+    };
+    setSfideState(prev => [created, ...prev]);
+    return created;
+  }, [user]);
 
-    if (!newSfida) {
-      if (currentSfida?.id) {
-        await supabase.from("challenges").delete().eq("id", currentSfida.id);
-      }
-    } else if (newSfida.id) {
-      await supabase.from("challenges").update({
-        nome: newSfida.nome, streak: newSfida.streak, ultima_data: newSfida.ultimaData
-      }).eq("id", newSfida.id);
+  // Delete a single challenge
+  const deleteSfida = useCallback(async (id: string) => {
+    if (!user) return;
+    await supabase.from("challenges").delete().eq("id", id);
+    setSfideState(prev => prev.filter(s => s.id !== id));
+  }, [user]);
+
+  // Toggle a specific date as completed/uncompleted for a given challenge.
+  // Supports retroactive (any date in YYYY-MM-DD format).
+  const toggleSfidaDate = useCallback(async (id: string, dateKey: string) => {
+    if (!user) return;
+    const target = (await new Promise<Sfida | undefined>(resolve => {
+      setSfideState(prev => {
+        const found = prev.find(s => s.id === id);
+        resolve(found);
+        return prev;
+      });
+    }));
+    if (!target) return;
+
+    const dates = new Set(target.completedDates);
+    if (dates.has(dateKey)) {
+      dates.delete(dateKey);
     } else {
-      const { data } = await supabase.from("challenges").insert({
-        user_id: user.id, nome: newSfida.nome, streak: newSfida.streak, ultima_data: newSfida.ultimaData
-      }).select().single();
-      if (data) {
-        const updated = { ...newSfida, id: data.id };
-        setSfidaState(updated);
-        sfidaRef.current = updated;
-      }
+      dates.add(dateKey);
     }
+    const newDates = Array.from(dates).sort();
+    const newStreak = newDates.length;
+    const newLast = newDates.length > 0 ? newDates[newDates.length - 1] : null;
+
+    setSfideState(prev => prev.map(s => s.id === id
+      ? { ...s, completedDates: newDates, streak: newStreak, ultimaData: newLast }
+      : s
+    ));
+
+    await supabase.from("challenges").update({
+      completed_dates: newDates,
+      streak: newStreak,
+      ultima_data: newLast,
+    } as any).eq("id", id);
   }, [user]);
 
   const updateProfile = useCallback(async (updates: Partial<ProfileData>) => {
@@ -457,7 +493,7 @@ export function useCloudData() {
     misure, addMisura, deleteMisura,
     pasti, addPasto, deletePasto,
     acqua, setAcqua,
-    sfida, setSfida,
+    sfide, addSfida, deleteSfida, toggleSfidaDate,
     ultimiAttrezzi, setUltimiAttrezzi,
     profile, updateProfile,
     resetWorkoutData,

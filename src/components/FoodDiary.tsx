@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { ChevronLeft, Trash2, Droplets } from "lucide-react";
+import { ChevronLeft, Trash2, Droplets, Plus, Calendar, Check } from "lucide-react";
 import { suggerimentiNutrizionali, WeekPlan } from "@/data/exercises";
 import { Pasto, Sfida } from "@/hooks/useCloudData";
 
@@ -10,17 +10,36 @@ interface FoodDiaryProps {
   onDeletePasto: (id: string) => Promise<void>;
   acqua: number;
   onSetAcqua: (n: number) => Promise<void>;
-  sfida: Sfida | null;
-  onSetSfida: (s: Sfida | null) => Promise<void>;
+  sfide: Sfida[];
+  onAddSfida: (nome: string) => Promise<Sfida | null>;
+  onDeleteSfida: (id: string) => Promise<void>;
+  onToggleSfidaDate: (id: string, dateKey: string) => Promise<void>;
   onBack: () => void;
 }
 
-export function FoodDiary({ piano, pasti, onAddPasto, onDeletePasto, acqua, onSetAcqua, sfida, onSetSfida, onBack }: FoodDiaryProps) {
+const TARGET_DAYS = 30;
+
+// Get YYYY-MM-DD using local timezone
+function localDateKey(d: Date): string {
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${y}-${m}-${day}`;
+}
+
+export function FoodDiary({
+  piano, pasti, onAddPasto, onDeletePasto,
+  acqua, onSetAcqua,
+  sfide, onAddSfida, onDeleteSfida, onToggleSfidaDate,
+  onBack,
+}: FoodDiaryProps) {
   const [tipo, setTipo] = useState("Colazione");
   const [desc, setDesc] = useState("");
   const [mood, setMood] = useState("🟢");
   const [sfidaNome, setSfidaNome] = useState("");
+  const [showCalendarFor, setShowCalendarFor] = useState<string | null>(null);
 
+  const todayKey = localDateKey(new Date());
   const dataOggi = new Date().toLocaleDateString();
   const pastiOggi = pasti.filter(p => p.data === dataOggi);
 
@@ -40,23 +59,28 @@ export function FoodDiary({ piano, pasti, onAddPasto, onDeletePasto, acqua, onSe
   };
 
   const avviaSfida = async () => {
-    if (!sfidaNome) return alert("Inserisci un nome per la sfida!");
-    await onSetSfida({ nome: sfidaNome, streak: 0, ultimaData: null });
-  };
-
-  const segnaVittoria = async () => {
-    if (!sfida) return;
-    if (sfida.ultimaData === dataOggi) return alert("Per oggi hai già dato!");
-    const newStreak = sfida.streak + 1;
-    if (newStreak >= 30) {
-      alert("🎉 Hai completato 30 giorni di: " + sfida.nome);
-      await onSetSfida(null);
-    } else {
-      await onSetSfida({ ...sfida, streak: newStreak, ultimaData: dataOggi });
-    }
+    if (!sfidaNome.trim()) return alert("Inserisci un nome per la sfida!");
+    await onAddSfida(sfidaNome.trim());
+    setSfidaNome("");
   };
 
   const moodBorder = (m: string) => m === "🟢" ? "border-pilates-green" : m === "🟡" ? "border-pilates-amber" : "border-pilates-red";
+
+  // Build last 30 days for calendar picker
+  const buildLast30Days = (): { key: string; label: string; isFuture: boolean }[] => {
+    const days = [];
+    const now = new Date();
+    for (let i = 0; i < 30; i++) {
+      const d = new Date(now);
+      d.setDate(d.getDate() - i);
+      days.push({
+        key: localDateKey(d),
+        label: d.toLocaleDateString("it-IT", { weekday: "short", day: "numeric", month: "short" }),
+        isFuture: false,
+      });
+    }
+    return days;
+  };
 
   return (
     <div className="space-y-5">
@@ -89,35 +113,116 @@ export function FoodDiary({ piano, pasti, onAddPasto, onDeletePasto, acqua, onSe
         <small className="block mt-2 text-sm font-bold text-sky-600 dark:text-sky-300">{acqua}/10 Bicchieri</small>
       </div>
 
-      {/* Challenge */}
-      <div className="bg-amber-50 dark:bg-amber-900/20 p-5 rounded-2xl border border-amber-200 dark:border-amber-800 text-center">
-        {!sfida ? (
-          <div className="space-y-3">
-            <h4 className="font-bold text-amber-800 dark:text-amber-200">🎯 Nuova Sfida 30gg</h4>
-            <input value={sfidaNome} onChange={e => setSfidaNome(e.target.value)} placeholder="Esempio: No Dolci" className="w-full p-3 rounded-xl border border-amber-300 dark:border-amber-700 bg-card text-foreground text-center" />
-            <div className="flex justify-center gap-2 flex-wrap">
-              {["🚫 No Dolci", "☕ No Zucchero", "🍔 No Junk Food", "🥤 No Bibite", "🥗 5 Verdure/Giorno", "💧 2L Acqua", "🍎 Frutta Ogni Pasto", "🍕 No Raffinati"].map(s => (
-                <button key={s} onClick={() => setSfidaNome(s)} className="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 px-3 py-1 rounded-full text-xs font-bold">{s}</button>
-              ))}
+      {/* Active challenges (multiple) */}
+      <div className="space-y-3">
+        <h4 className="font-bold text-foreground px-1 flex items-center gap-2">🎯 Sfide Alimentari Attive
+          {sfide.length > 0 && <span className="text-xs bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 px-2 py-0.5 rounded-full">{sfide.length}</span>}
+        </h4>
+
+        {sfide.map(s => {
+          const completedToday = s.completedDates.includes(todayKey);
+          const isCompleted = s.streak >= TARGET_DAYS;
+          const calendarOpen = showCalendarFor === s.id;
+          return (
+            <div key={s.id} className={`bg-amber-50 dark:bg-amber-900/20 p-4 rounded-2xl border ${isCompleted ? "border-pilates-green" : "border-amber-200 dark:border-amber-800"} space-y-3`}>
+              <div className="flex items-center justify-between gap-2">
+                <h5 className="font-bold text-amber-800 dark:text-amber-200 text-sm flex-1">{s.nome}</h5>
+                <button
+                  onClick={() => { if (s.id && confirm("Eliminare questa sfida?")) onDeleteSfida(s.id); }}
+                  className="text-muted-foreground hover:text-destructive p-1"
+                  aria-label="Elimina sfida"
+                >
+                  <Trash2 size={14} />
+                </button>
+              </div>
+
+              <div className="text-center">
+                <div className="text-3xl font-black text-amber-600 dark:text-amber-400">{s.streak}/{TARGET_DAYS}</div>
+                <div className="w-full h-2 mt-2 bg-amber-100 dark:bg-amber-950 rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-amber-400 to-amber-600 transition-all"
+                    style={{ width: `${Math.min(100, (s.streak / TARGET_DAYS) * 100)}%` }}
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <button
+                  onClick={() => s.id && onToggleSfidaDate(s.id, todayKey)}
+                  disabled={isCompleted}
+                  className={`py-2.5 rounded-xl font-bold text-sm flex items-center justify-center gap-1.5 ${
+                    completedToday ? "bg-pilates-green text-white" :
+                    isCompleted ? "bg-muted text-muted-foreground" :
+                    "bg-amber-600 text-white hover:bg-amber-700"
+                  }`}
+                >
+                  {completedToday ? <><Check size={14}/> Oggi fatto</> : "✅ Segna oggi"}
+                </button>
+                <button
+                  onClick={() => setShowCalendarFor(calendarOpen ? null : (s.id ?? null))}
+                  className="py-2.5 rounded-xl font-bold text-sm bg-card border-2 border-amber-300 dark:border-amber-700 text-amber-700 dark:text-amber-300 flex items-center justify-center gap-1.5"
+                >
+                  <Calendar size={14} /> Giorni passati
+                </button>
+              </div>
+
+              {/* Retroactive day picker */}
+              {calendarOpen && (
+                <div className="bg-card rounded-xl p-3 border border-border">
+                  <p className="text-xs text-muted-foreground mb-2 text-center">
+                    Tocca un giorno per segnarlo o annullarlo
+                  </p>
+                  <div className="grid grid-cols-5 gap-1.5 max-h-64 overflow-y-auto">
+                    {buildLast30Days().map(d => {
+                      const done = s.completedDates.includes(d.key);
+                      const isToday = d.key === todayKey;
+                      return (
+                        <button
+                          key={d.key}
+                          onClick={() => s.id && onToggleSfidaDate(s.id, d.key)}
+                          className={`p-2 rounded-lg text-[10px] font-medium border transition ${
+                            done
+                              ? "bg-pilates-green text-white border-pilates-green"
+                              : "bg-card border-border text-foreground hover:border-amber-400"
+                          } ${isToday ? "ring-2 ring-amber-400" : ""}`}
+                        >
+                          {d.label}
+                          {done && <Check size={10} className="mx-auto mt-0.5"/>}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {isCompleted && (
+                <div className="text-center text-pilates-green font-bold text-sm">
+                  🎉 Sfida completata!
+                </div>
+              )}
             </div>
-            <button onClick={avviaSfida} className="w-full py-3 rounded-2xl bg-amber-600 text-white font-bold">INIZIA SFIDA</button>
+          );
+        })}
+
+        {/* New challenge form */}
+        <div className="bg-card p-4 rounded-2xl border border-border space-y-3">
+          <h5 className="font-bold text-sm text-foreground text-center">➕ Nuova sfida {TARGET_DAYS}gg</h5>
+          <input
+            value={sfidaNome}
+            onChange={e => setSfidaNome(e.target.value)}
+            placeholder="Esempio: No Dolci"
+            className="w-full p-3 rounded-xl border border-border bg-card text-foreground text-center"
+          />
+          <div className="flex justify-center gap-2 flex-wrap">
+            {["🚫 No Dolci", "☕ No Zucchero", "🍔 No Junk Food", "🥤 No Bibite", "🥗 5 Verdure/Giorno", "💧 2L Acqua", "🍎 Frutta Ogni Pasto", "🍕 No Raffinati"].map(s => (
+              <button key={s} onClick={() => setSfidaNome(s)} className="bg-amber-200 dark:bg-amber-800 text-amber-800 dark:text-amber-200 px-3 py-1 rounded-full text-xs font-bold">{s}</button>
+            ))}
           </div>
-        ) : (
-          <div className="space-y-3">
-            <h4 className="font-bold text-amber-800 dark:text-amber-200">{sfida.nome}</h4>
-            <div className="text-4xl font-black text-amber-600 dark:text-amber-400">{sfida.streak}/30</div>
-            <button
-              onClick={segnaVittoria}
-              disabled={sfida.ultimaData === dataOggi}
-              className={`w-full py-3 rounded-2xl font-bold text-white ${sfida.ultimaData === dataOggi ? "bg-muted text-muted-foreground" : "bg-pilates-green"}`}
-            >
-              {sfida.ultimaData === dataOggi ? "COMPLETATA PER OGGI" : "HO VINTO OGGI! ✅"}
-            </button>
-            <button onClick={() => { if (confirm("Vuoi ricominciare?")) onSetSfida(null); }} className="text-xs text-amber-600 dark:text-amber-400 underline">
-              Cambia sfida
-            </button>
-          </div>
-        )}
+          <button onClick={avviaSfida} className="w-full py-3 rounded-2xl bg-amber-600 text-white font-bold flex items-center justify-center gap-2">
+            <Plus size={16}/> AGGIUNGI SFIDA
+          </button>
+          <p className="text-[11px] text-muted-foreground text-center">Puoi attivare più sfide insieme — sono indipendenti</p>
+        </div>
       </div>
 
       {/* Food diary */}

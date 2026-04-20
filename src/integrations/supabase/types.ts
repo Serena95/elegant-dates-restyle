@@ -91,6 +91,7 @@ export type Database = {
       }
       challenges: {
         Row: {
+          completed_dates: string[]
           created_at: string
           id: string
           nome: string
@@ -100,6 +101,7 @@ export type Database = {
           user_id: string
         }
         Insert: {
+          completed_dates?: string[]
           created_at?: string
           id?: string
           nome: string
@@ -109,6 +111,7 @@ export type Database = {
           user_id: string
         }
         Update: {
+          completed_dates?: string[]
           created_at?: string
           id?: string
           nome?: string
