@@ -76,7 +76,7 @@ export function useCloudData() {
   const [misure, setMisureState] = useState<Misura[]>([]);
   const [pasti, setPastiState] = useState<Pasto[]>([]);
   const [acqua, setAcquaState] = useState(0);
-  const [sfida, setSfidaState] = useState<Sfida | null>(null);
+  const [sfide, setSfideState] = useState<Sfida[]>([]);
   const [ultimiAttrezzi, setUltimiAttrezziState] = useState<string[]>([]);
   const [profile, setProfileState] = useState<ProfileData>({ display_name: null, avatar_url: null });
   const [cycleEntries, setCycleEntriesState] = useState<CycleEntry[]>([]);
@@ -91,11 +91,6 @@ export function useCloudData() {
     peso: null, altezza: null, eta: null,
     attivita_livello: "moderata", obiettivo_nutrizionale: "mantenimento", calorie_target: null,
   });
-  const sfidaRef = useRef<Sfida | null>(null);
-
-  useEffect(() => {
-    sfidaRef.current = sfida;
-  }, [sfida]);
 
   useEffect(() => {
     if (user) loadAll();
