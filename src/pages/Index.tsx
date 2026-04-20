@@ -570,8 +570,10 @@ const Index = () => {
             onDeletePasto={cloud.deletePasto}
             acqua={cloud.acqua}
             onSetAcqua={cloud.setAcqua}
-            sfida={cloud.sfida}
-            onSetSfida={cloud.setSfida}
+            sfide={cloud.sfide}
+            onAddSfida={cloud.addSfida}
+            onDeleteSfida={cloud.deleteSfida}
+            onToggleSfidaDate={cloud.toggleSfidaDate}
             onBack={() => navigate("dashboard")}
           />
         );
