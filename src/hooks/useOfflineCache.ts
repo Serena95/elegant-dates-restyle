@@ -18,7 +18,7 @@ export interface OfflineCache {
   misure: any[];
   pasti: any[];
   acqua: number;
-  sfida: any;
+  sfide: any[];
   cycleEntries: any[];
   pregnancySettings: any;
   timestamp: number;
