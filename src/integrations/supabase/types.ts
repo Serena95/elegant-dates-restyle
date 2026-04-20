@@ -516,6 +516,7 @@ export type Database = {
           ultimi_attrezzi: string[] | null
           updated_at: string
           user_id: string
+          workout_generation_key: string | null
         }
         Insert: {
           altezza?: number | null
@@ -539,6 +540,7 @@ export type Database = {
           ultimi_attrezzi?: string[] | null
           updated_at?: string
           user_id: string
+          workout_generation_key?: string | null
         }
         Update: {
           altezza?: number | null
@@ -562,6 +564,7 @@ export type Database = {
           ultimi_attrezzi?: string[] | null
           updated_at?: string
           user_id?: string
+          workout_generation_key?: string | null
         }
         Relationships: []
       }

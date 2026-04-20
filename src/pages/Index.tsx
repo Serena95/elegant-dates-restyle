@@ -158,7 +158,6 @@ const Index = () => {
 
     // Always use fixed training days [1,3,5]
     const currentWeekDates = getWeekDates(FIXED_TRAINING_DAYS);
-    // v3: regenerate once after focus/equipment compatibility fix
     const expectedKey = "v3:" + [...currentWeekDates].sort().join(",");
 
     // Check if piano already has valid data for this week (from DB)
@@ -170,41 +169,50 @@ const Index = () => {
     const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
     const hasAllExercises = pianoMatchesWeek &&
       currentWeekDates.every(d => allenamentiEsercizi[d]?.length > 0);
-    const hasAlignedExercises = pianoMatchesWeek &&
-      currentWeekDates.every(d => isWorkoutAlignedWithDayFocus(d, allenamentiEsercizi[d] || []));
 
-    // Check localStorage key — if it matches, piano was already generated this week
-    // Also serves as the primary guard: if the stored key matches, the plan is valid
-    const storedKey = getStoredGenerationKey();
-    if (storedKey === expectedKey && pianoMatchesWeek && hasAllExercises && hasAlignedExercises) {
+    // Use the cloud-stored key (persists across devices/logins) — fallback to localStorage for legacy
+    const storedKey = cloud.workoutGenerationKey || getStoredGenerationKey();
+
+    // PRIMARY GUARD: if the piano matches the current week and has all exercises, KEEP IT.
+    // This prevents regeneration on every login/device. We only regenerate if the week truly doesn't match.
+    if (pianoMatchesWeek && hasAllExercises) {
       generationGuardRef.current = true;
-      // Fill missing exercises without regenerating the plan
-      const updatedEsercizi = { ...allenamentiEsercizi };
-      let needsUpdate = false;
-      const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
+      // Persist key if it was missing
+      if (storedKey !== expectedKey) {
+        setStoredGenerationKey(expectedKey);
+        cloud.setWorkoutGenerationKey(expectedKey);
+      }
 
+      // Restore completed-days info from history into piano (so today's completed workout
+      // and equipment are reflected even after a logout/login)
+      const updatedPiano = { ...cloud.piano };
+      let pianoNeedsUpdate = false;
       currentWeekDates.forEach((dateKey) => {
-        if (!updatedEsercizi[dateKey] || updatedEsercizi[dateKey].length === 0) {
-          const dati = cloud.piano[dateKey];
-          if (dati) {
-            const dateObj = new Date(dateKey + "T00:00:00");
-            const dayFocus = getFocusForWeekday(dateObj.getDay());
-            const exercises = generaEserciziGiorno(dati.attrezzo, cloud.livello, [], dayFocus, ctx);
-            updatedEsercizi[dateKey] = exercises;
-            needsUpdate = true;
+        const histEntry = cloud.storicoCal[dateKey];
+        if (histEntry?.completato && updatedPiano[dateKey]) {
+          // Make sure the piano reflects what was actually done that day
+          if (updatedPiano[dateKey].attrezzo !== histEntry.attrezzo ||
+              (updatedPiano[dateKey].round || 0) < (histEntry.round || 0)) {
+            updatedPiano[dateKey] = {
+              ...updatedPiano[dateKey],
+              attrezzo: histEntry.attrezzo,
+              round: histEntry.round,
+            };
+            pianoNeedsUpdate = true;
           }
         }
       });
 
-      if (needsUpdate) {
-        cloud.savePiano(cloud.piano, { esercizi: updatedEsercizi, storico: cloud.allenamentiData.storico || {} });
+      if (pianoNeedsUpdate) {
+        cloud.savePiano(updatedPiano, cloud.allenamentiData);
       }
       return;
     }
 
-    // Need to generate a new week plan
+    // Need to generate a new week plan (week truly changed)
     generationGuardRef.current = true;
     setStoredGenerationKey(expectedKey);
+    cloud.setWorkoutGenerationKey(expectedKey);
 
     const result = generaSettimanaIntelligente(
       equipmentPool,
@@ -215,8 +223,27 @@ const Index = () => {
       FIXED_TRAINING_DAYS
     );
 
-    cloud.savePiano(result.piano, { esercizi: result.esercizi, storico: result.storico });
-    const usedEquipment = Object.values(result.piano).map(d => d.attrezzo);
+    // CRITICAL: preserve any already-completed days from history — never overwrite them
+    const finalPiano = { ...result.piano };
+    const finalEsercizi = { ...result.esercizi };
+    currentWeekDates.forEach((dateKey) => {
+      const histEntry = cloud.storicoCal[dateKey];
+      if (histEntry?.completato) {
+        finalPiano[dateKey] = {
+          ...finalPiano[dateKey],
+          attrezzo: histEntry.attrezzo,
+          round: histEntry.round,
+        };
+        // Keep existing exercises for that day if present
+        const existingEx = allenamentiEsercizi[dateKey];
+        if (existingEx && existingEx.length > 0) {
+          finalEsercizi[dateKey] = existingEx;
+        }
+      }
+    });
+
+    cloud.savePiano(finalPiano, { esercizi: finalEsercizi, storico: result.storico });
+    const usedEquipment = Object.values(finalPiano).map(d => d.attrezzo);
     cloud.setUltimiAttrezzi(usedEquipment);
   }, [cloud.loading]); // ONLY depend on loading — no other deps to prevent re-triggers
 

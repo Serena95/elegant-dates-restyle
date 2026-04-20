@@ -81,6 +81,7 @@ export function useCloudData() {
   const [profile, setProfileState] = useState<ProfileData>({ display_name: null, avatar_url: null });
   const [cycleEntries, setCycleEntriesState] = useState<CycleEntry[]>([]);
   const [giorniAllenamento, setGiorniAllenamentoState] = useState<number[]>([1, 3, 5]);
+  const [workoutGenerationKey, setWorkoutGenerationKeyState] = useState<string>("");
   const [pregnancySettings, setPregnancySettingsState] = useState<PregnancySettings>({
     modalita_gravidanza: false,
     settimana_gestazionale: 0,
@@ -168,6 +169,7 @@ export function useCloudData() {
       setLivelloState(settingsRes.data.livello || "MEDIO");
       setUltimiAttrezziState(settingsRes.data.ultimi_attrezzi || []);
       setGiorniAllenamentoState((settingsRes.data as any).giorni_allenamento || fallbackGiorni);
+      setWorkoutGenerationKeyState((settingsRes.data as any).workout_generation_key || "");
       setPregnancySettingsState({
         modalita_gravidanza: (settingsRes.data as any).modalita_gravidanza || false,
         settimana_gestazionale: (settingsRes.data as any).settimana_gestazionale || 0,
@@ -293,6 +295,12 @@ export function useCloudData() {
     if (!user) return;
     setGiorniAllenamentoState(v);
     await upsertUserSettings({ giorni_allenamento: v });
+  }, [user, upsertUserSettings]);
+
+  const setWorkoutGenerationKey = useCallback(async (v: string) => {
+    if (!user) return;
+    setWorkoutGenerationKeyState(v);
+    await upsertUserSettings({ workout_generation_key: v });
   }, [user, upsertUserSettings]);
 
   const savePiano = useCallback(async (newPiano: WeekPlan, newAllenamenti?: AllenamentiData) => {
@@ -501,5 +509,6 @@ export function useCloudData() {
     pregnancySettings, updatePregnancySettings,
     giorniAllenamento, setGiorniAllenamento,
     nutritionProfile, updateNutritionProfile,
+    workoutGenerationKey, setWorkoutGenerationKey,
   };
 }
