@@ -26,6 +26,8 @@ export interface Sfida {
   nome: string;
   streak: number;
   ultimaData: string | null;
+  completedDates: string[]; // Array of YYYY-MM-DD or locale dates marked as completed (supports retroactive)
+  completed?: boolean;
 }
 
 export interface AllenamentiData {
