@@ -94,16 +94,21 @@ export function ChallengesView({ onBack, activeChallenge, onStartChallenge, onCa
   };
 
   const syncParticipationDates = async (challengeId: string, dates: string[]) => {
-    if (!user) return { error: new Error("Utente non autenticato") };
+    if (!user) {
+      return { error: new Error("Utente non autenticato"), completedDays: 0, isCompleted: false };
+    }
+
     const challenge = FITNESS_CHALLENGES.find(c => c.id === challengeId);
-    if (!challenge) return { error: new Error("Challenge non trovata") };
+    if (!challenge) {
+      return { error: new Error("Challenge non trovata"), completedDays: 0, isCompleted: false };
+    }
 
     const sortedDates = [...new Set(dates)].sort();
     const completedDays = sortedDates.length;
     const isCompleted = completedDays >= challenge.durationDays;
     const lastCompletedDate = sortedDates.at(-1) ?? null;
 
-    const result = await supabase
+    const { error } = await supabase
       .from("challenge_participations")
       .update({
         completed_dates: sortedDates,
@@ -114,7 +119,7 @@ export function ChallengesView({ onBack, activeChallenge, onStartChallenge, onCa
       .eq("user_id", user.id)
       .eq("challenge_id", challengeId);
 
-    return { ...result, completedDays, isCompleted };
+    return { error, completedDays, isCompleted };
   };
 
   const completeDay = async (challengeId: string) => {
