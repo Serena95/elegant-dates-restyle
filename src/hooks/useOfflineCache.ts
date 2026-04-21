@@ -21,6 +21,7 @@ export interface OfflineCache {
   sfide: any[];
   cycleEntries: any[];
   pregnancySettings: any;
+  nutritionProfile: any;
   timestamp: number;
 }
 
