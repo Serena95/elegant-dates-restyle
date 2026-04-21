@@ -67,6 +67,14 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
     try { return JSON.parse(localStorage.getItem("activeNutritionPlan") || "null"); } catch { return null; }
   });
 
+  useEffect(() => {
+    try {
+      setSavedPlan(JSON.parse(localStorage.getItem("activeNutritionPlan") || "null"));
+    } catch {
+      setSavedPlan(null);
+    }
+  }, []);
+
   const lunarPhase = useMemo(() => getLunarPhase(new Date()), []);
   const combinedMessage = useMemo(() => getCombinedAdaptationMessage(cyclePhase, lunarPhase), [cyclePhase, lunarPhase]);
 
