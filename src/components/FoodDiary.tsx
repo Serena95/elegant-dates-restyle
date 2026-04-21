@@ -41,7 +41,7 @@ export function FoodDiary({
 
   const todayKey = localDateKey(new Date());
   const dataOggi = new Date().toLocaleDateString();
-  const pastiOggi = pasti.filter(p => p.data === dataOggi);
+  const pastiRecenti = pasti.slice(0, 12);
 
   const oggi = new Date().toLocaleDateString("it-IT", { weekday: "long" });
   const giornoFormatted = oggi.charAt(0).toUpperCase() + oggi.slice(1);
@@ -257,13 +257,14 @@ export function FoodDiary({
         <button onClick={salvaPasto} className="w-full py-3 rounded-2xl bg-primary text-primary-foreground font-bold">AGGIUNGI AL DIARIO</button>
       </div>
 
-      {/* Today's meals */}
-      {pastiOggi.length > 0 && (
+      {/* Recent meals */}
+      {pastiRecenti.length > 0 && (
         <div className="space-y-2">
-          {pastiOggi.map((p) => (
+          <h4 className="font-bold text-foreground px-1">🗂️ Diario recente</h4>
+          {pastiRecenti.map((p) => (
             <div key={p.id} className={`bg-card rounded-xl p-3 border border-border border-l-4 ${moodBorder(p.mood)} flex justify-between items-center`}>
               <div>
-                <div className="flex gap-2 text-xs font-bold text-primary"><span>{p.tipo}</span><span>{p.mood}</span></div>
+                <div className="flex gap-2 text-xs font-bold text-primary flex-wrap"><span>{p.tipo}</span><span>{p.mood}</span><span className="text-muted-foreground">{p.data === dataOggi ? "Oggi" : p.data}</span></div>
                 <div className="text-sm text-foreground mt-1">{p.desc}</div>
               </div>
               {p.id && (
