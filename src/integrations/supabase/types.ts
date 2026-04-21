@@ -60,6 +60,7 @@ export type Database = {
         Row: {
           challenge_id: string
           completed: boolean
+          completed_dates: string[]
           completed_days: number
           created_at: string
           id: string
@@ -70,6 +71,7 @@ export type Database = {
         Insert: {
           challenge_id: string
           completed?: boolean
+          completed_dates?: string[]
           completed_days?: number
           created_at?: string
           id?: string
@@ -80,6 +82,7 @@ export type Database = {
         Update: {
           challenge_id?: string
           completed?: boolean
+          completed_dates?: string[]
           completed_days?: number
           created_at?: string
           id?: string
