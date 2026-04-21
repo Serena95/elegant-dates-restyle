@@ -136,10 +136,11 @@ export function useCloudData() {
         if (cache.profile) setProfileState(cache.profile);
         if (cache.misure) setMisureState(cache.misure);
         if (cache.pasti) setPastiState(cache.pasti);
-        if (cache.acqua) setAcquaState(cache.acqua);
+        if (typeof cache.acqua === "number") setAcquaState(cache.acqua);
         if (cache.sfide) setSfideState(cache.sfide);
         if (cache.cycleEntries) setCycleEntriesState(cache.cycleEntries);
         if (cache.pregnancySettings) setPregnancySettingsState(cache.pregnancySettings);
+        if ((cache as any).nutritionProfile) setNutritionProfileState((cache as any).nutritionProfile);
         setLoading(false);
         // Register sync listener for when online returns
         const handleOnline = () => { window.removeEventListener("online", handleOnline); loadAll(); };

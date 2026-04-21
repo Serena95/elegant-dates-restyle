@@ -138,8 +138,16 @@ const Index = () => {
       livello: cloud.livello,
       giorniAllenamento: FIXED_TRAINING_DAYS,
       ultimiAttrezzi: cloud.ultimiAttrezzi,
+      profile: cloud.profile,
+      misure: cloud.misure,
+      pasti: cloud.pasti,
+      acqua: cloud.acqua,
+      sfide: cloud.sfide,
+      cycleEntries: cloud.cycleEntries,
+      pregnancySettings: cloud.pregnancySettings,
+      nutritionProfile: cloud.nutritionProfile,
     });
-  }, [cloud.loading, cloud.piano, cloud.allenamentiData, cloud.storicoCal, cloud.attrezzi, cloud.livello, cloud.ultimiAttrezzi]);
+  }, [cloud.loading, cloud.piano, cloud.allenamentiData, cloud.storicoCal, cloud.attrezzi, cloud.livello, cloud.ultimiAttrezzi, cloud.profile, cloud.misure, cloud.pasti, cloud.acqua, cloud.sfide, cloud.cycleEntries, cloud.pregnancySettings, cloud.nutritionProfile]);
 
   // Auto-generate weekly plan when needed — ONCE per week only
   // Uses FIXED_TRAINING_DAYS [1,3,5] = Mon/Wed/Fri always
