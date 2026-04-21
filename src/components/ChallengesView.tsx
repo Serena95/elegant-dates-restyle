@@ -11,7 +11,7 @@ import { motion } from "framer-motion";
 import { toast } from "sonner";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Calendar } from "@/components/ui/calendar";
-import { format, parseISO, startOfDay } from "date-fns";
+import { addDays, format, parseISO, startOfDay } from "date-fns";
 import { it } from "date-fns/locale";
 
 interface ChallengeParticipation {
@@ -156,11 +156,11 @@ export function ChallengesView({ onBack, activeChallenge, onStartChallenge, onCa
 
     const dateKey = toDateKey(selectedDate);
     const today = toDateKey(new Date());
-    const startDate = participation.start_date;
     const existingDates = participation.completed_dates || [];
+    const challengeWindowStart = toDateKey(addDays(new Date(), -(challenge.durationDays - 1)));
 
-    if (dateKey < startDate) {
-      toast.error("Puoi segnare solo dal giorno di inizio challenge in poi");
+    if (dateKey < challengeWindowStart) {
+      toast.error("Puoi segnare solo i giorni compresi nella finestra della challenge");
       return;
     }
 
@@ -209,13 +209,13 @@ export function ChallengesView({ onBack, activeChallenge, onStartChallenge, onCa
     [activeCalendarParticipation],
   );
   const calendarDisabled = useMemo(() => {
-    if (!activeCalendarParticipation) return [(date: Date) => true];
-    const start = startOfDay(parseISO(`${activeCalendarParticipation.start_date}T00:00:00`));
+    if (!activeCalendarParticipation || !selectedChallenge) return [(date: Date) => true];
+    const windowStart = startOfDay(addDays(new Date(), -(selectedChallenge.durationDays - 1)));
     const today = startOfDay(new Date());
     return [
-      (date: Date) => startOfDay(date) < start || startOfDay(date) > today,
+      (date: Date) => startOfDay(date) < windowStart || startOfDay(date) > today,
     ];
-  }, [activeCalendarParticipation]);
+  }, [activeCalendarParticipation, selectedChallenge]);
 
   return (
     <div className="space-y-6 pb-8">
@@ -386,6 +386,7 @@ export function ChallengesView({ onBack, activeChallenge, onStartChallenge, onCa
                   onSelect={setSelectedDate}
                   locale={it}
                   disabled={calendarDisabled}
+                  defaultMonth={selectedDate ?? (selectedChallenge ? addDays(new Date(), -(selectedChallenge.durationDays - 1)) : new Date())}
                   modifiers={{ completed: completedDateObjects }}
                   modifiersClassNames={{ completed: "bg-primary text-primary-foreground rounded-md" }}
                   className="rounded-md border border-border"
