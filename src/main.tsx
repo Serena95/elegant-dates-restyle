@@ -8,10 +8,26 @@ type InstallWindow = Window & {
   __installPromptInitialized?: boolean;
 };
 
-// Register SW WITHOUT auto-reloading the page when a new version is found.
-// The new SW will activate next time the user opens the app, avoiding
-// disruptive automatic refreshes during use.
-registerSW({ immediate: true, onNeedRefresh() {}, onOfflineReady() {} });
+const isInIframe = (() => {
+  try {
+    return window.self !== window.top;
+  } catch {
+    return true;
+  }
+})();
+
+const hostname = window.location.hostname;
+const isPreviewHost =
+  hostname.includes("id-preview--") ||
+  hostname.includes("lovableproject.com");
+
+if ("serviceWorker" in navigator && (isInIframe || isPreviewHost)) {
+  navigator.serviceWorker.getRegistrations().then((registrations) => {
+    registrations.forEach((registration) => registration.unregister());
+  });
+} else {
+  registerSW({ immediate: true, onNeedRefresh() {}, onOfflineReady() {} });
+}
 
 const installWindow = window as InstallWindow;
 if (!installWindow.__installPromptInitialized) {
