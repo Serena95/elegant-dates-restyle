@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
-import { WeekPlan, Exercise } from "@/data/exercises";
+import { WeekPlan, Exercise, getWeekdayFromDateKey } from "@/data/exercises";
 import { loadOfflineCache, isOnline } from "@/hooks/useOfflineCache";
 
 export interface Misura {
@@ -106,7 +106,7 @@ export function useCloudData() {
 
   const extractTrainingDaysFromPlan = (planData: any): number[] => {
     const days = Object.keys((planData || {}) as Record<string, any>)
-      .map((k) => new Date(`${k}T00:00:00`).getDay())
+      .map((k) => getWeekdayFromDateKey(k))
       .filter((d, i, arr) => arr.indexOf(d) === i);
 
     if (days.length === 0) return [1, 3, 5];

@@ -146,6 +146,20 @@ export function getLocalDateKey(date: Date): string {
   return `${y}-${m}-${d}`;
 }
 
+export function parseDateKey(dateKey: string): Date {
+  const match = dateKey.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!match) return new Date(NaN);
+
+  const [, year, month, day] = match;
+  const parsed = new Date(Number(year), Number(month) - 1, Number(day));
+  parsed.setHours(0, 0, 0, 0);
+  return parsed;
+}
+
+export function getWeekdayFromDateKey(dateKey: string): number {
+  return parseDateKey(dateKey).getDay();
+}
+
 /**
  * Get the Monday of the current week.
  */
@@ -184,7 +198,7 @@ export function getWeekDates(giorniSettimana: number[], refDate: Date = new Date
  * Format a date key "YYYY-MM-DD" to "Lunedì 10 Mar"
  */
 export function formatDateLabel(dateKey: string): string {
-  const d = new Date(dateKey + "T00:00:00");
+  const d = parseDateKey(dateKey);
   const dayName = DAY_NAMES[d.getDay()] || "";
   const dayNum = d.getDate();
   const month = MONTH_NAMES[d.getMonth()] || "";
@@ -243,7 +257,7 @@ export function computeProgressionContext(
   let weeksSinceLastWorkout = 0;
   if (entries.length > 0) {
     const lastDate = entries.map(([k]) => k).sort().pop()!;
-    const diffMs = now.getTime() - new Date(lastDate).getTime();
+    const diffMs = now.getTime() - parseDateKey(lastDate).getTime();
     weeksSinceLastWorkout = Math.floor(diffMs / (7 * 24 * 60 * 60 * 1000));
   }
 
@@ -539,8 +553,7 @@ export function generaSettimanaIntelligente(
 
   dateKeys.forEach((dateKey, i) => {
     // Use fixed weekday-based focus: Mon→Upper, Wed→Lower, Fri→Total
-    const dateObj = new Date(dateKey + "T00:00:00");
-    const dayFocus = getFocusForWeekday(dateObj.getDay(), i);
+    const dayFocus = getFocusForWeekday(getWeekdayFromDateKey(dateKey), i);
     const attrezzo = selectEquipmentForFocus(orderedEquipment, livello, dayFocus, usedEquipment, forbidden);
 
     ctx.recentExerciseIds = runningStorico;
