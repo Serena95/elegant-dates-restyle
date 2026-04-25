@@ -34,6 +34,7 @@ interface DashboardProps {
   activeProgram?: ActiveProgramState | null;
   onCancelProgram?: () => void;
   onActivateInDashboard?: () => void;
+  fusoOrario?: string;
 }
 
 export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(function Dashboard({
@@ -43,6 +44,7 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
   cyclePhase, pregnancyMode, pregnancyWeek,
   activeProgram, onCancelProgram, onActivateInDashboard,
   exercisesMap = {},
+  fusoOrario = "Europe/Rome",
 }, ref) {
   const badgeColor = livello === "BASSO" ? "bg-pilates-green" : livello === "MEDIO" ? "bg-primary" : "bg-pilates-red";
   const { isPremium } = usePremium();
@@ -55,7 +57,7 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
   const progressData = useMemo(() => computeProgress(storicoCal, livello), [storicoCal, livello]);
 
   // Determine today's plan context
-  const oggi = getLocalDateKey(new Date());
+  const oggi = getLocalDateKey(new Date(), fusoOrario);
   const todayKey = sortedDays.find(k => k === oggi);
   const todayWorkout = todayKey && piano[todayKey] ? { key: todayKey, ...piano[todayKey] } : null;
   const isRestDay = !todayWorkout;
