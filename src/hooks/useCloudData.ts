@@ -64,6 +64,10 @@ export interface NutritionProfile {
   calorie_target: number | null;
 }
 
+export interface UserTimeSettings {
+  fuso_orario: string;
+}
+
 export function useCloudData() {
   const { user } = useAuth();
   const [loading, setLoading] = useState(true);
@@ -91,6 +95,9 @@ export function useCloudData() {
   const [nutritionProfile, setNutritionProfileState] = useState<NutritionProfile>({
     peso: null, altezza: null, eta: null,
     attivita_livello: "moderata", obiettivo_nutrizionale: "mantenimento", calorie_target: null,
+  });
+  const [timeSettings, setTimeSettingsState] = useState<UserTimeSettings>({
+    fuso_orario: "Europe/Rome",
   });
 
   useEffect(() => {
@@ -171,6 +178,9 @@ export function useCloudData() {
       setUltimiAttrezziState(settingsRes.data.ultimi_attrezzi || []);
       setGiorniAllenamentoState((settingsRes.data as any).giorni_allenamento || fallbackGiorni);
       setWorkoutGenerationKeyState((settingsRes.data as any).workout_generation_key || "");
+      setTimeSettingsState({
+        fuso_orario: (settingsRes.data as any).fuso_orario || "Europe/Rome",
+      });
       setPregnancySettingsState({
         modalita_gravidanza: (settingsRes.data as any).modalita_gravidanza || false,
         settimana_gestazionale: (settingsRes.data as any).settimana_gestazionale || 0,
@@ -190,6 +200,7 @@ export function useCloudData() {
       setLivelloState("MEDIO");
       setUltimiAttrezziState([]);
       setGiorniAllenamentoState(fallbackGiorni);
+      setTimeSettingsState({ fuso_orario: "Europe/Rome" });
       await supabase.from("user_settings").insert({
         user_id: user.id,
         attrezzi_selezionati: fallbackAttrezzi,
@@ -511,5 +522,6 @@ export function useCloudData() {
     giorniAllenamento, setGiorniAllenamento,
     nutritionProfile, updateNutritionProfile,
     workoutGenerationKey, setWorkoutGenerationKey,
+    timeSettings,
   };
 }
