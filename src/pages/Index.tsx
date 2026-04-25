@@ -75,6 +75,21 @@ function parseGenerationKeyDates(key: string): string[] {
     .sort();
 }
 
+function shiftDateKey(dateKey: string, days: number): string {
+  const date = new Date(`${dateKey}T00:00:00`);
+  date.setDate(date.getDate() + days);
+  return getLocalDateKey(date);
+}
+
+function getPreviousWeekEquipmentFromHistory(
+  currentWeekDates: string[],
+  storicoCal: Record<string, any>
+): string[] {
+  return currentWeekDates
+    .map((dateKey) => storicoCal[shiftDateKey(dateKey, -7)]?.attrezzo)
+    .filter(Boolean);
+}
+
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
@@ -193,6 +208,8 @@ const Index = () => {
     const storedWeekDates = parseGenerationKeyDates(storedKey);
     const pianoMatchesStoredWeek = storedWeekDates.length === pianoKeys.length &&
       storedWeekDates.every((d, i) => d === pianoKeys[i]);
+    const storedWeekIsFuture = storedWeekDates.length > 0 && sortedExpected.length > 0 &&
+      storedWeekDates[0] > sortedExpected[0];
     const hasCompleteSavedPlan = pianoKeys.length > 0 &&
       pianoKeys.every(d => allenamentiEsercizi[d]?.length > 0);
 
@@ -235,7 +252,7 @@ const Index = () => {
     // SECONDARY GUARD: if there is already a fully saved plan that matches the persisted
     // generation key, keep that exact week instead of force-regenerating a different one.
     // This preserves the user's existing week after rollover-rule changes or reloads.
-    if (pianoMatchesStoredWeek && hasCompleteSavedPlan) {
+    if (pianoMatchesStoredWeek && hasCompleteSavedPlan && !storedWeekIsFuture) {
       generationGuardRef.current = true;
 
       const updatedPiano = { ...cloud.piano };
@@ -267,12 +284,16 @@ const Index = () => {
     setStoredGenerationKey(expectedKey);
     cloud.setWorkoutGenerationKey(expectedKey);
 
+    const lastWeekEquipment = storedWeekIsFuture
+      ? getPreviousWeekEquipmentFromHistory(currentWeekDates, cloud.storicoCal)
+      : cloud.ultimiAttrezzi;
+
     const result = generaSettimanaIntelligente(
       equipmentPool,
       cloud.livello,
       cloud.allenamentiData.storico || {},
       cloud.storicoCal,
-      cloud.ultimiAttrezzi,
+      lastWeekEquipment,
       FIXED_TRAINING_DAYS
     );
 
@@ -444,9 +465,9 @@ const Index = () => {
     }
     cloud.savePiano(updatedPiano);
 
-    if (nuoviRound >= config.round) {
+      if (nuoviRound >= config.round) {
       // Don't clear session yet - stretching still needs to happen
-      const dataKey = getLocalDateKey(new Date());
+        const dataKey = giornoSelezionato;
       const attrezzo = cloud.piano[giornoSelezionato]?.attrezzo || "allenamento";
       const focus = detectFocus(eserciziCorrenti);
       cloud.saveStoricoCal(dataKey, { attrezzo, round: nuoviRound, completato: true, focus });
