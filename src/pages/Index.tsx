@@ -200,6 +200,7 @@ const Index = () => {
       sortedExpected.every((d, i) => d === pianoKeys[i]);
 
     const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
+    const hasAnyCurrentWeekPlan = pianoMatchesWeek && currentWeekDates.every(d => !!cloud.piano[d]);
     const hasAllExercises = pianoMatchesWeek &&
       currentWeekDates.every(d => allenamentiEsercizi[d]?.length > 0);
 
@@ -215,7 +216,7 @@ const Index = () => {
 
     // PRIMARY GUARD: if the piano matches the current week and has all exercises, KEEP IT.
     // This prevents regeneration on every login/device. We only regenerate if the week truly doesn't match.
-    if (pianoMatchesWeek && hasAllExercises) {
+    if (hasAnyCurrentWeekPlan) {
       generationGuardRef.current = true;
       // Persist key if it was missing
       if (storedKey !== expectedKey) {
