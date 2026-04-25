@@ -433,7 +433,7 @@ const Index = () => {
         // modifier 0 or +1: keep current (boost is handled naturally by progression)
       }
 
-      const dayFocus = getFocusForWeekday(new Date(`${giorno}T00:00:00`).getDay());
+      const dayFocus = getFocusForWeekday(getWeekdayFromDateKey(giorno));
 
       const result = await generateAIWorkout({
         attrezzo,
