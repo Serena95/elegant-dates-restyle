@@ -173,11 +173,15 @@ export function getWeekDates(giorniSettimana: number[], refDate: Date = new Date
 
   const monday = getMondayOfWeek(refDate);
   const currentWeekDates = buildWeekDates(monday);
-  const todayKey = getLocalDateKey(refDate);
 
-  // If all selected training days for this week are in the past,
-  // prepare the upcoming week so the dashboard stays aligned with "next session".
-  if (currentWeekDates.every((dateKey) => dateKey < todayKey)) {
+  // The week rolls over only on Sunday evening (>=18:00) or on Monday.
+  // This keeps the current week's plan visible through Saturday and most of Sunday,
+  // so users can still complete a missed session on the day after their last training day.
+  const dayOfWeek = refDate.getDay(); // 0=Sun, 1=Mon ... 6=Sat
+  const hour = refDate.getHours();
+  const isSundayEvening = dayOfWeek === 0 && hour >= 18;
+
+  if (isSundayEvening) {
     const nextMonday = new Date(monday);
     nextMonday.setDate(nextMonday.getDate() + 7);
     return buildWeekDates(nextMonday);
