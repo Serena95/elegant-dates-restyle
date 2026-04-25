@@ -39,7 +39,7 @@ import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
-import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey, getWeekdayFromDateKey, parseDateKey } from "@/data/exercises";
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
@@ -57,7 +57,7 @@ function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): stri
 function isWorkoutAlignedWithDayFocus(dateKey: string, exercises: Exercise[]): boolean {
   if (!exercises || exercises.length === 0) return false;
 
-  const expectedFocus = getFocusForWeekday(new Date(`${dateKey}T00:00:00`).getDay());
+  const expectedFocus = getFocusForWeekday(getWeekdayFromDateKey(dateKey));
   const detectedFocus = detectFocus(exercises).key;
 
   if (expectedFocus === "upper_body") return detectedFocus === "upper_body";
@@ -76,7 +76,7 @@ function parseGenerationKeyDates(key: string): string[] {
 }
 
 function shiftDateKey(dateKey: string, days: number): string {
-  const date = new Date(`${dateKey}T00:00:00`);
+  const date = parseDateKey(dateKey);
   date.setDate(date.getDate() + days);
   return getLocalDateKey(date);
 }
@@ -226,6 +226,7 @@ const Index = () => {
       // Restore completed-days info from history into piano (so today's completed workout
       // and equipment are reflected even after a logout/login)
       const updatedPiano = { ...cloud.piano };
+      const syncedEquipment = currentWeekDates.map((dateKey) => updatedPiano[dateKey]?.attrezzo).filter(Boolean) as string[];
       let pianoNeedsUpdate = false;
       currentWeekDates.forEach((dateKey) => {
         const histEntry = cloud.storicoCal[dateKey];
@@ -246,6 +247,9 @@ const Index = () => {
       if (pianoNeedsUpdate) {
         cloud.savePiano(updatedPiano, cloud.allenamentiData);
       }
+      if (syncedEquipment.length > 0 && JSON.stringify(syncedEquipment) !== JSON.stringify(cloud.ultimiAttrezzi)) {
+        cloud.setUltimiAttrezzi(syncedEquipment);
+      }
       return;
     }
 
@@ -256,6 +260,7 @@ const Index = () => {
       generationGuardRef.current = true;
 
       const updatedPiano = { ...cloud.piano };
+      const syncedEquipment = pianoKeys.map((dateKey) => updatedPiano[dateKey]?.attrezzo).filter(Boolean) as string[];
       let pianoNeedsUpdate = false;
 
       pianoKeys.forEach((dateKey) => {
@@ -275,6 +280,9 @@ const Index = () => {
 
       if (pianoNeedsUpdate) {
         cloud.savePiano(updatedPiano, cloud.allenamentiData);
+      }
+      if (syncedEquipment.length > 0 && JSON.stringify(syncedEquipment) !== JSON.stringify(cloud.ultimiAttrezzi)) {
+        cloud.setUltimiAttrezzi(syncedEquipment);
       }
       return;
     }
@@ -361,7 +369,7 @@ const Index = () => {
     const map: Record<string, FocusInfo> = {};
 
     for (const giorno of Object.keys(cloud.piano)) {
-      const dayFocus = getFocusForWeekday(new Date(`${giorno}T00:00:00`).getDay());
+      const dayFocus = getFocusForWeekday(getWeekdayFromDateKey(giorno));
       map[giorno] = {
         key: dayFocus,
         label: dayFocus === "total_body" ? "Total Body" : dayFocus === "upper_body" ? "Upper Body" : "Lower Body",
@@ -701,8 +709,7 @@ const Index = () => {
               dateKeys.forEach((dateKey, i) => {
                 const giorno = week.giorni[i % week.giorni.length];
                 const attrezzo = giorno.attrezzo;
-                const dateObj = new Date(dateKey + "T00:00:00");
-                const dayFocus = getFocusForWeekday(dateObj.getDay(), i);
+                const dayFocus = getFocusForWeekday(getWeekdayFromDateKey(dateKey), i);
                 ctx.recentExerciseIds = runningStorico;
                 const exercises = generaEserciziGiorno(attrezzo, cloud.livello, [], dayFocus, ctx);
                 nuovoPiano[dateKey] = { attrezzo, round: 0 };
