@@ -190,7 +190,7 @@ const Index = () => {
     if (equipmentPool.length === 0) return;
 
     // Always use fixed training days [1,3,5]
-    const currentWeekDates = getWeekDates(FIXED_TRAINING_DAYS);
+    const currentWeekDates = getWeekDates(FIXED_TRAINING_DAYS, new Date(), cloud.timeSettings.fuso_orario);
     const expectedKey = "v3:" + [...currentWeekDates].sort().join(",");
 
     // Check if piano already has valid data for this week (from DB)
@@ -200,6 +200,7 @@ const Index = () => {
       sortedExpected.every((d, i) => d === pianoKeys[i]);
 
     const allenamentiEsercizi = cloud.allenamentiData.esercizi || {};
+    const hasAnyCurrentWeekPlan = pianoMatchesWeek && currentWeekDates.every(d => !!cloud.piano[d]);
     const hasAllExercises = pianoMatchesWeek &&
       currentWeekDates.every(d => allenamentiEsercizi[d]?.length > 0);
 
@@ -215,7 +216,7 @@ const Index = () => {
 
     // PRIMARY GUARD: if the piano matches the current week and has all exercises, KEEP IT.
     // This prevents regeneration on every login/device. We only regenerate if the week truly doesn't match.
-    if (pianoMatchesWeek && hasAllExercises) {
+    if (hasAnyCurrentWeekPlan) {
       generationGuardRef.current = true;
       // Persist key if it was missing
       if (storedKey !== expectedKey) {
@@ -331,10 +332,7 @@ const Index = () => {
 
   const weeklyStats = useMemo(() => {
     const now = new Date();
-    const startOfWeek = new Date(now);
-    const day = startOfWeek.getDay();
-    startOfWeek.setDate(startOfWeek.getDate() - (day === 0 ? 6 : day - 1));
-    startOfWeek.setHours(0, 0, 0, 0);
+    const startOfWeek = parseDateKey(getWeekDates([1], now, cloud.timeSettings.fuso_orario)[0]);
 
     let completed = 0;
     const total = FIXED_TRAINING_DAYS.length;
@@ -660,6 +658,7 @@ const Index = () => {
             pregnancyWeek={cloud.pregnancySettings.settimana_gestazionale}
             activeProgram={activeProgState.active}
             onCancelProgram={activeProgState.cancel}
+            fusoOrario={cloud.timeSettings.fuso_orario}
             onActivateInDashboard={() => {
               if (activeProgState.active?.type === "program") navigate("programs" as any);
               else navigate("challenges" as any);
@@ -700,7 +699,7 @@ const Index = () => {
               const weekIdx = 0;
               const week = program.settimane[weekIdx];
               // Map program days to real date keys
-              const dateKeys = getWeekDates(FIXED_TRAINING_DAYS);
+                const dateKeys = getWeekDates(FIXED_TRAINING_DAYS, new Date(), cloud.timeSettings.fuso_orario);
               const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
               const nuoviEsercizi: Record<string, Exercise[]> = {};
               const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);
@@ -808,7 +807,7 @@ const Index = () => {
               activeProgState.startChallenge(id, name);
               // Generate workout for the challenge based on its focus
               const challenge = FITNESS_CHALLENGES.find(c => c.id === id);
-              const dateKeys = getWeekDates(FIXED_TRAINING_DAYS);
+              const dateKeys = getWeekDates(FIXED_TRAINING_DAYS, new Date(), cloud.timeSettings.fuso_orario);
               const nuovoPiano: Record<string, { attrezzo: string; round: number }> = {};
               const nuoviEsercizi: Record<string, Exercise[]> = {};
               const ctx = computeProgressionContext(cloud.storicoCal, cloud.ultimiAttrezzi);

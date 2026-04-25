@@ -136,10 +136,41 @@ const DAY_NAMES: Record<number, string> = {
 
 const MONTH_NAMES = ["Gen", "Feb", "Mar", "Apr", "Mag", "Giu", "Lug", "Ago", "Set", "Ott", "Nov", "Dic"];
 
+const WEEKDAY_SHORT_MAP: Record<string, number> = {
+  Sun: 0,
+  Mon: 1,
+  Tue: 2,
+  Wed: 3,
+  Thu: 4,
+  Fri: 5,
+  Sat: 6,
+};
+
+function getDatePartsInTimeZone(date: Date, timeZone: string) {
+  const parts = new Intl.DateTimeFormat("en-CA", {
+    timeZone,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+
+  const lookup = Object.fromEntries(parts.map((part) => [part.type, part.value]));
+  return {
+    year: lookup.year,
+    month: lookup.month,
+    day: lookup.day,
+  };
+}
+
 /**
  * Local date key formatter to avoid timezone shifts from toISOString.
  */
-export function getLocalDateKey(date: Date): string {
+export function getLocalDateKey(date: Date, timeZone?: string): string {
+  if (timeZone) {
+    const parts = getDatePartsInTimeZone(date, timeZone);
+    return `${parts.year}-${parts.month}-${parts.day}`;
+  }
+
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, "0");
   const d = String(date.getDate()).padStart(2, "0");
@@ -160,10 +191,24 @@ export function getWeekdayFromDateKey(dateKey: string): number {
   return parseDateKey(dateKey).getDay();
 }
 
+export function getWeekdayInTimeZone(date: Date, timeZone?: string): number {
+  if (!timeZone) return date.getDay();
+  const weekday = new Intl.DateTimeFormat("en-US", { timeZone, weekday: "short" }).format(date);
+  return WEEKDAY_SHORT_MAP[weekday] ?? date.getDay();
+}
+
 /**
  * Get the Monday of the current week.
  */
-export function getMondayOfWeek(date: Date = new Date()): Date {
+export function getMondayOfWeek(date: Date = new Date(), timeZone?: string): Date {
+  if (timeZone) {
+    const tzDate = parseDateKey(getLocalDateKey(date, timeZone));
+    const day = getWeekdayInTimeZone(date, timeZone);
+    const diff = tzDate.getDate() - day + (day === 0 ? -6 : 1);
+    tzDate.setDate(diff);
+    return tzDate;
+  }
+
   const d = new Date(date);
   d.setHours(0, 0, 0, 0);
   const day = d.getDay();
@@ -176,7 +221,7 @@ export function getMondayOfWeek(date: Date = new Date()): Date {
  * Get dates for the given day-of-week numbers in the current week.
  * @param giorniSettimana Array of day numbers (0=Sun, 1=Mon, ..., 6=Sat)
  */
-export function getWeekDates(giorniSettimana: number[], refDate: Date = new Date()): string[] {
+export function getWeekDates(giorniSettimana: number[], refDate: Date = new Date(), timeZone?: string): string[] {
   const buildWeekDates = (monday: Date) =>
     giorniSettimana.map(dayNum => {
       const d = new Date(monday);
@@ -185,7 +230,7 @@ export function getWeekDates(giorniSettimana: number[], refDate: Date = new Date
       return getLocalDateKey(d);
     });
 
-  const monday = getMondayOfWeek(refDate);
+  const monday = getMondayOfWeek(refDate, timeZone);
   const currentWeekDates = buildWeekDates(monday);
 
   // No manual rollover override here:
