@@ -226,7 +226,6 @@ const Index = () => {
       // Restore completed-days info from history into piano (so today's completed workout
       // and equipment are reflected even after a logout/login)
       const updatedPiano = { ...cloud.piano };
-      const syncedEquipment = currentWeekDates.map((dateKey) => updatedPiano[dateKey]?.attrezzo).filter(Boolean) as string[];
       let pianoNeedsUpdate = false;
       currentWeekDates.forEach((dateKey) => {
         const histEntry = cloud.storicoCal[dateKey];
@@ -247,6 +246,7 @@ const Index = () => {
       if (pianoNeedsUpdate) {
         cloud.savePiano(updatedPiano, cloud.allenamentiData);
       }
+      const syncedEquipment = currentWeekDates.map((dateKey) => updatedPiano[dateKey]?.attrezzo).filter(Boolean) as string[];
       if (syncedEquipment.length > 0 && JSON.stringify(syncedEquipment) !== JSON.stringify(cloud.ultimiAttrezzi)) {
         cloud.setUltimiAttrezzi(syncedEquipment);
       }
@@ -260,7 +260,6 @@ const Index = () => {
       generationGuardRef.current = true;
 
       const updatedPiano = { ...cloud.piano };
-      const syncedEquipment = pianoKeys.map((dateKey) => updatedPiano[dateKey]?.attrezzo).filter(Boolean) as string[];
       let pianoNeedsUpdate = false;
 
       pianoKeys.forEach((dateKey) => {
@@ -281,6 +280,7 @@ const Index = () => {
       if (pianoNeedsUpdate) {
         cloud.savePiano(updatedPiano, cloud.allenamentiData);
       }
+      const syncedEquipment = pianoKeys.map((dateKey) => updatedPiano[dateKey]?.attrezzo).filter(Boolean) as string[];
       if (syncedEquipment.length > 0 && JSON.stringify(syncedEquipment) !== JSON.stringify(cloud.ultimiAttrezzi)) {
         cloud.setUltimiAttrezzi(syncedEquipment);
       }
