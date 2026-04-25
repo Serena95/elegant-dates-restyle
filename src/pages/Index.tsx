@@ -657,6 +657,7 @@ const Index = () => {
             pregnancyWeek={cloud.pregnancySettings.settimana_gestazionale}
             activeProgram={activeProgState.active}
             onCancelProgram={activeProgState.cancel}
+            fusoOrario={cloud.timeSettings.fuso_orario}
             onActivateInDashboard={() => {
               if (activeProgState.active?.type === "program") navigate("programs" as any);
               else navigate("challenges" as any);
