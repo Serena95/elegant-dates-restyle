@@ -65,6 +65,16 @@ function isWorkoutAlignedWithDayFocus(dateKey: string, exercises: Exercise[]): b
   return detectedFocus === "full_body";
 }
 
+function parseGenerationKeyDates(key: string): string[] {
+  if (!key.startsWith("v3:")) return [];
+  return key
+    .slice(3)
+    .split(",")
+    .map((date) => date.trim())
+    .filter(Boolean)
+    .sort();
+}
+
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
@@ -180,6 +190,11 @@ const Index = () => {
 
     // Use the cloud-stored key (persists across devices/logins) — fallback to localStorage for legacy
     const storedKey = cloud.workoutGenerationKey || getStoredGenerationKey();
+    const storedWeekDates = parseGenerationKeyDates(storedKey);
+    const pianoMatchesStoredWeek = storedWeekDates.length === pianoKeys.length &&
+      storedWeekDates.every((d, i) => d === pianoKeys[i]);
+    const hasCompleteSavedPlan = pianoKeys.length > 0 &&
+      pianoKeys.every(d => allenamentiEsercizi[d]?.length > 0);
 
     // PRIMARY GUARD: if the piano matches the current week and has all exercises, KEEP IT.
     // This prevents regeneration on every login/device. We only regenerate if the week truly doesn't match.
@@ -199,6 +214,36 @@ const Index = () => {
         const histEntry = cloud.storicoCal[dateKey];
         if (histEntry?.completato && updatedPiano[dateKey]) {
           // Make sure the piano reflects what was actually done that day
+          if (updatedPiano[dateKey].attrezzo !== histEntry.attrezzo ||
+              (updatedPiano[dateKey].round || 0) < (histEntry.round || 0)) {
+            updatedPiano[dateKey] = {
+              ...updatedPiano[dateKey],
+              attrezzo: histEntry.attrezzo,
+              round: histEntry.round,
+            };
+            pianoNeedsUpdate = true;
+          }
+        }
+      });
+
+      if (pianoNeedsUpdate) {
+        cloud.savePiano(updatedPiano, cloud.allenamentiData);
+      }
+      return;
+    }
+
+    // SECONDARY GUARD: if there is already a fully saved plan that matches the persisted
+    // generation key, keep that exact week instead of force-regenerating a different one.
+    // This preserves the user's existing week after rollover-rule changes or reloads.
+    if (pianoMatchesStoredWeek && hasCompleteSavedPlan) {
+      generationGuardRef.current = true;
+
+      const updatedPiano = { ...cloud.piano };
+      let pianoNeedsUpdate = false;
+
+      pianoKeys.forEach((dateKey) => {
+        const histEntry = cloud.storicoCal[dateKey];
+        if (histEntry?.completato && updatedPiano[dateKey]) {
           if (updatedPiano[dateKey].attrezzo !== histEntry.attrezzo ||
               (updatedPiano[dateKey].round || 0) < (histEntry.round || 0)) {
             updatedPiano[dateKey] = {
