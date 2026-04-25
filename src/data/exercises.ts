@@ -174,18 +174,9 @@ export function getWeekDates(giorniSettimana: number[], refDate: Date = new Date
   const monday = getMondayOfWeek(refDate);
   const currentWeekDates = buildWeekDates(monday);
 
-  // The week rolls over only on Monday.
-  // This keeps the current week's plan stable through the entire Sunday as well,
-  // avoiding premature switches to the upcoming week after app updates/reloads.
-  const dayOfWeek = refDate.getDay(); // 0=Sun, 1=Mon ... 6=Sat
-  const isMonday = dayOfWeek === 1;
-
-  if (isMonday) {
-    const nextMonday = new Date(monday);
-    nextMonday.setDate(nextMonday.getDate() + 7);
-    return buildWeekDates(nextMonday);
-  }
-
+  // No manual rollover override here:
+  // the current week naturally changes on Monday because `getMondayOfWeek(refDate)`
+  // already points to the new week's Monday.
   return currentWeekDates;
 }
 
