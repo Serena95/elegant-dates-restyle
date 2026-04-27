@@ -443,14 +443,30 @@ function getEquipmentCategoryCounts(attrezzo: string, livello: string) {
   };
 }
 
+/**
+ * Counts how many exercises of an equipment match a given muscle token.
+ * Uses the same synonym table as pickBalanced so vincoli muscolari are verificati realmente.
+ */
+function countTokenForEquipment(attrezzo: string, livello: string, token: string): number {
+  return EXERCISE_LIBRARY.filter(e =>
+    e.attrezzo === attrezzo &&
+    livelloAccessibile(e.livello, livello) &&
+    exerciseMatchesToken(e, token)
+  ).length;
+}
+
 function equipmentSupportsFocus(attrezzo: string, livello: string, focus: DayFocus): boolean {
   const counts = getEquipmentCategoryCounts(attrezzo, livello);
   if (counts.total === 0) return false;
 
-  if (focus === "upper_body") return counts.upper >= 3 && counts.core >= 1;
-  if (focus === "lower_body") return counts.lower >= 3 && counts.core >= 1;
-
-  return counts.upper >= 1 && counts.lower >= 2 && counts.core >= 1;
+  // Verifica i MINIMI MUSCOLARI reali richiesti dal focus (MIN_PER_TOKEN)
+  const required = MIN_PER_TOKEN[focus];
+  for (const token of Object.keys(required)) {
+    if (countTokenForEquipment(attrezzo, livello, token) < required[token]) {
+      return false;
+    }
+  }
+  return true;
 }
 
 function selectEquipmentForFocus(
