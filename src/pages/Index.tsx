@@ -329,7 +329,7 @@ const Index = () => {
     cloud.savePiano(finalPiano, { esercizi: finalEsercizi, storico: result.storico });
     const usedEquipment = Object.values(finalPiano).map(d => d.attrezzo);
     cloud.setUltimiAttrezzi(usedEquipment);
-  }, [cloud.loading]); // ONLY depend on loading — no other deps to prevent re-triggers
+  }, [cloud.loading, midnightTick]); // re-runs at local midnight (Mon 00:00 rollover) and on app re-open
 
   const weeklyStats = useMemo(() => {
     const now = new Date();
