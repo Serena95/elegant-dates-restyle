@@ -282,12 +282,15 @@ const Index = () => {
     setStoredGenerationKey(expectedKey);
     cloud.setWorkoutGenerationKey(expectedKey);
 
+    const lastWeekEquipmentForGen = storedWeekIsFuture
+      ? getPreviousWeekEquipmentFromHistory(currentWeekDates, cloud.storicoCal)
+      : cloud.ultimiAttrezzi;
     const result = generaSettimanaIntelligente(
       equipmentPool,
       cloud.livello,
       cloud.allenamentiData.storico || {},
       cloud.storicoCal,
-      lastWeekEquipment,
+      lastWeekEquipmentForGen,
       FIXED_TRAINING_DAYS
     );
 
