@@ -83,34 +83,70 @@ export function getFocusForWeekday(dayOfWeek: number, fallbackIndex: number = 0)
 }
 
 /**
- * Muscle-group slots for each focus type.
- * Each slot is a list of muscoli/categoria to look for.
+ * Token → synonyms used to match against either `categoria` or `muscoli`.
+ * Lets us require granular muscle groups (e.g. "interno coscia", "spalle", "petto")
+ * while staying compatible with the existing exercise tagging.
+ */
+const MUSCLE_TOKEN_SYNONYMS: Record<string, string[]> = {
+  schiena: ["schiena", "dorsali", "romboidi", "erettori spinali", "trapezio"],
+  spalle: ["spalle", "deltoidi"],
+  braccia: ["braccia", "bicipiti", "tricipiti"],
+  petto: ["petto", "pettorali"],
+  glutei: ["glutei"],
+  quadricipiti: ["quadricipiti", "gambe"],
+  femorali: ["femorali", "ischiocrurali", "posteriori coscia"],
+  "interno coscia": ["interno coscia", "adduttori"],
+  core: ["core", "addominali", "addominali bassi", "obliqui", "trasverso", "stabilità"],
+};
+
+function exerciseMatchesToken(e: Exercise, token: string): boolean {
+  const syn = MUSCLE_TOKEN_SYNONYMS[token] || [token];
+  if (syn.includes(e.categoria)) return true;
+  return e.muscoli.some(m => syn.includes(m.toLowerCase()));
+}
+
+/**
+ * Muscle-group slots per focus. Each entry is a token (matched via synonyms above).
+ * MANDATORY tokens are listed first; the engine will enforce they appear in the workout.
  */
 const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
+  // Upper Body (Lunedì): schiena (OBBLIGATORIA), spalle, braccia, petto, core (sempre)
   upper_body: [
-    ["schiena"],           // mandatory
-    ["braccia", "schiena"], // petto/tricipiti
-    ["schiena", "braccia"], // dorsali
-    ["braccia", "schiena", "stabilità"], // spalle
-    ["core"],              // addominali (mandatory)
-    ["core", "stabilità"], // fianchi/obliqui (mandatory)
+    ["schiena"],   // MANDATORY
+    ["core"],      // MANDATORY
+    ["spalle"],
+    ["braccia"],
+    ["petto"],
+    ["core"],
   ],
+  // Lower Body (Mercoledì): glutei, quadricipiti, femorali, interno coscia (OBBL.), core (sempre)
   lower_body: [
-    ["gambe"],             // quadricipiti
-    ["glutei"],            // glutei
-    ["gambe"],             // femorali
-    ["gambe"],             // interno coscia (mandatory)
-    ["core"],              // addominali (mandatory)
-    ["core"],              // fianchi/obliqui (mandatory)
+    ["interno coscia"], // MANDATORY
+    ["core"],           // MANDATORY
+    ["glutei"],
+    ["quadricipiti"],
+    ["femorali"],
+    ["core"],
   ],
+  // Total Body (Venerdì): parte superiore, parte inferiore, core (sempre)
   total_body: [
-    ["schiena", "braccia"], // upper
-    ["gambe", "glutei"],    // lower
-    ["braccia", "schiena", "stabilità"], // upper
-    ["gambe", "glutei"],    // lower
-    ["core"],              // addominali (mandatory)
-    ["core", "stabilità"], // fianchi/obliqui (mandatory)
+    ["core"],                      // MANDATORY
+    ["schiena", "spalle", "petto", "braccia"], // upper
+    ["glutei", "quadricipiti", "femorali", "interno coscia"], // lower
+    ["schiena", "spalle", "petto", "braccia"],
+    ["glutei", "quadricipiti", "femorali", "interno coscia"],
+    ["core"],
   ],
+};
+
+/**
+ * Tokens that MUST appear in the final workout for each focus.
+ * Enforced after balanced selection — if missing, we swap in a matching exercise.
+ */
+const MANDATORY_TOKENS: Record<DayFocus, string[]> = {
+  upper_body: ["schiena", "core"],
+  lower_body: ["interno coscia", "core"],
+  total_body: ["core"],
 };
 
 const FOCUS_PREFERRED_CATEGORIES: Record<DayFocus, string[]> = {
@@ -484,26 +520,37 @@ export function generaEserciziGiorno(
 
   let prioritySlots: string[][];
   let preferredCategories: string[];
+  let mandatoryTokens: string[];
 
   if (focus === "upper_body" || focus === "core" || focus === "core_stabilita") {
     prioritySlots = [...FOCUS_SLOTS.upper_body];
     preferredCategories = FOCUS_PREFERRED_CATEGORIES.upper_body;
+    mandatoryTokens = MANDATORY_TOKENS.upper_body;
   } else if (focus === "lower_body" || focus === "gambe_glutei") {
     prioritySlots = [...FOCUS_SLOTS.lower_body];
     preferredCategories = FOCUS_PREFERRED_CATEGORIES.lower_body;
+    mandatoryTokens = MANDATORY_TOKENS.lower_body;
   } else if (focus === "total_body" || focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
     prioritySlots = [...FOCUS_SLOTS.total_body];
     preferredCategories = FOCUS_PREFERRED_CATEGORIES.total_body;
+    mandatoryTokens = MANDATORY_TOKENS.total_body;
   } else {
     prioritySlots = [...FOCUS_SLOTS.total_body];
     preferredCategories = FOCUS_PREFERRED_CATEGORIES.total_body;
+    mandatoryTokens = MANDATORY_TOKENS.total_body;
   }
 
   if (ctx.weekNumber >= 4 && prioritySlots.length < targetCount) {
     prioritySlots.push(["core", "gambe", "glutei", "braccia"]);
   }
 
-  return pickBalanced(pool, prioritySlots, Math.max(6, Math.min(targetCount, pool.length)), preferredCategories);
+  return pickBalanced(
+    pool,
+    prioritySlots,
+    Math.max(6, Math.min(targetCount, pool.length)),
+    preferredCategories,
+    mandatoryTokens,
+  );
 }
 
 function weightByLevel(pool: Exercise[], levelPref: string[]): Exercise[] {
@@ -526,32 +573,63 @@ function weightByLevel(pool: Exercise[], levelPref: string[]): Exercise[] {
   return result;
 }
 
-function pickBalanced(pool: Exercise[], prioritySlots: string[][], count: number, preferredCategories: string[] = []): Exercise[] {
-  const byCat: Record<string, Exercise[]> = {};
-  pool.forEach(e => {
-    if (!byCat[e.categoria]) byCat[e.categoria] = [];
-    byCat[e.categoria].push(e);
-  });
-
+function pickBalanced(
+  pool: Exercise[],
+  prioritySlots: string[][],
+  count: number,
+  preferredCategories: string[] = [],
+  mandatoryTokens: string[] = [],
+): Exercise[] {
+  const used = new Set<string>();
   const result: Exercise[] = [];
 
+  const takeForTokens = (tokens: string[]): Exercise | null => {
+    const candidates = pool.filter(e => !used.has(e.id) && tokens.some(t => exerciseMatchesToken(e, t)));
+    if (candidates.length === 0) return null;
+    const picked = shuffle(candidates)[0];
+    used.add(picked.id);
+    return picked;
+  };
+
+  // 1) Walk priority slots in order
   for (const slot of prioritySlots) {
     if (result.length >= count) break;
-    const availableCats = shuffle(slot.filter(c => byCat[c] && byCat[c].length > 0));
-    if (availableCats.length > 0) {
-      result.push(byCat[availableCats[0]].shift()!);
+    const picked = takeForTokens(slot);
+    if (picked) result.push(picked);
+  }
+
+  // 2) Enforce mandatory tokens — if a required muscle group is missing, swap in
+  for (const token of mandatoryTokens) {
+    const present = result.some(e => exerciseMatchesToken(e, token));
+    if (present) continue;
+    const candidate = pool.find(e => !used.has(e.id) && exerciseMatchesToken(e, token));
+    if (!candidate) continue; // library has nothing for this token with this equipment
+    if (result.length < count) {
+      result.push(candidate);
+      used.add(candidate.id);
+    } else {
+      // Replace a non-mandatory, duplicate-category exercise to make room
+      const replaceableIdx = result.findIndex(e =>
+        !mandatoryTokens.some(mt => exerciseMatchesToken(e, mt))
+      );
+      if (replaceableIdx >= 0) {
+        used.delete(result[replaceableIdx].id);
+        result[replaceableIdx] = candidate;
+        used.add(candidate.id);
+      }
     }
   }
 
+  // 3) Fill remaining slots with preferred-category, then anything else
   if (result.length < count) {
-    const remaining = pool.filter(e => !result.find(r => r.id === e.id));
+    const remaining = pool.filter(e => !used.has(e.id));
     const preferredSet = new Set(preferredCategories);
     const prioritized = shuffle(remaining.filter(e => preferredSet.has(e.categoria)));
     const fallback = shuffle(remaining.filter(e => !preferredSet.has(e.categoria)));
-
     for (const e of [...prioritized, ...fallback]) {
       if (result.length >= count) break;
       result.push(e);
+      used.add(e.id);
     }
   }
   return result;
