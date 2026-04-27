@@ -110,29 +110,39 @@ function exerciseMatchesToken(e: Exercise, token: string): boolean {
  * MANDATORY tokens are listed first; the engine will enforce they appear in the workout.
  */
 const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
-  // Upper Body (Lunedì): schiena (OBBLIGATORIA), spalle, braccia, petto, core (sempre)
+  // Upper Body (Lunedì): schiena x2, core x2, spalle, braccia, petto + extra
   upper_body: [
-    ["schiena"],   // MANDATORY
-    ["core"],      // MANDATORY
+    ["schiena"],
+    ["core"],
+    ["schiena"],
+    ["core"],
     ["spalle"],
     ["braccia"],
     ["petto"],
-    ["core"],
+    ["spalle", "braccia", "petto"],
+    ["schiena", "spalle", "braccia", "petto"],
   ],
-  // Lower Body (Mercoledì): glutei, quadricipiti, femorali, interno coscia (OBBL.), core (sempre)
+  // Lower Body (Mercoledì): glutei x2, core x2, quadricipiti, femorali, interno coscia
   lower_body: [
-    ["interno coscia"], // MANDATORY
-    ["core"],           // MANDATORY
+    ["interno coscia"],
+    ["core"],
+    ["glutei"],
+    ["core"],
     ["glutei"],
     ["quadricipiti"],
     ["femorali"],
-    ["core"],
+    ["interno coscia", "glutei", "quadricipiti", "femorali"],
+    ["glutei", "quadricipiti", "femorali"],
   ],
-  // Total Body (Venerdì): parte superiore, parte inferiore, core (sempre)
+  // Total Body (Venerdì): allenamento completo 8-10 esercizi
   total_body: [
-    ["core"],                      // MANDATORY
-    ["schiena", "spalle", "petto", "braccia"], // upper
-    ["glutei", "quadricipiti", "femorali", "interno coscia"], // lower
+    ["core"],
+    ["schiena"],
+    ["glutei"],
+    ["core"],
+    ["spalle", "petto"],
+    ["quadricipiti", "femorali"],
+    ["braccia"],
     ["schiena", "spalle", "petto", "braccia"],
     ["glutei", "quadricipiti", "femorali", "interno coscia"],
     ["core"],
@@ -140,12 +150,25 @@ const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
 };
 
 /**
- * Tokens that MUST appear in the final workout for each focus.
- * Enforced after balanced selection — if missing, we swap in a matching exercise.
+ * Minimum required occurrences per token for each focus.
+ * Enforced after balanced selection — if below minimum, we swap in matching exercises.
+ */
+const MIN_PER_TOKEN: Record<DayFocus, Record<string, number>> = {
+  upper_body: { schiena: 2, core: 2, spalle: 1, braccia: 1, petto: 1 },
+  lower_body: { glutei: 2, core: 2, quadricipiti: 1, femorali: 1, "interno coscia": 1 },
+  total_body: {
+    core: 2,
+    schiena: 1,
+    glutei: 1,
+  },
+};
+
+/**
+ * Tokens that MUST appear in the final workout for each focus (legacy guard).
  */
 const MANDATORY_TOKENS: Record<DayFocus, string[]> = {
   upper_body: ["schiena", "core"],
-  lower_body: ["interno coscia", "core"],
+  lower_body: ["interno coscia", "core", "glutei"],
   total_body: ["core"],
 };
 
@@ -476,11 +499,17 @@ function getEffectiveLevel(baseLivello: string, ctx: ProgressionContext): string
   return baseLivello;
 }
 
-function getTargetCount(weekNumber: number, baseLivello: string): number {
-  const base = baseLivello === "AVANZATO" ? 7 : 6;
-  if (weekNumber <= 2) return base;
-  if (weekNumber === 3) return base + 1;
-  return base + (baseLivello === "AVANZATO" ? 1 : Math.random() > 0.5 ? 1 : 0);
+function getTargetCount(weekNumber: number, baseLivello: string, focus?: DayFocus): number {
+  // Total body must be a complete workout (8-10). Upper/Lower 7-9.
+  if (focus === "total_body") {
+    if (baseLivello === "AVANZATO") return 10;
+    if (baseLivello === "MEDIO") return 9;
+    return 8;
+  }
+  // Upper / Lower
+  if (baseLivello === "AVANZATO") return 9;
+  if (baseLivello === "MEDIO") return 8;
+  return 7;
 }
 
 function getLevelPreference(weekNumber: number, baseLivello: string): string[] {
@@ -504,7 +533,15 @@ export function generaEserciziGiorno(
 ): Exercise[] {
   const ctx = progressionCtx || { weekNumber: 1, recentExerciseIds: [], lastWeekEquipment: [], totalCompleted: 0, activeStreak: 0, weeksSinceLastWorkout: 0 };
   const effectiveLevel = getEffectiveLevel(livello, ctx);
-  const targetCount = getTargetCount(ctx.weekNumber, effectiveLevel);
+  let dayFocus: DayFocus;
+  if (focus === "upper_body" || focus === "core" || focus === "core_stabilita") {
+    dayFocus = "upper_body";
+  } else if (focus === "lower_body" || focus === "gambe_glutei") {
+    dayFocus = "lower_body";
+  } else {
+    dayFocus = "total_body";
+  }
+  const targetCount = getTargetCount(ctx.weekNumber, effectiveLevel, dayFocus);
 
   const disponibili = EXERCISE_LIBRARY.filter(e =>
     e.attrezzo === attrezzo && livelloAccessibile(e.livello, effectiveLevel)
@@ -518,38 +555,18 @@ export function generaEserciziGiorno(
   const levelPref = getLevelPreference(ctx.weekNumber, effectiveLevel);
   pool = weightByLevel(pool, levelPref);
 
-  let prioritySlots: string[][];
-  let preferredCategories: string[];
-  let mandatoryTokens: string[];
-
-  if (focus === "upper_body" || focus === "core" || focus === "core_stabilita") {
-    prioritySlots = [...FOCUS_SLOTS.upper_body];
-    preferredCategories = FOCUS_PREFERRED_CATEGORIES.upper_body;
-    mandatoryTokens = MANDATORY_TOKENS.upper_body;
-  } else if (focus === "lower_body" || focus === "gambe_glutei") {
-    prioritySlots = [...FOCUS_SLOTS.lower_body];
-    preferredCategories = FOCUS_PREFERRED_CATEGORIES.lower_body;
-    mandatoryTokens = MANDATORY_TOKENS.lower_body;
-  } else if (focus === "total_body" || focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
-    prioritySlots = [...FOCUS_SLOTS.total_body];
-    preferredCategories = FOCUS_PREFERRED_CATEGORIES.total_body;
-    mandatoryTokens = MANDATORY_TOKENS.total_body;
-  } else {
-    prioritySlots = [...FOCUS_SLOTS.total_body];
-    preferredCategories = FOCUS_PREFERRED_CATEGORIES.total_body;
-    mandatoryTokens = MANDATORY_TOKENS.total_body;
-  }
-
-  if (ctx.weekNumber >= 4 && prioritySlots.length < targetCount) {
-    prioritySlots.push(["core", "gambe", "glutei", "braccia"]);
-  }
+  const prioritySlots: string[][] = [...FOCUS_SLOTS[dayFocus]];
+  const preferredCategories: string[] = FOCUS_PREFERRED_CATEGORIES[dayFocus];
+  const mandatoryTokens: string[] = MANDATORY_TOKENS[dayFocus];
+  const minPerToken = MIN_PER_TOKEN[dayFocus];
 
   return pickBalanced(
     pool,
     prioritySlots,
-    Math.max(6, Math.min(targetCount, pool.length)),
+    Math.max(targetCount, Math.min(targetCount, pool.length)),
     preferredCategories,
     mandatoryTokens,
+    minPerToken,
   );
 }
 
@@ -579,6 +596,7 @@ function pickBalanced(
   count: number,
   preferredCategories: string[] = [],
   mandatoryTokens: string[] = [],
+  minPerToken: Record<string, number> = {},
 ): Exercise[] {
   const used = new Set<string>();
   const result: Exercise[] = [];
@@ -591,6 +609,9 @@ function pickBalanced(
     return picked;
   };
 
+  const countForToken = (token: string): number =>
+    result.reduce((acc, e) => acc + (exerciseMatchesToken(e, token) ? 1 : 0), 0);
+
   // 1) Walk priority slots in order
   for (const slot of prioritySlots) {
     if (result.length >= count) break;
@@ -598,17 +619,43 @@ function pickBalanced(
     if (picked) result.push(picked);
   }
 
-  // 2) Enforce mandatory tokens — if a required muscle group is missing, swap in
+  // 2) Enforce per-token minimums (e.g. schiena>=2, core>=2, glutei>=2)
+  const minTokens = Object.keys(minPerToken);
+  for (const token of minTokens) {
+    const min = minPerToken[token] || 0;
+    while (countForToken(token) < min) {
+      const candidate = pool.find(e => !used.has(e.id) && exerciseMatchesToken(e, token));
+      if (!candidate) break;
+      if (result.length < count) {
+        result.push(candidate);
+        used.add(candidate.id);
+      } else {
+        // Replace an exercise that doesn't help any minimum requirement and isn't unique-mandatory
+        const replaceableIdx = result.findIndex(e => {
+          // Don't drop exercises that are the only contributor to a still-needed token
+          for (const t of minTokens) {
+            if (exerciseMatchesToken(e, t) && countForToken(t) <= (minPerToken[t] || 0)) return false;
+          }
+          return true;
+        });
+        if (replaceableIdx < 0) break;
+        used.delete(result[replaceableIdx].id);
+        result[replaceableIdx] = candidate;
+        used.add(candidate.id);
+      }
+    }
+  }
+
+  // 3) Enforce mandatory tokens — if a required muscle group is still missing, swap in
   for (const token of mandatoryTokens) {
     const present = result.some(e => exerciseMatchesToken(e, token));
     if (present) continue;
     const candidate = pool.find(e => !used.has(e.id) && exerciseMatchesToken(e, token));
-    if (!candidate) continue; // library has nothing for this token with this equipment
+    if (!candidate) continue;
     if (result.length < count) {
       result.push(candidate);
       used.add(candidate.id);
     } else {
-      // Replace a non-mandatory, duplicate-category exercise to make room
       const replaceableIdx = result.findIndex(e =>
         !mandatoryTokens.some(mt => exerciseMatchesToken(e, mt))
       );
@@ -620,7 +667,7 @@ function pickBalanced(
     }
   }
 
-  // 3) Fill remaining slots with preferred-category, then anything else
+  // 4) Fill remaining slots with preferred-category, then anything else
   if (result.length < count) {
     const remaining = pool.filter(e => !used.has(e.id));
     const preferredSet = new Set(preferredCategories);
