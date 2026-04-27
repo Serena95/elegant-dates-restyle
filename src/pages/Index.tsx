@@ -271,7 +271,6 @@ const Index = () => {
         cloud.setUltimiAttrezzi(syncedEquipment);
       }
       return;
-      }
     }
 
     // No secondary guard: if the saved piano does not match the CURRENT week,
