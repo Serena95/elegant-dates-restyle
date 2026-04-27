@@ -88,6 +88,10 @@ function getPreviousWeekEquipmentFromPlan(
     .filter(Boolean) as string[];
 }
 
+function normalizeEquipmentName(attrezzo: string): string {
+  return attrezzo === "Pesi(da 1 a 4kg)" ? "Pesi" : attrezzo;
+}
+
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
@@ -243,8 +247,66 @@ const Index = () => {
     const hasCompleteSavedPlan = pianoKeys.length > 0 &&
       pianoKeys.every(d => allenamentiEsercizi[d]?.length > 0);
 
-    // PRIMARY GUARD: once a week is generated, KEEP IT. Never regenerate/replace equipment on refresh.
+    const currentWeekFocuses = currentWeekDates.map((dateKey, i) => getFocusForWeekday(getWeekdayFromDateKey(dateKey), i));
+    const previousWeekFromPlan = getPreviousWeekEquipmentFromPlan(currentWeekDates, cloud.piano);
+    const previousWeekFromHistory = getPreviousWeekEquipmentFromHistory(currentWeekDates, cloud.storicoCal);
+    const actualLastWeekEquipment = previousWeekFromPlan.length > 0
+      ? previousWeekFromPlan
+      : previousWeekFromHistory;
+
+    // PRIMARY GUARD: once a week is generated, KEEP IT.
+    // Exception: if the current saved week still repeats avoidable equipment from the actual previous week,
+    // repair it once, save it, and then lock it again.
     if (hasAnyCurrentWeekPlan) {
+      const currentPlanEquipment = currentWeekDates
+        .map((dateKey) => cloud.piano[dateKey]?.attrezzo)
+        .filter(Boolean) as string[];
+      const lastWeekSet = new Set(actualLastWeekEquipment.map(normalizeEquipmentName));
+      const repeatsLastWeek = currentPlanEquipment.some((attrezzo) => lastWeekSet.has(normalizeEquipmentName(attrezzo)));
+      const shouldRepairEquipmentOnly =
+        actualLastWeekEquipment.length > 0 &&
+        repeatsLastWeek &&
+        canAvoidLastWeekForFocuses(equipmentPool, cloud.livello, currentWeekFocuses, actualLastWeekEquipment);
+
+      if (shouldRepairEquipmentOnly) {
+        generationGuardRef.current = true;
+        if (storedKey !== expectedKey) {
+          setStoredGenerationKey(expectedKey);
+          cloud.setWorkoutGenerationKey(expectedKey);
+        }
+
+        const repaired = generaSettimanaIntelligente(
+          equipmentPool,
+          cloud.livello,
+          cloud.allenamentiData.storico || {},
+          cloud.storicoCal,
+          actualLastWeekEquipment,
+          FIXED_TRAINING_DAYS
+        );
+
+        const repairedPiano = { ...repaired.piano };
+        const repairedEsercizi = { ...repaired.esercizi };
+
+        currentWeekDates.forEach((dateKey) => {
+          const histEntry = cloud.storicoCal[dateKey];
+          if (histEntry?.completato) {
+            repairedPiano[dateKey] = {
+              ...repairedPiano[dateKey],
+              attrezzo: histEntry.attrezzo,
+              round: histEntry.round,
+            };
+            const existingEx = allenamentiEsercizi[dateKey];
+            if (existingEx && existingEx.length > 0) {
+              repairedEsercizi[dateKey] = existingEx;
+            }
+          }
+        });
+
+        cloud.savePiano(repairedPiano, { esercizi: repairedEsercizi, storico: repaired.storico });
+        cloud.setUltimiAttrezzi(Object.values(repairedPiano).map((d) => d.attrezzo));
+        return;
+      }
+
       generationGuardRef.current = true;
       // Persist key if it was missing
       if (storedKey !== expectedKey) {
@@ -287,8 +349,6 @@ const Index = () => {
     setStoredGenerationKey(expectedKey);
     cloud.setWorkoutGenerationKey(expectedKey);
 
-    const previousWeekFromPlan = getPreviousWeekEquipmentFromPlan(currentWeekDates, cloud.piano);
-    const previousWeekFromHistory = getPreviousWeekEquipmentFromHistory(currentWeekDates, cloud.storicoCal);
     const lastWeekEquipmentForGen = storedWeekIsFuture
       ? previousWeekFromHistory
       : previousWeekFromPlan.length > 0
