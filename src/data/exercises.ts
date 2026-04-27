@@ -499,18 +499,41 @@ function getEffectiveLevel(baseLivello: string, ctx: ProgressionContext): string
   return baseLivello;
 }
 
+/**
+ * Numero di esercizi per workout, con progressione settimanale graduale per livello.
+ * - BASSO (Base): 5–6 (settimana 1) → progressione lenta, max 7 per Upper/Lower e 8 per Total
+ * - MEDIO: 6–8 (settimana 1) → progressione media, max 8 Upper/Lower, 9 Total
+ * - AVANZATO (Alto): 7–9 (settimana 1) → progressione più rapida, max 10 (cap globale)
+ * Cap assoluto: 10 esercizi. Oltre, l'intensità cresce ma il numero non aumenta.
+ */
 function getTargetCount(weekNumber: number, baseLivello: string, focus?: DayFocus): number {
-  // Total body must be a complete workout (8-10). Upper/Lower 7-9.
-  if (focus === "total_body") {
-    if (baseLivello === "AVANZATO") return 10;
-    if (baseLivello === "MEDIO") return 9;
-    return 8;
+  const ABS_MAX = 10;
+  const w = Math.max(1, weekNumber);
+  const isTotal = focus === "total_body";
+
+  let base: number;
+  let step: number; // incremento per settimana
+  let maxForType: number;
+
+  if (baseLivello === "AVANZATO") {
+    base = isTotal ? 8 : 7;          // Total: 8, Upper/Lower: 7
+    step = 1;                         // +1/settimana (rapido ma controllato)
+    maxForType = isTotal ? 10 : 9;
+  } else if (baseLivello === "MEDIO") {
+    base = isTotal ? 7 : 6;          // Total: 7, Upper/Lower: 6
+    step = 0.5;                       // ~+1 ogni 2 settimane
+    maxForType = isTotal ? 9 : 8;
+  } else {
+    // BASSO / Base
+    base = isTotal ? 6 : 5;          // Total: 6, Upper/Lower: 5
+    step = 1 / 3;                     // ~+1 ogni 3 settimane
+    maxForType = isTotal ? 8 : 7;
   }
-  // Upper / Lower
-  if (baseLivello === "AVANZATO") return 9;
-  if (baseLivello === "MEDIO") return 8;
-  return 7;
+
+  const progressed = Math.floor(base + step * (w - 1));
+  return Math.min(ABS_MAX, maxForType, progressed);
 }
+
 
 function getLevelPreference(weekNumber: number, baseLivello: string): string[] {
   const accessible = LIVELLO_ACCESSO[baseLivello] || ["base", "medio", "avanzato"];
