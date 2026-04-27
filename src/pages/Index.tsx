@@ -302,6 +302,54 @@ const Index = () => {
       if (pianoNeedsUpdate) {
         cloud.savePiano(updatedPiano, cloud.allenamentiData);
       }
+
+      // ─────────────────────────────────────────────────────────────────
+      // MUSCLE-ONLY REPAIR: fix exercises that don't match the day's focus
+      // (e.g. leg exercises in an upper-body day) WITHOUT touching the
+      // chosen equipment, the round counter, or any completed day.
+      // Idempotent: once exercises are valid, no further changes happen.
+      // ─────────────────────────────────────────────────────────────────
+      const currentEsercizi = cloud.allenamentiData.esercizi || {};
+      const repairedEsercizi: Record<string, Exercise[]> = { ...currentEsercizi };
+      let needsExerciseRepair = false;
+      const progressionCtx = computeProgressionContext(
+        cloud.storicoCal,
+        getPreviousWeekEquipmentFromPlan(currentWeekDates, cloud.piano)
+      );
+
+      currentWeekDates.forEach((dateKey) => {
+        const histEntry = cloud.storicoCal[dateKey];
+        if (histEntry?.completato) return; // never touch completed days
+        const dayPlan = updatedPiano[dateKey];
+        if (!dayPlan?.attrezzo) return;
+        const weekday = getWeekdayFromDateKey(dateKey);
+        const focus = getFocusForWeekday(weekday);
+        const dayEx = currentEsercizi[dateKey];
+        if (!dayHasFocusViolation(dayEx, focus)) return;
+
+        // Regenerate exercises for THIS day only, keeping the same equipment.
+        const recentIds = Object.entries(currentEsercizi)
+          .filter(([k]) => k !== dateKey)
+          .flatMap(([, list]) => (list || []).map((e) => e.id));
+        const newEx = generaEserciziGiorno(
+          dayPlan.attrezzo,
+          cloud.livello,
+          recentIds,
+          focus,
+          progressionCtx
+        );
+        if (newEx.length > 0 && !dayHasFocusViolation(newEx, focus)) {
+          repairedEsercizi[dateKey] = newEx;
+          needsExerciseRepair = true;
+        }
+      });
+
+      if (needsExerciseRepair) {
+        cloud.savePiano(updatedPiano, {
+          ...cloud.allenamentiData,
+          esercizi: repairedEsercizi,
+        });
+      }
       return;
     }
 
