@@ -88,6 +88,30 @@ function getPreviousWeekEquipmentFromPlan(
     .filter(Boolean) as string[];
 }
 
+// Muscle tokens that must NOT appear in an upper-body day
+const LOWER_BODY_TOKENS = new Set([
+  "gambe", "glutei", "quadricipiti", "femorali",
+  "interno coscia", "adduttori", "ischiocrurali", "posteriori coscia",
+]);
+// Muscle tokens that must NOT appear in a lower-body day
+const UPPER_BODY_TOKENS = new Set([
+  "petto", "pettorali", "schiena", "dorsali", "romboidi", "trapezio",
+  "spalle", "deltoidi", "braccia", "bicipiti", "tricipiti",
+]);
+
+function exerciseViolatesFocus(ex: Exercise, focus: DayFocus): boolean {
+  if (focus === "total_body") return false;
+  const forbidden = focus === "upper_body" ? LOWER_BODY_TOKENS : UPPER_BODY_TOKENS;
+  const cat = (ex.categoria || "").toLowerCase();
+  if (forbidden.has(cat)) return true;
+  return (ex.muscoli || []).some((m) => forbidden.has(m.toLowerCase()));
+}
+
+function dayHasFocusViolation(exercises: Exercise[] | undefined, focus: DayFocus): boolean {
+  if (!exercises || exercises.length === 0) return false;
+  return exercises.some((e) => exerciseViolatesFocus(e, focus));
+}
+
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
