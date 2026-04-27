@@ -566,6 +566,7 @@ export function generaEserciziGiorno(
     Math.max(targetCount, Math.min(targetCount, pool.length)),
     preferredCategories,
     mandatoryTokens,
+    minPerToken,
   );
 }
 
