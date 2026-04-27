@@ -39,7 +39,7 @@ import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
-import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey, getWeekdayFromDateKey, parseDateKey } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey, getWeekdayFromDateKey, parseDateKey, canAvoidLastWeekForFocuses } from "@/data/exercises";
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
@@ -234,9 +234,20 @@ const Index = () => {
     const hasCompleteSavedPlan = pianoKeys.length > 0 &&
       pianoKeys.every(d => allenamentiEsercizi[d]?.length > 0);
 
-    // PRIMARY GUARD: if the piano matches the current week and has all exercises, KEEP IT.
-    // This prevents regeneration on every login/device. We only regenerate if the week truly doesn't match.
+    const currentWeekFocuses = currentWeekDates.map((dateKey, i) => getFocusForWeekday(getWeekdayFromDateKey(dateKey), i));
+    const currentPlanEquipment = currentWeekDates.map((dateKey) => cloud.piano[dateKey]?.attrezzo).filter(Boolean) as string[];
+    const lastWeekEquipment = storedWeekIsFuture
+      ? getPreviousWeekEquipmentFromHistory(currentWeekDates, cloud.storicoCal)
+      : cloud.ultimiAttrezzi;
+    const canAvoidLastWeekNow = canAvoidLastWeekForFocuses(equipmentPool, cloud.livello, currentWeekFocuses, lastWeekEquipment);
+    const repeatsLastWeek = currentPlanEquipment.some((attrezzo) => lastWeekEquipment.includes(attrezzo));
+    const shouldRefreshEquipmentOnly = hasAnyCurrentWeekPlan && canAvoidLastWeekNow && repeatsLastWeek;
+
+    // PRIMARY GUARD: keep the current week unless it's repeating avoidable equipment from last week.
     if (hasAnyCurrentWeekPlan) {
+      if (shouldRefreshEquipmentOnly) {
+        generationGuardRef.current = false;
+      } else {
       generationGuardRef.current = true;
       // Persist key if it was missing
       if (storedKey !== expectedKey) {
@@ -272,6 +283,7 @@ const Index = () => {
         cloud.setUltimiAttrezzi(syncedEquipment);
       }
       return;
+      }
     }
 
     // No secondary guard: if the saved piano does not match the CURRENT week,
@@ -282,10 +294,6 @@ const Index = () => {
     generationGuardRef.current = true;
     setStoredGenerationKey(expectedKey);
     cloud.setWorkoutGenerationKey(expectedKey);
-
-    const lastWeekEquipment = storedWeekIsFuture
-      ? getPreviousWeekEquipmentFromHistory(currentWeekDates, cloud.storicoCal)
-      : cloud.ultimiAttrezzi;
 
     const result = generaSettimanaIntelligente(
       equipmentPool,
