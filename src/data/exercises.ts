@@ -533,7 +533,15 @@ export function generaEserciziGiorno(
 ): Exercise[] {
   const ctx = progressionCtx || { weekNumber: 1, recentExerciseIds: [], lastWeekEquipment: [], totalCompleted: 0, activeStreak: 0, weeksSinceLastWorkout: 0 };
   const effectiveLevel = getEffectiveLevel(livello, ctx);
-  const targetCount = getTargetCount(ctx.weekNumber, effectiveLevel);
+  let dayFocus: DayFocus;
+  if (focus === "upper_body" || focus === "core" || focus === "core_stabilita") {
+    dayFocus = "upper_body";
+  } else if (focus === "lower_body" || focus === "gambe_glutei") {
+    dayFocus = "lower_body";
+  } else {
+    dayFocus = "total_body";
+  }
+  const targetCount = getTargetCount(ctx.weekNumber, effectiveLevel, dayFocus);
 
   const disponibili = EXERCISE_LIBRARY.filter(e =>
     e.attrezzo === attrezzo && livelloAccessibile(e.livello, effectiveLevel)
@@ -547,36 +555,15 @@ export function generaEserciziGiorno(
   const levelPref = getLevelPreference(ctx.weekNumber, effectiveLevel);
   pool = weightByLevel(pool, levelPref);
 
-  let prioritySlots: string[][];
-  let preferredCategories: string[];
-  let mandatoryTokens: string[];
-
-  if (focus === "upper_body" || focus === "core" || focus === "core_stabilita") {
-    prioritySlots = [...FOCUS_SLOTS.upper_body];
-    preferredCategories = FOCUS_PREFERRED_CATEGORIES.upper_body;
-    mandatoryTokens = MANDATORY_TOKENS.upper_body;
-  } else if (focus === "lower_body" || focus === "gambe_glutei") {
-    prioritySlots = [...FOCUS_SLOTS.lower_body];
-    preferredCategories = FOCUS_PREFERRED_CATEGORIES.lower_body;
-    mandatoryTokens = MANDATORY_TOKENS.lower_body;
-  } else if (focus === "total_body" || focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
-    prioritySlots = [...FOCUS_SLOTS.total_body];
-    preferredCategories = FOCUS_PREFERRED_CATEGORIES.total_body;
-    mandatoryTokens = MANDATORY_TOKENS.total_body;
-  } else {
-    prioritySlots = [...FOCUS_SLOTS.total_body];
-    preferredCategories = FOCUS_PREFERRED_CATEGORIES.total_body;
-    mandatoryTokens = MANDATORY_TOKENS.total_body;
-  }
-
-  if (ctx.weekNumber >= 4 && prioritySlots.length < targetCount) {
-    prioritySlots.push(["core", "gambe", "glutei", "braccia"]);
-  }
+  const prioritySlots: string[][] = [...FOCUS_SLOTS[dayFocus]];
+  const preferredCategories: string[] = FOCUS_PREFERRED_CATEGORIES[dayFocus];
+  const mandatoryTokens: string[] = MANDATORY_TOKENS[dayFocus];
+  const minPerToken = MIN_PER_TOKEN[dayFocus];
 
   return pickBalanced(
     pool,
     prioritySlots,
-    Math.max(6, Math.min(targetCount, pool.length)),
+    Math.max(targetCount, Math.min(targetCount, pool.length)),
     preferredCategories,
     mandatoryTokens,
   );
