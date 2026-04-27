@@ -83,34 +83,70 @@ export function getFocusForWeekday(dayOfWeek: number, fallbackIndex: number = 0)
 }
 
 /**
- * Muscle-group slots for each focus type.
- * Each slot is a list of muscoli/categoria to look for.
+ * Token → synonyms used to match against either `categoria` or `muscoli`.
+ * Lets us require granular muscle groups (e.g. "interno coscia", "spalle", "petto")
+ * while staying compatible with the existing exercise tagging.
+ */
+const MUSCLE_TOKEN_SYNONYMS: Record<string, string[]> = {
+  schiena: ["schiena", "dorsali", "romboidi", "erettori spinali", "trapezio"],
+  spalle: ["spalle", "deltoidi"],
+  braccia: ["braccia", "bicipiti", "tricipiti"],
+  petto: ["petto", "pettorali"],
+  glutei: ["glutei"],
+  quadricipiti: ["quadricipiti", "gambe"],
+  femorali: ["femorali", "ischiocrurali", "posteriori coscia"],
+  "interno coscia": ["interno coscia", "adduttori"],
+  core: ["core", "addominali", "addominali bassi", "obliqui", "trasverso", "stabilità"],
+};
+
+function exerciseMatchesToken(e: Exercise, token: string): boolean {
+  const syn = MUSCLE_TOKEN_SYNONYMS[token] || [token];
+  if (syn.includes(e.categoria)) return true;
+  return e.muscoli.some(m => syn.includes(m.toLowerCase()));
+}
+
+/**
+ * Muscle-group slots per focus. Each entry is a token (matched via synonyms above).
+ * MANDATORY tokens are listed first; the engine will enforce they appear in the workout.
  */
 const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
+  // Upper Body (Lunedì): schiena (OBBLIGATORIA), spalle, braccia, petto, core (sempre)
   upper_body: [
-    ["schiena"],           // mandatory
-    ["braccia", "schiena"], // petto/tricipiti
-    ["schiena", "braccia"], // dorsali
-    ["braccia", "schiena", "stabilità"], // spalle
-    ["core"],              // addominali (mandatory)
-    ["core", "stabilità"], // fianchi/obliqui (mandatory)
+    ["schiena"],   // MANDATORY
+    ["core"],      // MANDATORY
+    ["spalle"],
+    ["braccia"],
+    ["petto"],
+    ["core"],
   ],
+  // Lower Body (Mercoledì): glutei, quadricipiti, femorali, interno coscia (OBBL.), core (sempre)
   lower_body: [
-    ["gambe"],             // quadricipiti
-    ["glutei"],            // glutei
-    ["gambe"],             // femorali
-    ["gambe"],             // interno coscia (mandatory)
-    ["core"],              // addominali (mandatory)
-    ["core"],              // fianchi/obliqui (mandatory)
+    ["interno coscia"], // MANDATORY
+    ["core"],           // MANDATORY
+    ["glutei"],
+    ["quadricipiti"],
+    ["femorali"],
+    ["core"],
   ],
+  // Total Body (Venerdì): parte superiore, parte inferiore, core (sempre)
   total_body: [
-    ["schiena", "braccia"], // upper
-    ["gambe", "glutei"],    // lower
-    ["braccia", "schiena", "stabilità"], // upper
-    ["gambe", "glutei"],    // lower
-    ["core"],              // addominali (mandatory)
-    ["core", "stabilità"], // fianchi/obliqui (mandatory)
+    ["core"],                      // MANDATORY
+    ["schiena", "spalle", "petto", "braccia"], // upper
+    ["glutei", "quadricipiti", "femorali", "interno coscia"], // lower
+    ["schiena", "spalle", "petto", "braccia"],
+    ["glutei", "quadricipiti", "femorali", "interno coscia"],
+    ["core"],
   ],
+};
+
+/**
+ * Tokens that MUST appear in the final workout for each focus.
+ * Enforced after balanced selection — if missing, we swap in a matching exercise.
+ */
+const MANDATORY_TOKENS: Record<DayFocus, string[]> = {
+  upper_body: ["schiena", "core"],
+  lower_body: ["interno coscia", "core"],
+  total_body: ["core"],
 };
 
 const FOCUS_PREFERRED_CATEGORIES: Record<DayFocus, string[]> = {
