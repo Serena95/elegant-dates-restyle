@@ -42,6 +42,10 @@ function shuffle<T>(arr: T[]): T[] {
   return a;
 }
 
+function normalizeEquipmentName(attrezzo: string): string {
+  return attrezzo === "Pesi(da 1 a 4kg)" ? "Pesi" : attrezzo;
+}
+
 const LIVELLO_ACCESSO: Record<string, string[]> = {
   "BASSO": ["base"],
   "MEDIO": ["base", "medio"],
@@ -400,11 +404,13 @@ function getOrderedWeeklyEquipment(
   attrezziUtente: string[],
   lastWeekEquipment: string[] = []
 ): string[] {
-  const normalized = Array.from(new Set(attrezziUtente.map(a => a === "Pesi(da 1 a 4kg)" ? "Pesi" : a)));
+  const normalized = Array.from(new Set(attrezziUtente.map(normalizeEquipmentName)));
   if (normalized.length === 0) return [];
 
-  const fresh = normalized.filter(a => !lastWeekEquipment.includes(a));
-  const stale = normalized.filter(a => lastWeekEquipment.includes(a));
+  const lastWeekNormalized = new Set(lastWeekEquipment.map(normalizeEquipmentName));
+
+  const fresh = normalized.filter(a => !lastWeekNormalized.has(a));
+  const stale = normalized.filter(a => lastWeekNormalized.has(a));
 
   return [...shuffle(fresh), ...shuffle(stale)];
 }
@@ -419,10 +425,65 @@ function canFullyAvoidLastWeek(
   lastWeekEquipment: string[],
   trainingDays: number
 ): boolean {
-  const normalized = new Set(attrezziUtente.map(a => a === "Pesi(da 1 a 4kg)" ? "Pesi" : a));
-  const lastNormalized = new Set(lastWeekEquipment.map(a => a === "Pesi(da 1 a 4kg)" ? "Pesi" : a));
+  const normalized = new Set(attrezziUtente.map(normalizeEquipmentName));
+  const lastNormalized = new Set(lastWeekEquipment.map(normalizeEquipmentName));
   const fresh = [...normalized].filter(a => !lastNormalized.has(a));
   return fresh.length >= trainingDays;
+}
+
+function resolveWeeklyEquipmentAssignment(
+  orderedEquipment: string[],
+  livello: string,
+  focuses: DayFocus[],
+  forbiddenEquipment: string[] = [],
+  requireFreshOnly: boolean = false
+): string[] | null {
+  const uniqueOrdered = Array.from(new Set(orderedEquipment.map(normalizeEquipmentName)));
+  const forbidden = new Set(forbiddenEquipment.map(normalizeEquipmentName));
+  const orderIndex = new Map(uniqueOrdered.map((attrezzo, index) => [attrezzo, index]));
+
+  const candidatesPerFocus = focuses.map((focus) =>
+    uniqueOrdered.filter((attrezzo) => {
+      if (requireFreshOnly && forbidden.has(attrezzo)) return false;
+      return equipmentSupportsFocus(attrezzo, livello, focus);
+    })
+  );
+
+  if (candidatesPerFocus.some((candidates) => candidates.length === 0)) return null;
+
+  const assignment: string[] = new Array(focuses.length).fill("");
+  const used = new Set<string>();
+  const focusOrder = focuses
+    .map((_, index) => index)
+    .sort((a, b) => {
+      const freshA = candidatesPerFocus[a].filter((attrezzo) => !forbidden.has(attrezzo)).length;
+      const freshB = candidatesPerFocus[b].filter((attrezzo) => !forbidden.has(attrezzo)).length;
+      return freshA - freshB || candidatesPerFocus[a].length - candidatesPerFocus[b].length;
+    });
+
+  const backtrack = (position: number): boolean => {
+    if (position >= focusOrder.length) return true;
+
+    const focusIndex = focusOrder[position];
+    const rankedCandidates = [...candidatesPerFocus[focusIndex]].sort((a, b) => {
+      const aForbidden = forbidden.has(a) ? 1 : 0;
+      const bForbidden = forbidden.has(b) ? 1 : 0;
+      return aForbidden - bForbidden || (orderIndex.get(a) ?? 0) - (orderIndex.get(b) ?? 0);
+    });
+
+    for (const candidate of rankedCandidates) {
+      if (used.has(candidate)) continue;
+      assignment[focusIndex] = candidate;
+      used.add(candidate);
+      if (backtrack(position + 1)) return true;
+      used.delete(candidate);
+      assignment[focusIndex] = "";
+    }
+
+    return false;
+  };
+
+  return backtrack(0) ? assignment : null;
 }
 
 function getEquipmentCategoryCounts(attrezzo: string, livello: string) {
@@ -747,12 +808,16 @@ export function generaSettimanaIntelligente(
   const ctx = computeProgressionContext(storicoCal, lastWeekEquipment);
   const dateKeys = getWeekDates(giorniSettimana);
   const orderedEquipment = getOrderedWeeklyEquipment(attrezziUtente, lastWeekEquipment);
+  const weekFocuses = dateKeys.map((dateKey, i) => getFocusForWeekday(getWeekdayFromDateKey(dateKey), i));
 
   // If user has enough equipment, forbid any equipment used last week.
   const enforceFreshWeek = canFullyAvoidLastWeek(attrezziUtente, lastWeekEquipment, dateKeys.length);
   const forbidden = enforceFreshWeek
-    ? Array.from(new Set(lastWeekEquipment.map(a => a === "Pesi(da 1 a 4kg)" ? "Pesi" : a)))
+    ? Array.from(new Set(lastWeekEquipment.map(normalizeEquipmentName)))
     : [];
+  const preselectedEquipment =
+    resolveWeeklyEquipmentAssignment(orderedEquipment, livello, weekFocuses, forbidden, enforceFreshWeek) ||
+    resolveWeeklyEquipmentAssignment(orderedEquipment, livello, weekFocuses, forbidden, false);
 
   const piano: Record<string, { attrezzo: string; round: number }> = {};
   const esercizi: Record<string, Exercise[]> = {};
@@ -762,8 +827,8 @@ export function generaSettimanaIntelligente(
 
   dateKeys.forEach((dateKey, i) => {
     // Use fixed weekday-based focus: Mon→Upper, Wed→Lower, Fri→Total
-    const dayFocus = getFocusForWeekday(getWeekdayFromDateKey(dateKey), i);
-    const attrezzo = selectEquipmentForFocus(orderedEquipment, livello, dayFocus, usedEquipment, forbidden);
+    const dayFocus = weekFocuses[i];
+    const attrezzo = preselectedEquipment?.[i] || selectEquipmentForFocus(orderedEquipment, livello, dayFocus, usedEquipment, forbidden);
 
     ctx.recentExerciseIds = runningStorico;
 
