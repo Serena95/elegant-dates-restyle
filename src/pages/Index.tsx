@@ -54,17 +54,6 @@ function getCyclePhase(entries: CycleEntry[], settings: PregnancySettings): stri
   return getCyclePhaseForDate(todayKey, entries, settings.durata_ciclo || 28, settings.durata_mestruazione || 5) || undefined;
 }
 
-function isWorkoutAlignedWithDayFocus(dateKey: string, exercises: Exercise[]): boolean {
-  if (!exercises || exercises.length === 0) return false;
-
-  const expectedFocus = getFocusForWeekday(getWeekdayFromDateKey(dateKey));
-  const detectedFocus = detectFocus(exercises).key;
-
-  if (expectedFocus === "upper_body") return detectedFocus === "upper_body";
-  if (expectedFocus === "lower_body") return detectedFocus === "lower_body";
-  return detectedFocus === "full_body";
-}
-
 function parseGenerationKeyDates(key: string): string[] {
   if (!key.startsWith("v3:")) return [];
   return key
