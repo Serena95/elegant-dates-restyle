@@ -596,6 +596,7 @@ function pickBalanced(
   count: number,
   preferredCategories: string[] = [],
   mandatoryTokens: string[] = [],
+  minPerToken: Record<string, number> = {},
 ): Exercise[] {
   const used = new Set<string>();
   const result: Exercise[] = [];
@@ -608,6 +609,9 @@ function pickBalanced(
     return picked;
   };
 
+  const countForToken = (token: string): number =>
+    result.reduce((acc, e) => acc + (exerciseMatchesToken(e, token) ? 1 : 0), 0);
+
   // 1) Walk priority slots in order
   for (const slot of prioritySlots) {
     if (result.length >= count) break;
@@ -615,17 +619,43 @@ function pickBalanced(
     if (picked) result.push(picked);
   }
 
-  // 2) Enforce mandatory tokens — if a required muscle group is missing, swap in
+  // 2) Enforce per-token minimums (e.g. schiena>=2, core>=2, glutei>=2)
+  const minTokens = Object.keys(minPerToken);
+  for (const token of minTokens) {
+    const min = minPerToken[token] || 0;
+    while (countForToken(token) < min) {
+      const candidate = pool.find(e => !used.has(e.id) && exerciseMatchesToken(e, token));
+      if (!candidate) break;
+      if (result.length < count) {
+        result.push(candidate);
+        used.add(candidate.id);
+      } else {
+        // Replace an exercise that doesn't help any minimum requirement and isn't unique-mandatory
+        const replaceableIdx = result.findIndex(e => {
+          // Don't drop exercises that are the only contributor to a still-needed token
+          for (const t of minTokens) {
+            if (exerciseMatchesToken(e, t) && countForToken(t) <= (minPerToken[t] || 0)) return false;
+          }
+          return true;
+        });
+        if (replaceableIdx < 0) break;
+        used.delete(result[replaceableIdx].id);
+        result[replaceableIdx] = candidate;
+        used.add(candidate.id);
+      }
+    }
+  }
+
+  // 3) Enforce mandatory tokens — if a required muscle group is still missing, swap in
   for (const token of mandatoryTokens) {
     const present = result.some(e => exerciseMatchesToken(e, token));
     if (present) continue;
     const candidate = pool.find(e => !used.has(e.id) && exerciseMatchesToken(e, token));
-    if (!candidate) continue; // library has nothing for this token with this equipment
+    if (!candidate) continue;
     if (result.length < count) {
       result.push(candidate);
       used.add(candidate.id);
     } else {
-      // Replace a non-mandatory, duplicate-category exercise to make room
       const replaceableIdx = result.findIndex(e =>
         !mandatoryTokens.some(mt => exerciseMatchesToken(e, mt))
       );
@@ -637,7 +667,7 @@ function pickBalanced(
     }
   }
 
-  // 3) Fill remaining slots with preferred-category, then anything else
+  // 4) Fill remaining slots with preferred-category, then anything else
   if (result.length < count) {
     const remaining = pool.filter(e => !used.has(e.id));
     const preferredSet = new Set(preferredCategories);
