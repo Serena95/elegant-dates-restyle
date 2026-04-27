@@ -177,6 +177,37 @@ const Index = () => {
   // Auto-generate weekly plan when needed — ONCE per week only
   // Uses FIXED_TRAINING_DAYS [1,3,5] = Mon/Wed/Fri always
   const generationGuardRef = useRef(false);
+  const [midnightTick, setMidnightTick] = useState(0);
+
+  // Force re-evaluation at local midnight (Monday 00:00 = new week rollover) and on app reopen.
+  useEffect(() => {
+    let timeoutId: number;
+    const scheduleMidnight = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setHours(24, 0, 5, 0); // ~5s after midnight
+      const ms = Math.max(1000, next.getTime() - now.getTime());
+      timeoutId = window.setTimeout(() => {
+        generationGuardRef.current = false;
+        setMidnightTick((t) => t + 1);
+        scheduleMidnight();
+      }, ms);
+    };
+    scheduleMidnight();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        generationGuardRef.current = false;
+        setMidnightTick((t) => t + 1);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
 
   useEffect(() => {
     // Prevent multiple runs in the same component lifecycle
