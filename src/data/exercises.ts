@@ -110,29 +110,39 @@ function exerciseMatchesToken(e: Exercise, token: string): boolean {
  * MANDATORY tokens are listed first; the engine will enforce they appear in the workout.
  */
 const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
-  // Upper Body (Lunedì): schiena (OBBLIGATORIA), spalle, braccia, petto, core (sempre)
+  // Upper Body (Lunedì): schiena x2, core x2, spalle, braccia, petto + extra
   upper_body: [
-    ["schiena"],   // MANDATORY
-    ["core"],      // MANDATORY
+    ["schiena"],
+    ["core"],
+    ["schiena"],
+    ["core"],
     ["spalle"],
     ["braccia"],
     ["petto"],
-    ["core"],
+    ["spalle", "braccia", "petto"],
+    ["schiena", "spalle", "braccia", "petto"],
   ],
-  // Lower Body (Mercoledì): glutei, quadricipiti, femorali, interno coscia (OBBL.), core (sempre)
+  // Lower Body (Mercoledì): glutei x2, core x2, quadricipiti, femorali, interno coscia
   lower_body: [
-    ["interno coscia"], // MANDATORY
-    ["core"],           // MANDATORY
+    ["interno coscia"],
+    ["core"],
+    ["glutei"],
+    ["core"],
     ["glutei"],
     ["quadricipiti"],
     ["femorali"],
-    ["core"],
+    ["interno coscia", "glutei", "quadricipiti", "femorali"],
+    ["glutei", "quadricipiti", "femorali"],
   ],
-  // Total Body (Venerdì): parte superiore, parte inferiore, core (sempre)
+  // Total Body (Venerdì): allenamento completo 8-10 esercizi
   total_body: [
-    ["core"],                      // MANDATORY
-    ["schiena", "spalle", "petto", "braccia"], // upper
-    ["glutei", "quadricipiti", "femorali", "interno coscia"], // lower
+    ["core"],
+    ["schiena"],
+    ["glutei"],
+    ["core"],
+    ["spalle", "petto"],
+    ["quadricipiti", "femorali"],
+    ["braccia"],
     ["schiena", "spalle", "petto", "braccia"],
     ["glutei", "quadricipiti", "femorali", "interno coscia"],
     ["core"],
@@ -140,12 +150,25 @@ const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
 };
 
 /**
- * Tokens that MUST appear in the final workout for each focus.
- * Enforced after balanced selection — if missing, we swap in a matching exercise.
+ * Minimum required occurrences per token for each focus.
+ * Enforced after balanced selection — if below minimum, we swap in matching exercises.
+ */
+const MIN_PER_TOKEN: Record<DayFocus, Record<string, number>> = {
+  upper_body: { schiena: 2, core: 2, spalle: 1, braccia: 1, petto: 1 },
+  lower_body: { glutei: 2, core: 2, quadricipiti: 1, femorali: 1, "interno coscia": 1 },
+  total_body: {
+    core: 2,
+    schiena: 1,
+    glutei: 1,
+  },
+};
+
+/**
+ * Tokens that MUST appear in the final workout for each focus (legacy guard).
  */
 const MANDATORY_TOKENS: Record<DayFocus, string[]> = {
   upper_body: ["schiena", "core"],
-  lower_body: ["interno coscia", "core"],
+  lower_body: ["interno coscia", "core", "glutei"],
   total_body: ["core"],
 };
 
