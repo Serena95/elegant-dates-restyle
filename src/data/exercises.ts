@@ -520,26 +520,37 @@ export function generaEserciziGiorno(
 
   let prioritySlots: string[][];
   let preferredCategories: string[];
+  let mandatoryTokens: string[];
 
   if (focus === "upper_body" || focus === "core" || focus === "core_stabilita") {
     prioritySlots = [...FOCUS_SLOTS.upper_body];
     preferredCategories = FOCUS_PREFERRED_CATEGORIES.upper_body;
+    mandatoryTokens = MANDATORY_TOKENS.upper_body;
   } else if (focus === "lower_body" || focus === "gambe_glutei") {
     prioritySlots = [...FOCUS_SLOTS.lower_body];
     preferredCategories = FOCUS_PREFERRED_CATEGORIES.lower_body;
+    mandatoryTokens = MANDATORY_TOKENS.lower_body;
   } else if (focus === "total_body" || focus === "full_body" || focus === "full_body_mobilita" || focus === "tonificazione") {
     prioritySlots = [...FOCUS_SLOTS.total_body];
     preferredCategories = FOCUS_PREFERRED_CATEGORIES.total_body;
+    mandatoryTokens = MANDATORY_TOKENS.total_body;
   } else {
     prioritySlots = [...FOCUS_SLOTS.total_body];
     preferredCategories = FOCUS_PREFERRED_CATEGORIES.total_body;
+    mandatoryTokens = MANDATORY_TOKENS.total_body;
   }
 
   if (ctx.weekNumber >= 4 && prioritySlots.length < targetCount) {
     prioritySlots.push(["core", "gambe", "glutei", "braccia"]);
   }
 
-  return pickBalanced(pool, prioritySlots, Math.max(6, Math.min(targetCount, pool.length)), preferredCategories);
+  return pickBalanced(
+    pool,
+    prioritySlots,
+    Math.max(6, Math.min(targetCount, pool.length)),
+    preferredCategories,
+    mandatoryTokens,
+  );
 }
 
 function weightByLevel(pool: Exercise[], levelPref: string[]): Exercise[] {
