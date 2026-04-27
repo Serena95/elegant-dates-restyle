@@ -79,6 +79,15 @@ function getPreviousWeekEquipmentFromHistory(
     .filter(Boolean);
 }
 
+function getPreviousWeekEquipmentFromPlan(
+  currentWeekDates: string[],
+  piano: Record<string, { attrezzo?: string }>
+): string[] {
+  return currentWeekDates
+    .map((dateKey) => piano[shiftDateKey(dateKey, -7)]?.attrezzo)
+    .filter(Boolean) as string[];
+}
+
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
@@ -266,10 +275,6 @@ const Index = () => {
       if (pianoNeedsUpdate) {
         cloud.savePiano(updatedPiano, cloud.allenamentiData);
       }
-      const syncedEquipment = currentWeekDates.map((dateKey) => updatedPiano[dateKey]?.attrezzo).filter(Boolean) as string[];
-      if (syncedEquipment.length > 0 && JSON.stringify(syncedEquipment) !== JSON.stringify(cloud.ultimiAttrezzi)) {
-        cloud.setUltimiAttrezzi(syncedEquipment);
-      }
       return;
     }
 
@@ -282,9 +287,15 @@ const Index = () => {
     setStoredGenerationKey(expectedKey);
     cloud.setWorkoutGenerationKey(expectedKey);
 
+    const previousWeekFromPlan = getPreviousWeekEquipmentFromPlan(currentWeekDates, cloud.piano);
+    const previousWeekFromHistory = getPreviousWeekEquipmentFromHistory(currentWeekDates, cloud.storicoCal);
     const lastWeekEquipmentForGen = storedWeekIsFuture
-      ? getPreviousWeekEquipmentFromHistory(currentWeekDates, cloud.storicoCal)
-      : cloud.ultimiAttrezzi;
+      ? previousWeekFromHistory
+      : previousWeekFromPlan.length > 0
+        ? previousWeekFromPlan
+        : previousWeekFromHistory.length > 0
+          ? previousWeekFromHistory
+          : cloud.ultimiAttrezzi;
     const result = generaSettimanaIntelligente(
       equipmentPool,
       cloud.livello,
