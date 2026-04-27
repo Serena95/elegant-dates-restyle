@@ -177,6 +177,37 @@ const Index = () => {
   // Auto-generate weekly plan when needed — ONCE per week only
   // Uses FIXED_TRAINING_DAYS [1,3,5] = Mon/Wed/Fri always
   const generationGuardRef = useRef(false);
+  const [midnightTick, setMidnightTick] = useState(0);
+
+  // Force re-evaluation at local midnight (Monday 00:00 = new week rollover) and on app reopen.
+  useEffect(() => {
+    let timeoutId: number;
+    const scheduleMidnight = () => {
+      const now = new Date();
+      const next = new Date(now);
+      next.setHours(24, 0, 5, 0); // ~5s after midnight
+      const ms = Math.max(1000, next.getTime() - now.getTime());
+      timeoutId = window.setTimeout(() => {
+        generationGuardRef.current = false;
+        setMidnightTick((t) => t + 1);
+        scheduleMidnight();
+      }, ms);
+    };
+    scheduleMidnight();
+
+    const onVisible = () => {
+      if (document.visibilityState === "visible") {
+        generationGuardRef.current = false;
+        setMidnightTick((t) => t + 1);
+      }
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    return () => {
+      clearTimeout(timeoutId);
+      document.removeEventListener("visibilitychange", onVisible);
+    };
+  }, []);
+
 
   useEffect(() => {
     // Prevent multiple runs in the same component lifecycle
@@ -254,41 +285,11 @@ const Index = () => {
       return;
     }
 
-    // SECONDARY GUARD: if there is already a fully saved plan that matches the persisted
-    // generation key, keep that exact week instead of force-regenerating a different one.
-    // This preserves the user's existing week after rollover-rule changes or reloads.
-    if (pianoMatchesStoredWeek && hasCompleteSavedPlan && !storedWeekIsFuture) {
-      generationGuardRef.current = true;
+    // No secondary guard: if the saved piano does not match the CURRENT week,
+    // we must regenerate immediately so the user always sees the current week
+    // (no "next week" stuck state, no stale weeks after refresh/republish).
 
-      const updatedPiano = { ...cloud.piano };
-      let pianoNeedsUpdate = false;
-
-      pianoKeys.forEach((dateKey) => {
-        const histEntry = cloud.storicoCal[dateKey];
-        if (histEntry?.completato && updatedPiano[dateKey]) {
-          if (updatedPiano[dateKey].attrezzo !== histEntry.attrezzo ||
-              (updatedPiano[dateKey].round || 0) < (histEntry.round || 0)) {
-            updatedPiano[dateKey] = {
-              ...updatedPiano[dateKey],
-              attrezzo: histEntry.attrezzo,
-              round: histEntry.round,
-            };
-            pianoNeedsUpdate = true;
-          }
-        }
-      });
-
-      if (pianoNeedsUpdate) {
-        cloud.savePiano(updatedPiano, cloud.allenamentiData);
-      }
-      const syncedEquipment = pianoKeys.map((dateKey) => updatedPiano[dateKey]?.attrezzo).filter(Boolean) as string[];
-      if (syncedEquipment.length > 0 && JSON.stringify(syncedEquipment) !== JSON.stringify(cloud.ultimiAttrezzi)) {
-        cloud.setUltimiAttrezzi(syncedEquipment);
-      }
-      return;
-    }
-
-    // Need to generate a new week plan (week truly changed)
+    // Need to generate a new week plan (week truly changed or no piano yet)
     generationGuardRef.current = true;
     setStoredGenerationKey(expectedKey);
     cloud.setWorkoutGenerationKey(expectedKey);
@@ -328,7 +329,7 @@ const Index = () => {
     cloud.savePiano(finalPiano, { esercizi: finalEsercizi, storico: result.storico });
     const usedEquipment = Object.values(finalPiano).map(d => d.attrezzo);
     cloud.setUltimiAttrezzi(usedEquipment);
-  }, [cloud.loading]); // ONLY depend on loading — no other deps to prevent re-triggers
+  }, [cloud.loading, midnightTick]); // re-runs at local midnight (Mon 00:00 rollover) and on app re-open
 
   const weeklyStats = useMemo(() => {
     const now = new Date();
