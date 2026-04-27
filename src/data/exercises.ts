@@ -486,6 +486,17 @@ function resolveWeeklyEquipmentAssignment(
   return backtrack(0) ? assignment : null;
 }
 
+export function canAvoidLastWeekForFocuses(
+  attrezziUtente: string[],
+  livello: string,
+  focuses: DayFocus[],
+  lastWeekEquipment: string[] = []
+): boolean {
+  const orderedEquipment = getOrderedWeeklyEquipment(attrezziUtente, lastWeekEquipment);
+  const forbidden = Array.from(new Set(lastWeekEquipment.map(normalizeEquipmentName)));
+  return resolveWeeklyEquipmentAssignment(orderedEquipment, livello, focuses, forbidden, true) !== null;
+}
+
 function getEquipmentCategoryCounts(attrezzo: string, livello: string) {
   const disponibili = EXERCISE_LIBRARY.filter(e =>
     e.attrezzo === attrezzo && livelloAccessibile(e.livello, livello)
