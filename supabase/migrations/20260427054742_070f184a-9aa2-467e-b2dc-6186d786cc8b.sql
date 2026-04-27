@@ -1,0 +1,2 @@
+UPDATE public.workout_plans SET piano = '{}'::jsonb, allenamenti = '{}'::jsonb, updated_at = now();
+UPDATE public.user_settings SET workout_generation_key = '' WHERE workout_generation_key IS NOT NULL;
