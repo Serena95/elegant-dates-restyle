@@ -562,32 +562,63 @@ function weightByLevel(pool: Exercise[], levelPref: string[]): Exercise[] {
   return result;
 }
 
-function pickBalanced(pool: Exercise[], prioritySlots: string[][], count: number, preferredCategories: string[] = []): Exercise[] {
-  const byCat: Record<string, Exercise[]> = {};
-  pool.forEach(e => {
-    if (!byCat[e.categoria]) byCat[e.categoria] = [];
-    byCat[e.categoria].push(e);
-  });
-
+function pickBalanced(
+  pool: Exercise[],
+  prioritySlots: string[][],
+  count: number,
+  preferredCategories: string[] = [],
+  mandatoryTokens: string[] = [],
+): Exercise[] {
+  const used = new Set<string>();
   const result: Exercise[] = [];
 
+  const takeForTokens = (tokens: string[]): Exercise | null => {
+    const candidates = pool.filter(e => !used.has(e.id) && tokens.some(t => exerciseMatchesToken(e, t)));
+    if (candidates.length === 0) return null;
+    const picked = shuffle(candidates)[0];
+    used.add(picked.id);
+    return picked;
+  };
+
+  // 1) Walk priority slots in order
   for (const slot of prioritySlots) {
     if (result.length >= count) break;
-    const availableCats = shuffle(slot.filter(c => byCat[c] && byCat[c].length > 0));
-    if (availableCats.length > 0) {
-      result.push(byCat[availableCats[0]].shift()!);
+    const picked = takeForTokens(slot);
+    if (picked) result.push(picked);
+  }
+
+  // 2) Enforce mandatory tokens — if a required muscle group is missing, swap in
+  for (const token of mandatoryTokens) {
+    const present = result.some(e => exerciseMatchesToken(e, token));
+    if (present) continue;
+    const candidate = pool.find(e => !used.has(e.id) && exerciseMatchesToken(e, token));
+    if (!candidate) continue; // library has nothing for this token with this equipment
+    if (result.length < count) {
+      result.push(candidate);
+      used.add(candidate.id);
+    } else {
+      // Replace a non-mandatory, duplicate-category exercise to make room
+      const replaceableIdx = result.findIndex(e =>
+        !mandatoryTokens.some(mt => exerciseMatchesToken(e, mt))
+      );
+      if (replaceableIdx >= 0) {
+        used.delete(result[replaceableIdx].id);
+        result[replaceableIdx] = candidate;
+        used.add(candidate.id);
+      }
     }
   }
 
+  // 3) Fill remaining slots with preferred-category, then anything else
   if (result.length < count) {
-    const remaining = pool.filter(e => !result.find(r => r.id === e.id));
+    const remaining = pool.filter(e => !used.has(e.id));
     const preferredSet = new Set(preferredCategories);
     const prioritized = shuffle(remaining.filter(e => preferredSet.has(e.categoria)));
     const fallback = shuffle(remaining.filter(e => !preferredSet.has(e.categoria)));
-
     for (const e of [...prioritized, ...fallback]) {
       if (result.length >= count) break;
       result.push(e);
+      used.add(e.id);
     }
   }
   return result;
