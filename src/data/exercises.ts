@@ -499,11 +499,17 @@ function getEffectiveLevel(baseLivello: string, ctx: ProgressionContext): string
   return baseLivello;
 }
 
-function getTargetCount(weekNumber: number, baseLivello: string): number {
-  const base = baseLivello === "AVANZATO" ? 7 : 6;
-  if (weekNumber <= 2) return base;
-  if (weekNumber === 3) return base + 1;
-  return base + (baseLivello === "AVANZATO" ? 1 : Math.random() > 0.5 ? 1 : 0);
+function getTargetCount(weekNumber: number, baseLivello: string, focus?: DayFocus): number {
+  // Total body must be a complete workout (8-10). Upper/Lower 7-9.
+  if (focus === "total_body") {
+    if (baseLivello === "AVANZATO") return 10;
+    if (baseLivello === "MEDIO") return 9;
+    return 8;
+  }
+  // Upper / Lower
+  if (baseLivello === "AVANZATO") return 9;
+  if (baseLivello === "MEDIO") return 8;
+  return 7;
 }
 
 function getLevelPreference(weekNumber: number, baseLivello: string): string[] {
