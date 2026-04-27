@@ -254,41 +254,11 @@ const Index = () => {
       return;
     }
 
-    // SECONDARY GUARD: if there is already a fully saved plan that matches the persisted
-    // generation key, keep that exact week instead of force-regenerating a different one.
-    // This preserves the user's existing week after rollover-rule changes or reloads.
-    if (pianoMatchesStoredWeek && hasCompleteSavedPlan && !storedWeekIsFuture) {
-      generationGuardRef.current = true;
+    // No secondary guard: if the saved piano does not match the CURRENT week,
+    // we must regenerate immediately so the user always sees the current week
+    // (no "next week" stuck state, no stale weeks after refresh/republish).
 
-      const updatedPiano = { ...cloud.piano };
-      let pianoNeedsUpdate = false;
-
-      pianoKeys.forEach((dateKey) => {
-        const histEntry = cloud.storicoCal[dateKey];
-        if (histEntry?.completato && updatedPiano[dateKey]) {
-          if (updatedPiano[dateKey].attrezzo !== histEntry.attrezzo ||
-              (updatedPiano[dateKey].round || 0) < (histEntry.round || 0)) {
-            updatedPiano[dateKey] = {
-              ...updatedPiano[dateKey],
-              attrezzo: histEntry.attrezzo,
-              round: histEntry.round,
-            };
-            pianoNeedsUpdate = true;
-          }
-        }
-      });
-
-      if (pianoNeedsUpdate) {
-        cloud.savePiano(updatedPiano, cloud.allenamentiData);
-      }
-      const syncedEquipment = pianoKeys.map((dateKey) => updatedPiano[dateKey]?.attrezzo).filter(Boolean) as string[];
-      if (syncedEquipment.length > 0 && JSON.stringify(syncedEquipment) !== JSON.stringify(cloud.ultimiAttrezzi)) {
-        cloud.setUltimiAttrezzi(syncedEquipment);
-      }
-      return;
-    }
-
-    // Need to generate a new week plan (week truly changed)
+    // Need to generate a new week plan (week truly changed or no piano yet)
     generationGuardRef.current = true;
     setStoredGenerationKey(expectedKey);
     cloud.setWorkoutGenerationKey(expectedKey);
