@@ -39,7 +39,7 @@ import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
-import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey, getWeekdayFromDateKey, parseDateKey, canAvoidLastWeekForFocuses } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey, getWeekdayFromDateKey, parseDateKey } from "@/data/exercises";
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
@@ -86,10 +86,6 @@ function getPreviousWeekEquipmentFromPlan(
   return currentWeekDates
     .map((dateKey) => piano[shiftDateKey(dateKey, -7)]?.attrezzo)
     .filter(Boolean) as string[];
-}
-
-function normalizeEquipmentName(attrezzo: string): string {
-  return attrezzo === "Pesi(da 1 a 4kg)" ? "Pesi" : attrezzo;
 }
 
 const Index = () => {
@@ -247,66 +243,11 @@ const Index = () => {
     const hasCompleteSavedPlan = pianoKeys.length > 0 &&
       pianoKeys.every(d => allenamentiEsercizi[d]?.length > 0);
 
-    const currentWeekFocuses = currentWeekDates.map((dateKey, i) => getFocusForWeekday(getWeekdayFromDateKey(dateKey), i));
     const previousWeekFromPlan = getPreviousWeekEquipmentFromPlan(currentWeekDates, cloud.piano);
     const previousWeekFromHistory = getPreviousWeekEquipmentFromHistory(currentWeekDates, cloud.storicoCal);
-    const actualLastWeekEquipment = previousWeekFromPlan.length > 0
-      ? previousWeekFromPlan
-      : previousWeekFromHistory;
 
-    // PRIMARY GUARD: once a week is generated, KEEP IT.
-    // Exception: if the current saved week still repeats avoidable equipment from the actual previous week,
-    // repair it once, save it, and then lock it again.
+    // PRIMARY GUARD: once a week is generated, KEEP IT. Never regenerate/replace equipment on refresh.
     if (hasAnyCurrentWeekPlan) {
-      const currentPlanEquipment = currentWeekDates
-        .map((dateKey) => cloud.piano[dateKey]?.attrezzo)
-        .filter(Boolean) as string[];
-      const lastWeekSet = new Set(actualLastWeekEquipment.map(normalizeEquipmentName));
-      const repeatsLastWeek = currentPlanEquipment.some((attrezzo) => lastWeekSet.has(normalizeEquipmentName(attrezzo)));
-      const shouldRepairEquipmentOnly =
-        actualLastWeekEquipment.length > 0 &&
-        repeatsLastWeek &&
-        canAvoidLastWeekForFocuses(equipmentPool, cloud.livello, currentWeekFocuses, actualLastWeekEquipment);
-
-      if (shouldRepairEquipmentOnly) {
-        generationGuardRef.current = true;
-        if (storedKey !== expectedKey) {
-          setStoredGenerationKey(expectedKey);
-          cloud.setWorkoutGenerationKey(expectedKey);
-        }
-
-        const repaired = generaSettimanaIntelligente(
-          equipmentPool,
-          cloud.livello,
-          cloud.allenamentiData.storico || {},
-          cloud.storicoCal,
-          actualLastWeekEquipment,
-          FIXED_TRAINING_DAYS
-        );
-
-        const repairedPiano = { ...repaired.piano };
-        const repairedEsercizi = { ...repaired.esercizi };
-
-        currentWeekDates.forEach((dateKey) => {
-          const histEntry = cloud.storicoCal[dateKey];
-          if (histEntry?.completato) {
-            repairedPiano[dateKey] = {
-              ...repairedPiano[dateKey],
-              attrezzo: histEntry.attrezzo,
-              round: histEntry.round,
-            };
-            const existingEx = allenamentiEsercizi[dateKey];
-            if (existingEx && existingEx.length > 0) {
-              repairedEsercizi[dateKey] = existingEx;
-            }
-          }
-        });
-
-        cloud.savePiano(repairedPiano, { esercizi: repairedEsercizi, storico: repaired.storico });
-        cloud.setUltimiAttrezzi(Object.values(repairedPiano).map((d) => d.attrezzo));
-        return;
-      }
-
       generationGuardRef.current = true;
       // Persist key if it was missing
       if (storedKey !== expectedKey) {
