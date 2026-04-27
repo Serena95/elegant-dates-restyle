@@ -88,6 +88,30 @@ function getPreviousWeekEquipmentFromPlan(
     .filter(Boolean) as string[];
 }
 
+// Muscle tokens that must NOT appear in an upper-body day
+const LOWER_BODY_TOKENS = new Set([
+  "gambe", "glutei", "quadricipiti", "femorali",
+  "interno coscia", "adduttori", "ischiocrurali", "posteriori coscia",
+]);
+// Muscle tokens that must NOT appear in a lower-body day
+const UPPER_BODY_TOKENS = new Set([
+  "petto", "pettorali", "schiena", "dorsali", "romboidi", "trapezio",
+  "spalle", "deltoidi", "braccia", "bicipiti", "tricipiti",
+]);
+
+function exerciseViolatesFocus(ex: Exercise, focus: DayFocus): boolean {
+  if (focus === "total_body") return false;
+  const forbidden = focus === "upper_body" ? LOWER_BODY_TOKENS : UPPER_BODY_TOKENS;
+  const cat = (ex.categoria || "").toLowerCase();
+  if (forbidden.has(cat)) return true;
+  return (ex.muscoli || []).some((m) => forbidden.has(m.toLowerCase()));
+}
+
+function dayHasFocusViolation(exercises: Exercise[] | undefined, focus: DayFocus): boolean {
+  if (!exercises || exercises.length === 0) return false;
+  return exercises.some((e) => exerciseViolatesFocus(e, focus));
+}
+
 const Index = () => {
   const cloud = useCloudData();
   const { user } = useAuth();
@@ -277,6 +301,54 @@ const Index = () => {
 
       if (pianoNeedsUpdate) {
         cloud.savePiano(updatedPiano, cloud.allenamentiData);
+      }
+
+      // ─────────────────────────────────────────────────────────────────
+      // MUSCLE-ONLY REPAIR: fix exercises that don't match the day's focus
+      // (e.g. leg exercises in an upper-body day) WITHOUT touching the
+      // chosen equipment, the round counter, or any completed day.
+      // Idempotent: once exercises are valid, no further changes happen.
+      // ─────────────────────────────────────────────────────────────────
+      const currentEsercizi = cloud.allenamentiData.esercizi || {};
+      const repairedEsercizi: Record<string, Exercise[]> = { ...currentEsercizi };
+      let needsExerciseRepair = false;
+      const progressionCtx = computeProgressionContext(
+        cloud.storicoCal,
+        getPreviousWeekEquipmentFromPlan(currentWeekDates, cloud.piano)
+      );
+
+      currentWeekDates.forEach((dateKey) => {
+        const histEntry = cloud.storicoCal[dateKey];
+        if (histEntry?.completato) return; // never touch completed days
+        const dayPlan = updatedPiano[dateKey];
+        if (!dayPlan?.attrezzo) return;
+        const weekday = getWeekdayFromDateKey(dateKey);
+        const focus = getFocusForWeekday(weekday);
+        const dayEx = currentEsercizi[dateKey];
+        if (!dayHasFocusViolation(dayEx, focus)) return;
+
+        // Regenerate exercises for THIS day only, keeping the same equipment.
+        const recentIds = Object.entries(currentEsercizi)
+          .filter(([k]) => k !== dateKey)
+          .flatMap(([, list]) => (list || []).map((e) => e.id));
+        const newEx = generaEserciziGiorno(
+          dayPlan.attrezzo,
+          cloud.livello,
+          recentIds,
+          focus,
+          progressionCtx
+        );
+        if (newEx.length > 0 && !dayHasFocusViolation(newEx, focus)) {
+          repairedEsercizi[dateKey] = newEx;
+          needsExerciseRepair = true;
+        }
+      });
+
+      if (needsExerciseRepair) {
+        cloud.savePiano(updatedPiano, {
+          ...cloud.allenamentiData,
+          esercizi: repairedEsercizi,
+        });
       }
       return;
     }
