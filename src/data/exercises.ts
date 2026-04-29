@@ -1010,7 +1010,7 @@ export function generaSettimanaIntelligente(
 
     ctx.recentExerciseIds = runningStorico;
 
-    const dayExercises = generaEserciziGiorno(attrezzo, livello, [], dayFocus, ctx);
+    const dayExercises = generaEserciziGiorno(attrezzo, livello, [], dayFocus, ctx, attrezziUtente);
 
     piano[dateKey] = { attrezzo, round: 0 };
     esercizi[dateKey] = dayExercises;
