@@ -336,7 +336,8 @@ const Index = () => {
           cloud.livello,
           recentIds,
           focus,
-          progressionCtx
+          progressionCtx,
+          cloud.attrezzi,
         );
         if (newEx.length > 0 && !dayHasFocusViolation(newEx, focus)) {
           repairedEsercizi[dateKey] = newEx;
