@@ -317,6 +317,12 @@ const Index = () => {
         getPreviousWeekEquipmentFromPlan(currentWeekDates, cloud.piano)
       );
 
+      // ONE-SHOT MIGRATION: applica multi-attrezzo + ordinamento per fasi alla settimana corrente
+      // su tutti i giorni non ancora completati. Avviene una sola volta per utente.
+      const MIGRATION_FLAG = "workout_phases_multiequip_v1";
+      const alreadyMigrated = localStorage.getItem(MIGRATION_FLAG) === "1";
+      const forceRegenerateAll = !alreadyMigrated;
+
       currentWeekDates.forEach((dateKey) => {
         const histEntry = cloud.storicoCal[dateKey];
         if (histEntry?.completato) return; // never touch completed days
@@ -325,7 +331,8 @@ const Index = () => {
         const weekday = getWeekdayFromDateKey(dateKey);
         const focus = getFocusForWeekday(weekday);
         const dayEx = currentEsercizi[dateKey];
-        if (!dayHasFocusViolation(dayEx, focus)) return;
+        const needsRepair = forceRegenerateAll || dayHasFocusViolation(dayEx, focus);
+        if (!needsRepair) return;
 
         // Regenerate exercises for THIS day only, keeping the same equipment.
         const recentIds = Object.entries(currentEsercizi)
@@ -344,6 +351,10 @@ const Index = () => {
           needsExerciseRepair = true;
         }
       });
+
+      if (forceRegenerateAll) {
+        localStorage.setItem(MIGRATION_FLAG, "1");
+      }
 
       if (needsExerciseRepair) {
         cloud.savePiano(updatedPiano, {
