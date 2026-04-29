@@ -275,27 +275,38 @@ function mixSecondaryEquipment(
 ): Exercise[] {
   if (primaryExercises.length < 4) return primaryExercises;
 
-  // Pool secondario: attrezzi utente diversi dal primario, normalizzati. Aggiungi sempre Corpo Libero come fallback.
   const normPrimary = normalizeEquipmentName(primaryAttrezzo);
+  // Pool utente diverso dal primario, normalizzato e ordinato in modo stabile (non random)
   const userPool = Array.from(new Set(availableEquipment.map(normalizeEquipmentName)))
-    .filter(a => a !== normPrimary);
-  const secondaryPool = userPool.length > 0 ? userPool : ["Corpo Libero"];
-  const includeBodyWeight = !secondaryPool.includes("Corpo Libero");
-  const candidatesPool = includeBodyWeight ? [...secondaryPool, "Corpo Libero"] : secondaryPool;
+    .filter(a => a !== normPrimary)
+    .sort();
 
-  // Quante sostituire: ~1/3, minimo 1, max metà
-  const targetSwaps = Math.max(1, Math.min(Math.floor(primaryExercises.length / 3), Math.floor(primaryExercises.length / 2)));
+  // Scelta DETERMINISTICA dell'attrezzo secondario in base al focus del giorno + attrezzo primario
+  // (così non cambia ai refresh e segue una logica, non è random)
+  const seed = (dayFocus + "|" + normPrimary).split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
+  const secondaryAttr = userPool.length > 0 ? userPool[seed % userPool.length] : null;
+
+  // Pool finale: max 3 attrezzi (primario + secondario + Corpo Libero come 3° opzionale)
+  // Se secondario è già "Corpo Libero", non lo aggiungo due volte.
+  const candidatesPool: string[] = [];
+  if (secondaryAttr) candidatesPool.push(secondaryAttr);
+  if (normPrimary !== "Corpo Libero" && secondaryAttr !== "Corpo Libero") {
+    candidatesPool.push("Corpo Libero");
+  }
+  if (candidatesPool.length === 0) return primaryExercises;
+
+  // Numero di sostituzioni: ~1/3 esercizi
+  const targetSwaps = Math.max(1, Math.floor(primaryExercises.length / 3));
 
   const minPerToken = MIN_PER_TOKEN[dayFocus] || {};
   const result = [...primaryExercises];
   const usedIds = new Set(result.map(e => e.id));
 
-  // Conta quanti esercizi soddisfano ogni token mandatory; non rimuovere quelli "critici"
+  // Conta token critici per non scendere sotto i minimi
   const tokenCount: Record<string, number> = {};
   for (const t of Object.keys(minPerToken)) {
     tokenCount[t] = result.reduce((acc, e) => acc + (exerciseMatchesToken(e, t) ? 1 : 0), 0);
   }
-
   const isCritical = (e: Exercise): boolean => {
     for (const t of Object.keys(minPerToken)) {
       if (exerciseMatchesToken(e, t) && tokenCount[t] <= (minPerToken[t] || 0)) return true;
@@ -303,20 +314,31 @@ function mixSecondaryEquipment(
     return false;
   };
 
+  // Scegli posizioni deterministiche da sostituire (distribuite uniformemente nel workout)
+  // Esempio con 7 esercizi e 2 swap: posizioni [2, 4]
+  const positions: number[] = [];
+  const step = primaryExercises.length / (targetSwaps + 1);
+  for (let k = 1; k <= targetSwaps; k++) {
+    positions.push(Math.min(primaryExercises.length - 1, Math.max(1, Math.round(k * step))));
+  }
+
   let swaps = 0;
-  // Itera dalla posizione 1 (lascia il primo come "attivazione" del primario)
-  for (let i = 1; i < result.length && swaps < targetSwaps; i++) {
+  for (const i of positions) {
+    if (swaps >= targetSwaps) break;
     const current = result[i];
     if (isCritical(current)) continue;
 
-    // Evita due esercizi consecutivi con lo stesso attrezzo
-    const prevAttr = i > 0 ? normalizeEquipmentName(result[i - 1].attrezzo) : "";
-    const nextAttr = i < result.length - 1 ? normalizeEquipmentName(result[i + 1].attrezzo) : "";
+    // Alterna tra secondary e Corpo Libero in modo logico (no random)
+    const orderedAttempt = swaps % 2 === 0
+      ? candidatesPool
+      : [...candidatesPool].reverse();
 
-    // Cerca un sostituto in candidatesPool che matchi categoria/muscoli ed eviti ripetizioni consecutive
     let replacement: Exercise | null = null;
-    for (const attr of shuffle(candidatesPool)) {
+    for (const attr of orderedAttempt) {
+      const prevAttr = i > 0 ? normalizeEquipmentName(result[i - 1].attrezzo) : "";
+      const nextAttr = i < result.length - 1 ? normalizeEquipmentName(result[i + 1].attrezzo) : "";
       if (attr === prevAttr || attr === nextAttr) continue;
+
       const matches = EXERCISE_LIBRARY.filter(e =>
         e.attrezzo === attr &&
         livelloAccessibile(e.livello, livello) &&
@@ -324,13 +346,13 @@ function mixSecondaryEquipment(
         e.categoria === current.categoria
       );
       if (matches.length > 0) {
-        replacement = shuffle(matches)[0];
+        // Selezione deterministica: prendi il primo per id (ordinamento stabile)
+        replacement = matches.sort((a, b) => a.id.localeCompare(b.id))[0];
         break;
       }
     }
 
     if (replacement) {
-      // aggiorna conteggi token
       for (const t of Object.keys(minPerToken)) {
         const wasMatch = exerciseMatchesToken(current, t);
         const isMatch = exerciseMatchesToken(replacement, t);
