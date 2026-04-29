@@ -171,6 +171,10 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
                           <p className="text-xs font-semibold text-foreground truncate">{ex.nome}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{ex.categoria} • {ex.muscoli?.slice(0, 2).join(", ")}</p>
                         </div>
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-foreground text-[10px] font-semibold flex-shrink-0">
+                          <span>{ATTREZZO_ICONS[ex.attrezzo] || "🏋️"}</span>
+                          <span className="hidden xs:inline">{ex.attrezzo}</span>
+                        </span>
                       </div>
                     ))}
                   </div>
