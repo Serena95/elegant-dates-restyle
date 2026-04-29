@@ -30,6 +30,11 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
   const temaIcon = ATTREZZO_ICONS[attrezzo] || "🏋️";
   const gradient = isToday ? TODAY_GRADIENT : DEFAULT_GRADIENT;
 
+  // Tutti gli attrezzi effettivamente usati nel workout di questo giorno (max 3)
+  const attrezziGiorno: string[] = exercises && exercises.length > 0
+    ? Array.from(new Set([attrezzo, ...exercises.map(e => e.attrezzo).filter(Boolean)]))
+    : [attrezzo];
+
   const dayNum = new Date(giorno + "T00:00:00").getDate();
 
   const handleCardClick = () => {
