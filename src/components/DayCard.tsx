@@ -30,11 +30,6 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
   const temaIcon = ATTREZZO_ICONS[attrezzo] || "🏋️";
   const gradient = isToday ? TODAY_GRADIENT : DEFAULT_GRADIENT;
 
-  // Tutti gli attrezzi effettivamente usati nel workout di questo giorno (max 3)
-  const attrezziGiorno: string[] = exercises && exercises.length > 0
-    ? Array.from(new Set([attrezzo, ...exercises.map(e => e.attrezzo).filter(Boolean)]))
-    : [attrezzo];
-
   const dayNum = new Date(giorno + "T00:00:00").getDate();
 
   const handleCardClick = () => {
@@ -93,16 +88,11 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
               )}
             </div>
 
-            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
-              {attrezziGiorno.map((a) => (
-                <span
-                  key={a}
-                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/15 text-primary text-[11px] font-bold uppercase tracking-wide"
-                >
-                  <span className="text-sm">{ATTREZZO_ICONS[a] || "🏋️"}</span>
-                  {a}
-                </span>
-              ))}
+            <div className="flex items-center gap-2 mb-1.5">
+              <span className="text-xl">{temaIcon}</span>
+              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wide">
+                {attrezzo}
+              </span>
               {locked && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
                   <Crown size={10} /> PLUS
@@ -171,10 +161,6 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
                           <p className="text-xs font-semibold text-foreground truncate">{ex.nome}</p>
                           <p className="text-[10px] text-muted-foreground truncate">{ex.categoria} • {ex.muscoli?.slice(0, 2).join(", ")}</p>
                         </div>
-                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-muted text-foreground text-[10px] font-semibold flex-shrink-0">
-                          <span>{ATTREZZO_ICONS[ex.attrezzo] || "🏋️"}</span>
-                          <span className="hidden xs:inline">{ex.attrezzo}</span>
-                        </span>
                       </div>
                     ))}
                   </div>
