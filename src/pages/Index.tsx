@@ -336,7 +336,8 @@ const Index = () => {
           cloud.livello,
           recentIds,
           focus,
-          progressionCtx
+          progressionCtx,
+          cloud.attrezzi,
         );
         if (newEx.length > 0 && !dayHasFocusViolation(newEx, focus)) {
           repairedEsercizi[dateKey] = newEx;
@@ -782,7 +783,7 @@ const Index = () => {
                 const attrezzo = giorno.attrezzo;
                 const dayFocus = getFocusForWeekday(getWeekdayFromDateKey(dateKey), i);
                 ctx.recentExerciseIds = runningStorico;
-                const exercises = generaEserciziGiorno(attrezzo, cloud.livello, [], dayFocus, ctx);
+                const exercises = generaEserciziGiorno(attrezzo, cloud.livello, [], dayFocus, ctx, cloud.attrezzi);
                 nuovoPiano[dateKey] = { attrezzo, round: 0 };
                 nuoviEsercizi[dateKey] = exercises;
                 runningStorico = [...runningStorico, ...exercises.map(e => e.id)];
@@ -896,7 +897,7 @@ const Index = () => {
                 else if (challengeFocus === "upper_body") dayFocus = "upper_body";
                 
                 ctx.recentExerciseIds = runningStorico;
-                const exercises = generaEserciziGiorno(attrezzo, cloud.livello, [], dayFocus, ctx);
+                const exercises = generaEserciziGiorno(attrezzo, cloud.livello, [], dayFocus, ctx, cloud.attrezzi);
                 nuovoPiano[dateKey] = { attrezzo, round: 0 };
                 nuoviEsercizi[dateKey] = exercises;
                 runningStorico = [...runningStorico, ...exercises.map(e => e.id)];
