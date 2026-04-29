@@ -800,7 +800,8 @@ export function generaEserciziGiorno(
   livello: string,
   storici: string[] = [],
   focus?: string,
-  progressionCtx?: ProgressionContext
+  progressionCtx?: ProgressionContext,
+  availableEquipment: string[] = [],
 ): Exercise[] {
   const ctx = progressionCtx || { weekNumber: 1, recentExerciseIds: [], lastWeekEquipment: [], totalCompleted: 0, activeStreak: 0, weeksSinceLastWorkout: 0 };
   const effectiveLevel = getEffectiveLevel(livello, ctx);
@@ -831,7 +832,7 @@ export function generaEserciziGiorno(
   const mandatoryTokens: string[] = MANDATORY_TOKENS[dayFocus];
   const minPerToken = MIN_PER_TOKEN[dayFocus];
 
-  return pickBalanced(
+  const balanced = pickBalanced(
     pool,
     prioritySlots,
     Math.max(targetCount, Math.min(targetCount, pool.length)),
@@ -839,6 +840,12 @@ export function generaEserciziGiorno(
     mandatoryTokens,
     minPerToken,
   );
+
+  // Mix multi-attrezzo: usa anche un secondo attrezzo (se disponibile) + corpo libero
+  const mixed = mixSecondaryEquipment(balanced, attrezzo, effectiveLevel, availableEquipment, dayFocus);
+
+  // Ordina per fasi: Attivazione → Centrale (pilates) → Metabolica → Core finale
+  return orderByPhases(mixed);
 }
 
 function weightByLevel(pool: Exercise[], levelPref: string[]): Exercise[] {
