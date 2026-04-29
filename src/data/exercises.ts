@@ -160,10 +160,14 @@ const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
 const MIN_PER_TOKEN: Record<DayFocus, Record<string, number>> = {
   upper_body: { schiena: 2, core: 2, spalle: 1, braccia: 1, petto: 1 },
   lower_body: { glutei: 2, core: 2, quadricipiti: 1, femorali: 1, "interno coscia": 1 },
+  // Total Body: parte superiore ≥3 (schiena+spalle+petto), parte inferiore ≥2 (glutei+quadricipiti), core ≥2
   total_body: {
     core: 2,
     schiena: 1,
+    spalle: 1,
+    petto: 1,
     glutei: 1,
+    quadricipiti: 1,
   },
 };
 
