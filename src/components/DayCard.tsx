@@ -93,11 +93,16 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
               )}
             </div>
 
-            <div className="flex items-center gap-2 mb-1.5">
-              <span className="text-xl">{temaIcon}</span>
-              <span className="inline-flex items-center gap-1 px-3 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold uppercase tracking-wide">
-                {attrezzo}
-              </span>
+            <div className="flex items-center gap-1.5 mb-1.5 flex-wrap">
+              {attrezziGiorno.map((a) => (
+                <span
+                  key={a}
+                  className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/15 text-primary text-[11px] font-bold uppercase tracking-wide"
+                >
+                  <span className="text-sm">{ATTREZZO_ICONS[a] || "🏋️"}</span>
+                  {a}
+                </span>
+              ))}
               {locked && (
                 <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-amber-500/15 text-amber-600 dark:text-amber-400 text-[10px] font-bold">
                   <Crown size={10} /> PLUS
