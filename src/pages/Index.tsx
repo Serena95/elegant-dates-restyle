@@ -897,7 +897,7 @@ const Index = () => {
                 else if (challengeFocus === "upper_body") dayFocus = "upper_body";
                 
                 ctx.recentExerciseIds = runningStorico;
-                const exercises = generaEserciziGiorno(attrezzo, cloud.livello, [], dayFocus, ctx);
+                const exercises = generaEserciziGiorno(attrezzo, cloud.livello, [], dayFocus, ctx, cloud.attrezzi);
                 nuovoPiano[dateKey] = { attrezzo, round: 0 };
                 nuoviEsercizi[dateKey] = exercises;
                 runningStorico = [...runningStorico, ...exercises.map(e => e.id)];
