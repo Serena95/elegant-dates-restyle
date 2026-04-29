@@ -193,6 +193,162 @@ export const FOCUS_LABELS: Record<DayFocus, { label: string; icon: string }> = {
 };
 
 // ============================================================
+// WORKOUT INTERNAL PHASES (Attivazione → Pilates → Metabolico → Core finale)
+// ============================================================
+
+type WorkoutPhase = "attivazione" | "centrale" | "metabolica" | "core_finale";
+
+/**
+ * Heuristic phase classification based on existing categoria/muscoli.
+ * - attivazione: mobilità + stabilità + core warm-up
+ * - metabolica: cardio + esercizi dinamici (categoria cardio o nome contenente "jump"/"climb"/"burpee")
+ * - core_finale: core (assegnato all'ultima posizione)
+ * - centrale: tutto il resto (esercizi controllati stile pilates)
+ */
+function classifyExercisePhase(e: Exercise): WorkoutPhase {
+  const cat = e.categoria;
+  const nameLow = (e.nome || "").toLowerCase();
+  if (cat === "cardio" || /jump|climb|burpee|skip|salto/.test(nameLow)) return "metabolica";
+  if (cat === "mobilità" || cat === "stabilità") return "attivazione";
+  if (cat === "core") return "centrale"; // verrà spostato al finale solo l'ultimo
+  return "centrale";
+}
+
+/**
+ * Reorder exercises into the required workout phases:
+ * 1) Attivazione (mobilità/stabilità + 1 core)
+ * 2) Centrale (esercizi controllati pilates)
+ * 3) Metabolica (1-2 esercizi dinamici se presenti)
+ * 4) Core finale (1 esercizio core)
+ * Mantiene tutti gli esercizi, cambia solo l'ordine.
+ */
+function orderByPhases(exs: Exercise[]): Exercise[] {
+  if (exs.length <= 3) return exs;
+
+  const attivazione: Exercise[] = [];
+  const centrale: Exercise[] = [];
+  const metabolica: Exercise[] = [];
+  const coreList: Exercise[] = [];
+
+  for (const e of exs) {
+    if (e.categoria === "core") coreList.push(e);
+    else {
+      const phase = classifyExercisePhase(e);
+      if (phase === "attivazione") attivazione.push(e);
+      else if (phase === "metabolica") metabolica.push(e);
+      else centrale.push(e);
+    }
+  }
+
+  // Distribuzione core: 1 in apertura (se presente), 1 in chiusura, resto in centrale
+  const coreOpen = coreList.length > 1 ? [coreList.shift()!] : [];
+  const coreFinal = coreList.length > 0 ? [coreList.pop()!] : [];
+  const coreMid = coreList; // restanti core nel blocco centrale
+
+  return [
+    ...attivazione,
+    ...coreOpen,
+    ...centrale,
+    ...coreMid,
+    ...metabolica,
+    ...coreFinal,
+  ];
+}
+
+// ============================================================
+// MULTI-EQUIPMENT MIX
+// ============================================================
+
+/**
+ * Replace ~30% of the workout with exercises from a secondary equipment
+ * (or Corpo Libero) so the session uses ≥2 different equipments + body weight.
+ * - Mai sostituisce un esercizio "mandatory" per i token richiesti.
+ * - Mai usa un attrezzo non disponibile nel pool utente.
+ * - Evita di mettere lo stesso attrezzo in due esercizi consecutivi.
+ */
+function mixSecondaryEquipment(
+  primaryExercises: Exercise[],
+  primaryAttrezzo: string,
+  livello: string,
+  availableEquipment: string[],
+  dayFocus: DayFocus,
+): Exercise[] {
+  if (primaryExercises.length < 4) return primaryExercises;
+
+  // Pool secondario: attrezzi utente diversi dal primario, normalizzati. Aggiungi sempre Corpo Libero come fallback.
+  const normPrimary = normalizeEquipmentName(primaryAttrezzo);
+  const userPool = Array.from(new Set(availableEquipment.map(normalizeEquipmentName)))
+    .filter(a => a !== normPrimary);
+  const secondaryPool = userPool.length > 0 ? userPool : ["Corpo Libero"];
+  const includeBodyWeight = !secondaryPool.includes("Corpo Libero");
+  const candidatesPool = includeBodyWeight ? [...secondaryPool, "Corpo Libero"] : secondaryPool;
+
+  // Quante sostituire: ~1/3, minimo 1, max metà
+  const targetSwaps = Math.max(1, Math.min(Math.floor(primaryExercises.length / 3), Math.floor(primaryExercises.length / 2)));
+
+  const minPerToken = MIN_PER_TOKEN[dayFocus] || {};
+  const result = [...primaryExercises];
+  const usedIds = new Set(result.map(e => e.id));
+
+  // Conta quanti esercizi soddisfano ogni token mandatory; non rimuovere quelli "critici"
+  const tokenCount: Record<string, number> = {};
+  for (const t of Object.keys(minPerToken)) {
+    tokenCount[t] = result.reduce((acc, e) => acc + (exerciseMatchesToken(e, t) ? 1 : 0), 0);
+  }
+
+  const isCritical = (e: Exercise): boolean => {
+    for (const t of Object.keys(minPerToken)) {
+      if (exerciseMatchesToken(e, t) && tokenCount[t] <= (minPerToken[t] || 0)) return true;
+    }
+    return false;
+  };
+
+  let swaps = 0;
+  // Itera dalla posizione 1 (lascia il primo come "attivazione" del primario)
+  for (let i = 1; i < result.length && swaps < targetSwaps; i++) {
+    const current = result[i];
+    if (isCritical(current)) continue;
+
+    // Evita due esercizi consecutivi con lo stesso attrezzo
+    const prevAttr = i > 0 ? normalizeEquipmentName(result[i - 1].attrezzo) : "";
+    const nextAttr = i < result.length - 1 ? normalizeEquipmentName(result[i + 1].attrezzo) : "";
+
+    // Cerca un sostituto in candidatesPool che matchi categoria/muscoli ed eviti ripetizioni consecutive
+    let replacement: Exercise | null = null;
+    for (const attr of shuffle(candidatesPool)) {
+      if (attr === prevAttr || attr === nextAttr) continue;
+      const matches = EXERCISE_LIBRARY.filter(e =>
+        e.attrezzo === attr &&
+        livelloAccessibile(e.livello, livello) &&
+        !usedIds.has(e.id) &&
+        e.categoria === current.categoria
+      );
+      if (matches.length > 0) {
+        replacement = shuffle(matches)[0];
+        break;
+      }
+    }
+
+    if (replacement) {
+      // aggiorna conteggi token
+      for (const t of Object.keys(minPerToken)) {
+        const wasMatch = exerciseMatchesToken(current, t);
+        const isMatch = exerciseMatchesToken(replacement, t);
+        if (wasMatch && !isMatch) tokenCount[t]--;
+        if (!wasMatch && isMatch) tokenCount[t]++;
+      }
+      usedIds.delete(current.id);
+      usedIds.add(replacement.id);
+      result[i] = replacement;
+      swaps++;
+    }
+  }
+
+  return result;
+}
+
+
+// ============================================================
 // DATE UTILITIES
 // ============================================================
 
