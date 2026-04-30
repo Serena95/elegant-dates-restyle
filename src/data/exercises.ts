@@ -10,6 +10,7 @@ import { SMALL_BALL_EXERCISES } from "./exercises-small-ball";
 import { FITBALL_EXERCISES } from "./exercises-fitball";
 import { ELASTICO_EXERCISES, FASCIA_EXERCISES } from "./exercises-bands";
 import { PESI_EXERCISES } from "./exercises-pesi";
+import { KETTLEBELL_EXERCISES } from "./exercises-kettlebell";
 import { RULLO_EXERCISES } from "./exercises-rullo";
 import { REFORMER_EXERCISES, CADILLAC_EXERCISES, CHAIR_EXERCISES, BARREL_EXERCISES, SPINE_CORRECTOR_EXERCISES } from "./exercises-studio";
 
@@ -21,6 +22,7 @@ export const EXERCISE_LIBRARY: Exercise[] = [
   ...ELASTICO_EXERCISES,
   ...FASCIA_EXERCISES,
   ...PESI_EXERCISES,
+  ...KETTLEBELL_EXERCISES,
   ...RULLO_EXERCISES,
   ...REFORMER_EXERCISES,
   ...CADILLAC_EXERCISES,
