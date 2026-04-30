@@ -371,7 +371,60 @@ function mixSecondaryEquipment(
   return result;
 }
 
+/**
+ * Hard cap: ensure the workout uses at most `maxAttrezzi` different equipments.
+ * If exceeded, replace the least-used equipment occurrences with exercises from
+ * the most-used one (matching same categoria when possible).
+ */
+function enforceMaxEquipment(exs: Exercise[], livello: string, maxAttrezzi: number = 3): Exercise[] {
+  if (exs.length === 0) return exs;
+  const result = [...exs];
+  const countByAttr = (): Record<string, number> => {
+    const c: Record<string, number> = {};
+    result.forEach(e => { const a = normalizeEquipmentName(e.attrezzo); c[a] = (c[a] || 0) + 1; });
+    return c;
+  };
 
+  let counts = countByAttr();
+  let distinct = Object.keys(counts);
+  while (distinct.length > maxAttrezzi) {
+    // pick least used attrezzo to remove
+    const sorted = distinct.sort((a, b) => counts[a] - counts[b]);
+    const toRemove = sorted[0];
+    // pick a target attrezzo (most used)
+    const target = sorted[sorted.length - 1];
+    const usedIds = new Set(result.map(e => e.id));
+    let replaced = false;
+    for (let i = 0; i < result.length; i++) {
+      if (normalizeEquipmentName(result[i].attrezzo) !== toRemove) continue;
+      const cat = result[i].categoria;
+      const candidates = EXERCISE_LIBRARY.filter(e =>
+        normalizeEquipmentName(e.attrezzo) === target &&
+        livelloAccessibile(e.livello, livello) &&
+        !usedIds.has(e.id) &&
+        e.categoria === cat
+      );
+      const pick = candidates.length > 0
+        ? candidates.sort((a, b) => a.id.localeCompare(b.id))[0]
+        : EXERCISE_LIBRARY.filter(e =>
+            normalizeEquipmentName(e.attrezzo) === target &&
+            livelloAccessibile(e.livello, livello) &&
+            !usedIds.has(e.id)
+          ).sort((a, b) => a.id.localeCompare(b.id))[0];
+      if (pick) {
+        usedIds.delete(result[i].id);
+        usedIds.add(pick.id);
+        result[i] = pick;
+        replaced = true;
+        break;
+      }
+    }
+    if (!replaced) break; // can't reduce further safely
+    counts = countByAttr();
+    distinct = Object.keys(counts);
+  }
+  return result;
+}
 // ============================================================
 // DATE UTILITIES
 // ============================================================
