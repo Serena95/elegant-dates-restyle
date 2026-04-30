@@ -23,20 +23,20 @@ export const CONFIG_LIVELLI: Record<string, { round: number; tempoEsercizio: num
 };
 
 export const TUTTI_GLI_ATTREZZI = [
-  "Corpo Libero", "Ring", "Rullo", "Pesi",
+  "Corpo Libero", "Ring", "Rullo", "Pesi", "Kettlebell",
   "Elastico Chiuso", "Fascia Aperta", "Palla Piccola", "Palla Grande",
   "Reformer", "Cadillac", "Wunda Chair", "Ladder Barrel", "Spine Corrector",
 ];
 
 export const ATTREZZO_ICONS: Record<string, string> = {
-  "Corpo Libero": "🧘", "Ring": "⭕", "Rullo": "🔄", "Pesi": "🏋️",
+  "Corpo Libero": "🧘", "Ring": "⭕", "Rullo": "🔄", "Pesi": "🏋️", "Kettlebell": "🟠",
   "Pesi(da 1 a 4kg)": "🏋️", "Elastico Chiuso": "🔗", "Fascia Aperta": "🎗️",
   "Palla Piccola": "⚽", "Palla Grande": "🔵", "Reformer": "🛏️",
   "Cadillac": "🗼", "Wunda Chair": "🪑", "Ladder Barrel": "🪜", "Spine Corrector": "🌀",
 };
 
 export const ATTREZZO_SHORT: Record<string, string> = {
-  "Corpo Libero": "CL", "Ring": "RG", "Rullo": "RL", "Pesi": "PS",
+  "Corpo Libero": "CL", "Ring": "RG", "Rullo": "RL", "Pesi": "PS", "Kettlebell": "KB",
   "Pesi(da 1 a 4kg)": "PS", "Elastico Chiuso": "EC", "Fascia Aperta": "FA",
   "Palla Piccola": "PP", "Palla Grande": "PG", "Reformer": "RF",
   "Cadillac": "CD", "Wunda Chair": "WC", "Ladder Barrel": "LB", "Spine Corrector": "SC",

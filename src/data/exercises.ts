@@ -10,6 +10,7 @@ import { SMALL_BALL_EXERCISES } from "./exercises-small-ball";
 import { FITBALL_EXERCISES } from "./exercises-fitball";
 import { ELASTICO_EXERCISES, FASCIA_EXERCISES } from "./exercises-bands";
 import { PESI_EXERCISES } from "./exercises-pesi";
+import { KETTLEBELL_EXERCISES } from "./exercises-kettlebell";
 import { RULLO_EXERCISES } from "./exercises-rullo";
 import { REFORMER_EXERCISES, CADILLAC_EXERCISES, CHAIR_EXERCISES, BARREL_EXERCISES, SPINE_CORRECTOR_EXERCISES } from "./exercises-studio";
 
@@ -21,6 +22,7 @@ export const EXERCISE_LIBRARY: Exercise[] = [
   ...ELASTICO_EXERCISES,
   ...FASCIA_EXERCISES,
   ...PESI_EXERCISES,
+  ...KETTLEBELL_EXERCISES,
   ...RULLO_EXERCISES,
   ...REFORMER_EXERCISES,
   ...CADILLAC_EXERCISES,
@@ -369,7 +371,60 @@ function mixSecondaryEquipment(
   return result;
 }
 
+/**
+ * Hard cap: ensure the workout uses at most `maxAttrezzi` different equipments.
+ * If exceeded, replace the least-used equipment occurrences with exercises from
+ * the most-used one (matching same categoria when possible).
+ */
+function enforceMaxEquipment(exs: Exercise[], livello: string, maxAttrezzi: number = 3): Exercise[] {
+  if (exs.length === 0) return exs;
+  const result = [...exs];
+  const countByAttr = (): Record<string, number> => {
+    const c: Record<string, number> = {};
+    result.forEach(e => { const a = normalizeEquipmentName(e.attrezzo); c[a] = (c[a] || 0) + 1; });
+    return c;
+  };
 
+  let counts = countByAttr();
+  let distinct = Object.keys(counts);
+  while (distinct.length > maxAttrezzi) {
+    // pick least used attrezzo to remove
+    const sorted = distinct.sort((a, b) => counts[a] - counts[b]);
+    const toRemove = sorted[0];
+    // pick a target attrezzo (most used)
+    const target = sorted[sorted.length - 1];
+    const usedIds = new Set(result.map(e => e.id));
+    let replaced = false;
+    for (let i = 0; i < result.length; i++) {
+      if (normalizeEquipmentName(result[i].attrezzo) !== toRemove) continue;
+      const cat = result[i].categoria;
+      const candidates = EXERCISE_LIBRARY.filter(e =>
+        normalizeEquipmentName(e.attrezzo) === target &&
+        livelloAccessibile(e.livello, livello) &&
+        !usedIds.has(e.id) &&
+        e.categoria === cat
+      );
+      const pick = candidates.length > 0
+        ? candidates.sort((a, b) => a.id.localeCompare(b.id))[0]
+        : EXERCISE_LIBRARY.filter(e =>
+            normalizeEquipmentName(e.attrezzo) === target &&
+            livelloAccessibile(e.livello, livello) &&
+            !usedIds.has(e.id)
+          ).sort((a, b) => a.id.localeCompare(b.id))[0];
+      if (pick) {
+        usedIds.delete(result[i].id);
+        usedIds.add(pick.id);
+        result[i] = pick;
+        replaced = true;
+        break;
+      }
+    }
+    if (!replaced) break; // can't reduce further safely
+    counts = countByAttr();
+    distinct = Object.keys(counts);
+  }
+  return result;
+}
 // ============================================================
 // DATE UTILITIES
 // ============================================================
@@ -866,8 +921,11 @@ export function generaEserciziGiorno(
   // Mix multi-attrezzo: usa anche un secondo attrezzo (se disponibile) + corpo libero
   const mixed = mixSecondaryEquipment(balanced, attrezzo, effectiveLevel, availableEquipment, dayFocus);
 
+  // Hard cap: max 3 attrezzi distinti per workout
+  const capped = enforceMaxEquipment(mixed, effectiveLevel, 3);
+
   // Ordina per fasi: Attivazione → Centrale (pilates) → Metabolica → Core finale
-  return orderByPhases(mixed);
+  return orderByPhases(capped);
 }
 
 function weightByLevel(pool: Exercise[], levelPref: string[]): Exercise[] {

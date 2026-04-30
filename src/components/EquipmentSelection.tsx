@@ -22,7 +22,7 @@ export function EquipmentSelection({ savedAttrezzi, onComplete }: EquipmentSelec
   };
 
   // Split into home and studio equipment
-  const homeEquipment = ["Corpo Libero", "Ring", "Rullo", "Pesi", "Elastico Chiuso", "Fascia Aperta", "Palla Piccola", "Palla Grande"];
+  const homeEquipment = ["Corpo Libero", "Ring", "Rullo", "Pesi", "Kettlebell", "Elastico Chiuso", "Fascia Aperta", "Palla Piccola", "Palla Grande"];
   const studioEquipment = ["Reformer", "Cadillac", "Wunda Chair", "Ladder Barrel", "Spine Corrector"];
 
   return (
