@@ -921,8 +921,11 @@ export function generaEserciziGiorno(
   // Mix multi-attrezzo: usa anche un secondo attrezzo (se disponibile) + corpo libero
   const mixed = mixSecondaryEquipment(balanced, attrezzo, effectiveLevel, availableEquipment, dayFocus);
 
+  // Hard cap: max 3 attrezzi distinti per workout
+  const capped = enforceMaxEquipment(mixed, effectiveLevel, 3);
+
   // Ordina per fasi: Attivazione → Centrale (pilates) → Metabolica → Core finale
-  return orderByPhases(mixed);
+  return orderByPhases(capped);
 }
 
 function weightByLevel(pool: Exercise[], levelPref: string[]): Exercise[] {
