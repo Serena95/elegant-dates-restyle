@@ -258,171 +258,188 @@ function orderByPhases(exs: Exercise[]): Exercise[] {
 }
 
 // ============================================================
-// MULTI-EQUIPMENT MIX
+// EQUIPMENT MIX — sempre ESATTAMENTE 3 attrezzi per workout:
+//   • 1 primario (dominante, il più usato)
+//   • 2 di supporto (coerenti con focus + gruppi muscolari)
 // ============================================================
 
 /**
- * Replace ~30% of the workout with exercises from a secondary equipment
- * (or Corpo Libero) so the session uses ≥2 different equipments + body weight.
- * - Mai sostituisce un esercizio "mandatory" per i token richiesti.
- * - Mai usa un attrezzo non disponibile nel pool utente.
- * - Evita di mettere lo stesso attrezzo in due esercizi consecutivi.
+ * Affinità deterministica attrezzo↔focus: punteggio basato sul numero di esercizi
+ * disponibili dell'attrezzo che servono i token muscolari richiesti dal focus.
+ * Più alto = più coerente con il tipo di allenamento.
  */
-function mixSecondaryEquipment(
-  primaryExercises: Exercise[],
+function equipmentFocusAffinity(attrezzo: string, livello: string, focus: DayFocus): number {
+  const required = MIN_PER_TOKEN[focus] || {};
+  let score = 0;
+  for (const token of Object.keys(required)) {
+    const count = countTokenForEquipment(attrezzo, livello, token);
+    // Pesato sul minimo richiesto: più contribuisce a soddisfare i minimi, più punti
+    score += Math.min(count, (required[token] || 0) * 2);
+  }
+  // Bonus se l'attrezzo copre tutti i token richiesti
+  if (equipmentSupportsFocus(attrezzo, livello, focus)) score += 5;
+  return score;
+}
+
+/**
+ * Sceglie deterministicamente i 3 attrezzi (primario + 2 supporto) per il workout
+ * tra quelli disponibili dell'utente, in modo logico e coerente con il focus.
+ */
+function selectThreeEquipment(
   primaryAttrezzo: string,
   livello: string,
   availableEquipment: string[],
   dayFocus: DayFocus,
-): Exercise[] {
-  if (primaryExercises.length < 4) return primaryExercises;
-
+): { primary: string; support: string[] } {
   const normPrimary = normalizeEquipmentName(primaryAttrezzo);
-  // Pool utente diverso dal primario, normalizzato e ordinato in modo stabile (non random)
-  const userPool = Array.from(new Set(availableEquipment.map(normalizeEquipmentName)))
-    .filter(a => a !== normPrimary)
-    .sort();
+  const userPool = Array.from(new Set(availableEquipment.map(normalizeEquipmentName)));
 
-  // Scelta DETERMINISTICA dell'attrezzo secondario in base al focus del giorno + attrezzo primario
-  // (così non cambia ai refresh e segue una logica, non è random)
-  const seed = (dayFocus + "|" + normPrimary).split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
-  const secondaryAttr = userPool.length > 0 ? userPool[seed % userPool.length] : null;
+  // Candidati di supporto: tutti gli attrezzi utente diversi dal primario
+  const supportCandidates = userPool.filter(a => a !== normPrimary);
 
-  // Pool finale: max 3 attrezzi (primario + secondario + Corpo Libero come 3° opzionale)
-  // Se secondario è già "Corpo Libero", non lo aggiungo due volte.
-  const candidatesPool: string[] = [];
-  if (secondaryAttr) candidatesPool.push(secondaryAttr);
-  if (normPrimary !== "Corpo Libero" && secondaryAttr !== "Corpo Libero") {
-    candidatesPool.push("Corpo Libero");
-  }
-  if (candidatesPool.length === 0) return primaryExercises;
+  // Ordinamento DETERMINISTICO per affinità con il focus, poi per nome (stabile, no random)
+  supportCandidates.sort((a, b) => {
+    const sa = equipmentFocusAffinity(a, livello, dayFocus);
+    const sb = equipmentFocusAffinity(b, livello, dayFocus);
+    if (sb !== sa) return sb - sa;
+    return a.localeCompare(b);
+  });
 
-  // Numero di sostituzioni: ~1/3 esercizi
-  const targetSwaps = Math.max(1, Math.floor(primaryExercises.length / 3));
-
-  const minPerToken = MIN_PER_TOKEN[dayFocus] || {};
-  const result = [...primaryExercises];
-  const usedIds = new Set(result.map(e => e.id));
-
-  // Conta token critici per non scendere sotto i minimi
-  const tokenCount: Record<string, number> = {};
-  for (const t of Object.keys(minPerToken)) {
-    tokenCount[t] = result.reduce((acc, e) => acc + (exerciseMatchesToken(e, t) ? 1 : 0), 0);
-  }
-  const isCritical = (e: Exercise): boolean => {
-    for (const t of Object.keys(minPerToken)) {
-      if (exerciseMatchesToken(e, t) && tokenCount[t] <= (minPerToken[t] || 0)) return true;
-    }
-    return false;
-  };
-
-  // Scegli posizioni deterministiche da sostituire (distribuite uniformemente nel workout)
-  // Esempio con 7 esercizi e 2 swap: posizioni [2, 4]
-  const positions: number[] = [];
-  const step = primaryExercises.length / (targetSwaps + 1);
-  for (let k = 1; k <= targetSwaps; k++) {
-    positions.push(Math.min(primaryExercises.length - 1, Math.max(1, Math.round(k * step))));
+  // Prendi i 2 di supporto più coerenti
+  const support: string[] = [];
+  for (const a of supportCandidates) {
+    if (support.length >= 2) break;
+    support.push(a);
   }
 
-  let swaps = 0;
-  for (const i of positions) {
-    if (swaps >= targetSwaps) break;
-    const current = result[i];
-    if (isCritical(current)) continue;
-
-    // Alterna tra secondary e Corpo Libero in modo logico (no random)
-    const orderedAttempt = swaps % 2 === 0
-      ? candidatesPool
-      : [...candidatesPool].reverse();
-
-    let replacement: Exercise | null = null;
-    for (const attr of orderedAttempt) {
-      const prevAttr = i > 0 ? normalizeEquipmentName(result[i - 1].attrezzo) : "";
-      const nextAttr = i < result.length - 1 ? normalizeEquipmentName(result[i + 1].attrezzo) : "";
-      if (attr === prevAttr || attr === nextAttr) continue;
-
-      const matches = EXERCISE_LIBRARY.filter(e =>
-        e.attrezzo === attr &&
-        livelloAccessibile(e.livello, livello) &&
-        !usedIds.has(e.id) &&
-        e.categoria === current.categoria
-      );
-      if (matches.length > 0) {
-        // Selezione deterministica: prendi il primo per id (ordinamento stabile)
-        replacement = matches.sort((a, b) => a.id.localeCompare(b.id))[0];
-        break;
-      }
-    }
-
-    if (replacement) {
-      for (const t of Object.keys(minPerToken)) {
-        const wasMatch = exerciseMatchesToken(current, t);
-        const isMatch = exerciseMatchesToken(replacement, t);
-        if (wasMatch && !isMatch) tokenCount[t]--;
-        if (!wasMatch && isMatch) tokenCount[t]++;
-      }
-      usedIds.delete(current.id);
-      usedIds.add(replacement.id);
-      result[i] = replacement;
-      swaps++;
+  // Se l'utente ha < 3 attrezzi totali, completa con "Corpo Libero" (sempre disponibile,
+  // garantisce esattamente 3 attrezzi anche con pool ridotto).
+  while (support.length < 2) {
+    const fallback = "Corpo Libero";
+    if (fallback !== normPrimary && !support.includes(fallback)) {
+      support.push(fallback);
+    } else {
+      // Edge case: primario è Corpo Libero e l'utente ha solo 1 attrezzo aggiuntivo
+      // → usiamo qualunque altro attrezzo non ancora incluso
+      const extra = userPool.find(a => a !== normPrimary && !support.includes(a));
+      if (extra) support.push(extra);
+      else break; // impossibile arrivare a 3 — accettiamo 2
     }
   }
 
-  return result;
+  return { primary: normPrimary, support };
 }
 
 /**
- * Hard cap: ensure the workout uses at most `maxAttrezzi` different equipments.
- * If exceeded, replace the least-used equipment occurrences with exercises from
- * the most-used one (matching same categoria when possible).
+ * Garantisce che il workout usi ESATTAMENTE i 3 attrezzi scelti, con:
+ *   • il primario dominante (≥ ceil(N/2) esercizi)
+ *   • ciascun supporto presente almeno 1 volta (se possibile data la libreria)
+ *   • nessun attrezzo extra fuori dai 3
+ * Sostituzioni preservano la categoria muscolare di ogni esercizio.
  */
-function enforceMaxEquipment(exs: Exercise[], livello: string, maxAttrezzi: number = 3): Exercise[] {
+function enforceThreeEquipment(
+  exs: Exercise[],
+  livello: string,
+  primary: string,
+  support: string[],
+  dayFocus: DayFocus,
+): Exercise[] {
   if (exs.length === 0) return exs;
+  const allowed = [primary, ...support];
+  const allowedSet = new Set(allowed);
   const result = [...exs];
-  const countByAttr = (): Record<string, number> => {
-    const c: Record<string, number> = {};
-    result.forEach(e => { const a = normalizeEquipmentName(e.attrezzo); c[a] = (c[a] || 0) + 1; });
-    return c;
+
+  const minPerToken = MIN_PER_TOKEN[dayFocus] || {};
+  const tokenCount = (arr: Exercise[]): Record<string, number> => {
+    const tc: Record<string, number> = {};
+    for (const t of Object.keys(minPerToken)) {
+      tc[t] = arr.reduce((acc, e) => acc + (exerciseMatchesToken(e, t) ? 1 : 0), 0);
+    }
+    return tc;
   };
 
-  let counts = countByAttr();
-  let distinct = Object.keys(counts);
-  while (distinct.length > maxAttrezzi) {
-    // pick least used attrezzo to remove
-    const sorted = distinct.sort((a, b) => counts[a] - counts[b]);
-    const toRemove = sorted[0];
-    // pick a target attrezzo (most used)
-    const target = sorted[sorted.length - 1];
+  // Sostituisci un esercizio nella posizione `idx` con uno dell'attrezzo `targetAttr`
+  // mantenendo categoria e senza compromettere i minimi muscolari.
+  const trySwap = (idx: number, targetAttr: string): boolean => {
+    const current = result[idx];
+    if (normalizeEquipmentName(current.attrezzo) === targetAttr) return true;
     const usedIds = new Set(result.map(e => e.id));
-    let replaced = false;
-    for (let i = 0; i < result.length; i++) {
-      if (normalizeEquipmentName(result[i].attrezzo) !== toRemove) continue;
-      const cat = result[i].categoria;
-      const candidates = EXERCISE_LIBRARY.filter(e =>
-        normalizeEquipmentName(e.attrezzo) === target &&
-        livelloAccessibile(e.livello, livello) &&
-        !usedIds.has(e.id) &&
-        e.categoria === cat
-      );
-      const pick = candidates.length > 0
-        ? candidates.sort((a, b) => a.id.localeCompare(b.id))[0]
-        : EXERCISE_LIBRARY.filter(e =>
-            normalizeEquipmentName(e.attrezzo) === target &&
-            livelloAccessibile(e.livello, livello) &&
-            !usedIds.has(e.id)
-          ).sort((a, b) => a.id.localeCompare(b.id))[0];
-      if (pick) {
-        usedIds.delete(result[i].id);
-        usedIds.add(pick.id);
-        result[i] = pick;
-        replaced = true;
-        break;
+    const cat = current.categoria;
+
+    // Candidati: stesso categoria preferita, poi qualunque
+    const sameCat = EXERCISE_LIBRARY.filter(e =>
+      normalizeEquipmentName(e.attrezzo) === targetAttr &&
+      livelloAccessibile(e.livello, livello) &&
+      !usedIds.has(e.id) &&
+      e.categoria === cat
+    ).sort((a, b) => a.id.localeCompare(b.id));
+
+    const anyCat = sameCat.length > 0 ? sameCat : EXERCISE_LIBRARY.filter(e =>
+      normalizeEquipmentName(e.attrezzo) === targetAttr &&
+      livelloAccessibile(e.livello, livello) &&
+      !usedIds.has(e.id)
+    ).sort((a, b) => a.id.localeCompare(b.id));
+
+    if (anyCat.length === 0) return false;
+
+    // Verifica che la sostituzione non rompa i minimi muscolari
+    const candidate = anyCat[0];
+    const before = tokenCount(result);
+    const tentative = [...result];
+    tentative[idx] = candidate;
+    const after = tokenCount(tentative);
+    for (const t of Object.keys(minPerToken)) {
+      const min = minPerToken[t] || 0;
+      if (before[t] >= min && after[t] < min) return false;
+    }
+
+    result[idx] = candidate;
+    return true;
+  };
+
+  // 1) Rimuovi attrezzi NON ammessi: ogni esercizio fuori dai 3 viene rimpiazzato
+  //    con uno del primario (se possibile) o di un supporto.
+  for (let i = 0; i < result.length; i++) {
+    const a = normalizeEquipmentName(result[i].attrezzo);
+    if (allowedSet.has(a)) continue;
+    if (!trySwap(i, primary)) {
+      for (const s of support) {
+        if (trySwap(i, s)) break;
       }
     }
-    if (!replaced) break; // can't reduce further safely
-    counts = countByAttr();
-    distinct = Object.keys(counts);
   }
+
+  // 2) Garantisci che il PRIMARIO sia dominante (≥ ceil(N/2)).
+  const targetPrimaryCount = Math.ceil(result.length / 2);
+  const countOf = (attr: string) =>
+    result.filter(e => normalizeEquipmentName(e.attrezzo) === attr).length;
+
+  let primaryCount = countOf(primary);
+  if (primaryCount < targetPrimaryCount) {
+    // Riconvertiamo prima i supporti in eccesso (chi ha più esercizi) verso il primario
+    for (let i = 0; i < result.length && primaryCount < targetPrimaryCount; i++) {
+      const a = normalizeEquipmentName(result[i].attrezzo);
+      if (a === primary) continue;
+      // Mantieni almeno 1 esercizio per ogni supporto
+      const supportCount = countOf(a);
+      if (support.includes(a) && supportCount <= 1) continue;
+      if (trySwap(i, primary)) primaryCount++;
+    }
+  }
+
+  // 3) Garantisci che ogni SUPPORTO compaia almeno 1 volta (se la libreria lo permette
+  //    e se non comprometterebbe la dominanza del primario o i minimi muscolari).
+  for (const s of support) {
+    if (countOf(s) >= 1) continue;
+    // Trova un esercizio del primario "sacrificabile" (oltre il minimo dominante)
+    for (let i = result.length - 1; i >= 0; i--) {
+      const a = normalizeEquipmentName(result[i].attrezzo);
+      if (a !== primary) continue;
+      if (countOf(primary) <= targetPrimaryCount) break;
+      if (trySwap(i, s)) break;
+    }
+  }
+
   return result;
 }
 // ============================================================
