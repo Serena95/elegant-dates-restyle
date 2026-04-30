@@ -1,5 +1,39 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 
+const TIMER_PERSIST_KEY = "active_timer_state";
+
+interface PersistedTimer {
+  endTime: number;
+  label: string;
+}
+
+function loadPersistedTimer(): PersistedTimer | null {
+  try {
+    const raw = localStorage.getItem(TIMER_PERSIST_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw) as PersistedTimer;
+    if (!parsed.endTime || parsed.endTime <= Date.now()) {
+      localStorage.removeItem(TIMER_PERSIST_KEY);
+      return null;
+    }
+    return parsed;
+  } catch {
+    return null;
+  }
+}
+
+function savePersistedTimer(endTime: number, label: string) {
+  try {
+    localStorage.setItem(TIMER_PERSIST_KEY, JSON.stringify({ endTime, label }));
+  } catch {}
+}
+
+function clearPersistedTimer() {
+  try {
+    localStorage.removeItem(TIMER_PERSIST_KEY);
+  } catch {}
+}
+
 export function useTimer() {
   const [isActive, setIsActive] = useState(false);
   const [timeLeft, setTimeLeft] = useState(0);
@@ -49,6 +83,7 @@ export function useTimer() {
           setLabel(lbl);
         }
         if (type === "done") {
+          clearPersistedTimer();
           setIsActive(false);
           setTimeLeft(0);
           playFinishSound();
@@ -64,11 +99,26 @@ export function useTimer() {
           onDoneRef.current?.();
         }
         if (type === "stopped") {
+          clearPersistedTimer();
           setIsActive(false);
           setTimeLeft(0);
         }
       };
       workerRef.current = worker;
+
+      // RESTORE persisted timer after refresh: resume worker with remaining time
+      const persisted = loadPersistedTimer();
+      if (persisted) {
+        const remaining = Math.max(0, Math.round((persisted.endTime - Date.now()) / 1000));
+        if (remaining > 0) {
+          setTimeLeft(remaining);
+          setLabel(persisted.label);
+          setIsActive(true);
+          worker.postMessage({ type: "start", seconds: remaining, timerLabel: persisted.label });
+        } else {
+          clearPersistedTimer();
+        }
+      }
     } catch {
       // Fallback: no worker support
     }
@@ -80,11 +130,12 @@ export function useTimer() {
   const start = useCallback((seconds: number, timerLabel: string, onDone?: () => void) => {
     // Pre-warm AudioContext on user interaction
     ensureAudioCtx();
-    
+
     setTimeLeft(seconds);
     setLabel(timerLabel);
     setIsActive(true);
     onDoneRef.current = onDone || null;
+    savePersistedTimer(Date.now() + seconds * 1000, timerLabel);
 
     if (workerRef.current) {
       workerRef.current.postMessage({ type: "start", seconds, timerLabel });
@@ -94,6 +145,7 @@ export function useTimer() {
         setTimeLeft(prev => {
           if (prev <= 1) {
             clearInterval(interval);
+            clearPersistedTimer();
             setIsActive(false);
             playFinishSound();
             if ("vibrate" in navigator) {
@@ -112,6 +164,7 @@ export function useTimer() {
     if (workerRef.current) {
       workerRef.current.postMessage({ type: "stop" });
     }
+    clearPersistedTimer();
     setIsActive(false);
     setTimeLeft(0);
     onDoneRef.current = null;
@@ -125,3 +178,4 @@ export function useTimer() {
 
   return { isActive, timeLeft, label, start, stop, formatTime: () => formatTime(timeLeft) };
 }
+
