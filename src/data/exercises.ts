@@ -427,16 +427,41 @@ function enforceThreeEquipment(
     }
   }
 
-  // 3) Garantisci che ogni SUPPORTO compaia almeno 1 volta (se la libreria lo permette
-  //    e se non comprometterebbe la dominanza del primario o i minimi muscolari).
+  // 3) Garantisci che ogni SUPPORTO compaia almeno 1 volta.
+  //    Sacrificiamo nell'ordine: (a) un altro supporto in eccesso (count > 1),
+  //    poi (b) il primario se sopra il target dominante,
+  //    infine (c) il primario anche se al target (preferibile a perdere un attrezzo).
   for (const s of support) {
     if (countOf(s) >= 1) continue;
-    // Trova un esercizio del primario "sacrificabile" (oltre il minimo dominante)
-    for (let i = result.length - 1; i >= 0; i--) {
+
+    // (a) altro supporto in eccesso
+    let placed = false;
+    for (let i = result.length - 1; i >= 0 && !placed; i--) {
+      const a = normalizeEquipmentName(result[i].attrezzo);
+      if (a === s || a === primary) continue;
+      if (!support.includes(a)) continue;
+      if (countOf(a) <= 1) continue;
+      if (trySwap(i, s)) placed = true;
+    }
+    if (placed) continue;
+
+    // (b) primario in eccesso rispetto al target
+    for (let i = result.length - 1; i >= 0 && !placed; i--) {
       const a = normalizeEquipmentName(result[i].attrezzo);
       if (a !== primary) continue;
       if (countOf(primary) <= targetPrimaryCount) break;
-      if (trySwap(i, s)) break;
+      if (trySwap(i, s)) placed = true;
+    }
+    if (placed) continue;
+
+    // (c) primario anche se al target (meglio 3 attrezzi che 2): mantieni comunque
+    //     almeno la metà arrotondata per difetto degli esercizi sul primario.
+    const minPrimaryFloor = Math.max(1, Math.floor(result.length / 2));
+    for (let i = result.length - 1; i >= 0 && !placed; i--) {
+      const a = normalizeEquipmentName(result[i].attrezzo);
+      if (a !== primary) continue;
+      if (countOf(primary) <= minPrimaryFloor) break;
+      if (trySwap(i, s)) placed = true;
     }
   }
 
