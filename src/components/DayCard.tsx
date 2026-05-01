@@ -30,10 +30,18 @@ export const DayCard = React.forwardRef<HTMLDivElement, DayCardProps>(function D
   const temaIcon = ATTREZZO_ICONS[attrezzo] || "🏋️";
   const gradient = isToday ? TODAY_GRADIENT : DEFAULT_GRADIENT;
 
-  // Tutti gli attrezzi effettivamente usati nel workout di questo giorno (max 3)
-  const attrezziGiorno: string[] = exercises && exercises.length > 0
-    ? Array.from(new Set([attrezzo, ...exercises.map(e => e.attrezzo).filter(Boolean)]))
-    : [attrezzo];
+  // Attrezzi effettivamente usati negli esercizi del giorno (esattamente 3: 1 principale + 2 di supporto)
+  // Il principale (dati.attrezzo) viene mostrato per primo, seguito dai 2 di supporto effettivamente presenti.
+  const attrezziGiorno: string[] = (() => {
+    if (!exercises || exercises.length === 0) return [attrezzo];
+    const usati = Array.from(new Set(exercises.map(e => e.attrezzo).filter(Boolean)));
+    // Ordina mettendo il principale per primo, poi gli altri nell'ordine in cui appaiono
+    const ordered = [
+      ...(usati.includes(attrezzo) ? [attrezzo] : []),
+      ...usati.filter(a => a !== attrezzo),
+    ];
+    return ordered.slice(0, 3);
+  })();
 
   const dayNum = new Date(giorno + "T00:00:00").getDate();
 
