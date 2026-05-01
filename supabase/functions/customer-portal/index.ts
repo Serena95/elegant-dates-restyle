@@ -50,9 +50,16 @@ serve(async (req) => {
     });
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
-    return new Response(JSON.stringify({ error: errorMessage }), {
+    console.error("[CUSTOMER-PORTAL] ERROR:", errorMessage);
+    const isAuthError = /auth|unauthenticated|not authenticated/i.test(errorMessage);
+    const isNotFound = /no stripe customer/i.test(errorMessage);
+    let status = 500;
+    let clientMessage = "An internal error occurred. Please try again.";
+    if (isAuthError) { status = 401; clientMessage = "Unauthorized"; }
+    else if (isNotFound) { status = 404; clientMessage = "No billing account found."; }
+    return new Response(JSON.stringify({ error: clientMessage }), {
       headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
+      status,
     });
   }
 });
