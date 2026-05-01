@@ -22,7 +22,7 @@ export function PublicProfileView({ userId, onBack }: PublicProfileViewProps) {
 
   useEffect(() => {
     Promise.all([
-      supabase.from("profiles").select("*").eq("user_id", userId).single(),
+      supabase.from("public_profiles" as any).select("user_id, display_name, avatar_url, xp, level").eq("user_id", userId).single(),
       fetchUserBadges(userId),
       fetchAllBadges(),
       supabase.from("workout_history").select("id", { count: "exact", head: true }).eq("user_id", userId).eq("completato", true),

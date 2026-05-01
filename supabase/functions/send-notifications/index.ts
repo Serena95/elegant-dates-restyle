@@ -221,6 +221,17 @@ Deno.serve(async (req) => {
     return new Response("ok", { headers: corsHeaders });
   }
 
+  // Restrict to internal/cron callers: require service role key in Authorization header
+  const authHeader = req.headers.get("Authorization") || "";
+  const token = authHeader.replace("Bearer ", "").trim();
+  const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+  if (!token || token !== serviceRoleKey) {
+    return new Response(JSON.stringify({ error: "Unauthorized" }), {
+      status: 401,
+      headers: { ...corsHeaders, "Content-Type": "application/json" },
+    });
+  }
+
   try {
     const supabaseAdmin = createClient(
       Deno.env.get("SUPABASE_URL")!,

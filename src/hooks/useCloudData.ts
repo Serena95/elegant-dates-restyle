@@ -164,7 +164,7 @@ export function useCloudData() {
       supabase.from("food_diary").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
       supabase.from("water_tracking").select("*").eq("user_id", user.id).eq("data", new Date().toISOString().split("T")[0]).maybeSingle(),
       supabase.from("challenges").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
-      supabase.from("profiles").select("*").eq("user_id", user.id).maybeSingle(),
+      supabase.from("profiles").select("user_id, display_name, avatar_url, xp, level, premium, premium_expires").eq("user_id", user.id).maybeSingle(),
       supabase.from("cycle_tracking").select("*").eq("user_id", user.id).order("created_at", { ascending: false }),
     ]);
 

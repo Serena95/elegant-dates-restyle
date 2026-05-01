@@ -654,7 +654,30 @@ export type Database = {
       }
     }
     Views: {
-      [_ in never]: never
+      public_profiles: {
+        Row: {
+          avatar_url: string | null
+          display_name: string | null
+          level: number | null
+          user_id: string | null
+          xp: number | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          display_name?: string | null
+          level?: number | null
+          user_id?: string | null
+          xp?: number | null
+        }
+        Update: {
+          avatar_url?: string | null
+          display_name?: string | null
+          level?: number | null
+          user_id?: string | null
+          xp?: number | null
+        }
+        Relationships: []
+      }
     }
     Functions: {
       delete_user_account: { Args: never; Returns: undefined }
@@ -665,10 +688,7 @@ export type Database = {
         }
         Returns: boolean
       }
-      toggle_post_like: {
-        Args: { p_post_id: string; p_user_id: string }
-        Returns: boolean
-      }
+      toggle_post_like: { Args: { p_post_id: string }; Returns: boolean }
     }
     Enums: {
       app_role: "admin" | "user"
