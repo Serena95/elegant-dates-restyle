@@ -934,8 +934,16 @@ export function generaEserciziGiorno(
   }
   const targetCount = getTargetCount(ctx.weekNumber, effectiveLevel, dayFocus);
 
+  // Selezione deterministica dei 3 attrezzi: 1 primario (dominante) + 2 di supporto
+  // coerenti con focus + gruppi muscolari + attrezzi selezionati dall'utente.
+  const { primary, support } = selectThreeEquipment(attrezzo, effectiveLevel, availableEquipment, dayFocus);
+  const allowedEquipment = new Set([primary, ...support].map(normalizeEquipmentName));
+
+  // Il workout viene costruito direttamente sul pool dei 3 attrezzi del giorno,
+  // così ogni giorno (anche il venerdì) può realmente mostrare 3 attrezzi distinti.
   const disponibili = EXERCISE_LIBRARY.filter(e =>
-    e.attrezzo === attrezzo && livelloAccessibile(e.livello, effectiveLevel)
+    allowedEquipment.has(normalizeEquipmentName(e.attrezzo)) &&
+    livelloAccessibile(e.livello, effectiveLevel)
   );
   if (disponibili.length === 0) return [];
 
@@ -960,9 +968,6 @@ export function generaEserciziGiorno(
     minPerToken,
   );
 
-  // Selezione deterministica dei 3 attrezzi: 1 primario (dominante) + 2 di supporto
-  // coerenti con focus + gruppi muscolari + attrezzi selezionati dall'utente.
-  const { primary, support } = selectThreeEquipment(attrezzo, effectiveLevel, availableEquipment, dayFocus);
   const finalEx = enforceThreeEquipment(balanced, effectiveLevel, primary, support, dayFocus);
 
   // Ordina per fasi: Attivazione → Centrale (pilates) → Metabolica → Core finale
