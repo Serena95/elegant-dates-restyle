@@ -83,19 +83,7 @@ Deno.serve(async (req) => {
       return new Response(JSON.stringify({ error: "Forbidden" }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    // Check if keys already exist
-    const { data: existing } = await supabaseAdmin
-      .from("app_config")
-      .select("value")
-      .eq("key", "vapid_public_key")
-      .maybeSingle();
-
-    if (existing) {
-      return new Response(
-        JSON.stringify({ publicKey: existing.value }),
-        { headers: { ...corsHeaders, "Content-Type": "application/json" } }
-      );
-    }
+    // (existing-keys check already happened above)
 
     // Generate new VAPID keys
     const keys = await generateVapidKeys();
