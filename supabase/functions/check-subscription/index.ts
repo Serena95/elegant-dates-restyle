@@ -107,9 +107,13 @@ serve(async (req) => {
   } catch (error) {
     const errorMessage = error instanceof Error ? error.message : String(error);
     logStep("ERROR", { message: errorMessage });
-    return new Response(JSON.stringify({ error: errorMessage }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    const isAuthError = /auth|unauthenticated|not authenticated/i.test(errorMessage);
+    return new Response(
+      JSON.stringify({ error: isAuthError ? "Unauthorized" : "An internal error occurred. Please try again." }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: isAuthError ? 401 : 500,
+      }
+    );
   }
 });
