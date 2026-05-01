@@ -54,9 +54,15 @@ serve(async (req) => {
       status: 200,
     });
   } catch (error) {
-    return new Response(JSON.stringify({ error: error.message }), {
-      headers: { ...corsHeaders, "Content-Type": "application/json" },
-      status: 500,
-    });
+    const errorMessage = error instanceof Error ? error.message : String(error);
+    console.error("[CREATE-CHECKOUT] ERROR:", errorMessage);
+    const isAuthError = /auth|unauthenticated|not authenticated/i.test(errorMessage);
+    return new Response(
+      JSON.stringify({ error: isAuthError ? "Unauthorized" : "An internal error occurred. Please try again." }),
+      {
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+        status: isAuthError ? 401 : 500,
+      }
+    );
   }
 });
