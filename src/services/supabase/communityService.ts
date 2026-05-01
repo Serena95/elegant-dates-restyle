@@ -61,10 +61,9 @@ export async function deletePost(postId: string) {
   return supabase.from("community_posts").delete().eq("id", postId);
 }
 
-export async function toggleLike(postId: string, userId: string, currentlyLiked: boolean, _currentCount: number) {
+export async function toggleLike(postId: string, _userId: string, _currentlyLiked: boolean, _currentCount: number) {
   const { data, error } = await supabase.rpc("toggle_post_like", {
     p_post_id: postId,
-    p_user_id: userId,
   });
   if (error) console.error("toggleLike error:", error);
   return data; // true = liked, false = unliked
