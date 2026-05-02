@@ -928,6 +928,7 @@ export function generaEserciziGiorno(
   focus?: string,
   progressionCtx?: ProgressionContext,
   availableEquipment: string[] = [],
+  avoidAsSupport: string[] = [],
 ): Exercise[] {
   const ctx = progressionCtx || { weekNumber: 1, recentExerciseIds: [], lastWeekEquipment: [], totalCompleted: 0, activeStreak: 0, weeksSinceLastWorkout: 0 };
   const effectiveLevel = getEffectiveLevel(livello, ctx);
@@ -943,7 +944,9 @@ export function generaEserciziGiorno(
 
   // Selezione deterministica dei 3 attrezzi: 1 primario (dominante) + 2 di supporto
   // coerenti con focus + gruppi muscolari + attrezzi selezionati dall'utente.
-  const { primary, support } = selectThreeEquipment(attrezzo, effectiveLevel, availableEquipment, dayFocus);
+  // `avoidAsSupport` (attrezzi già usati negli altri giorni della settimana) è
+  // usato come tie-breaker: se possibile, NON ripetiamo gli stessi 3 attrezzi tra giorni.
+  const { primary, support } = selectThreeEquipment(attrezzo, effectiveLevel, availableEquipment, dayFocus, avoidAsSupport);
   const allowedEquipment = new Set([primary, ...support].map(normalizeEquipmentName));
 
   // Il workout viene costruito direttamente sul pool dei 3 attrezzi del giorno,
