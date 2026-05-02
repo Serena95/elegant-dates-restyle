@@ -290,22 +290,29 @@ function selectThreeEquipment(
   livello: string,
   availableEquipment: string[],
   dayFocus: DayFocus,
+  avoidAsSupport: string[] = [],
 ): { primary: string; support: string[] } {
   const normPrimary = normalizeEquipmentName(primaryAttrezzo);
   const userPool = Array.from(new Set(availableEquipment.map(normalizeEquipmentName)));
+  const avoidSet = new Set(avoidAsSupport.map(normalizeEquipmentName));
 
   // Candidati di supporto: tutti gli attrezzi utente diversi dal primario
   const supportCandidates = userPool.filter(a => a !== normPrimary);
 
-  // Ordinamento DETERMINISTICO per affinità con il focus, poi per nome (stabile, no random)
+  // Ordinamento DETERMINISTICO: 1) preferisci attrezzi NON ancora usati come supporto
+  // negli altri giorni della settimana (varietà tra giorni); 2) per affinità col focus;
+  // 3) per nome (stabile).
   supportCandidates.sort((a, b) => {
+    const aAvoid = avoidSet.has(a) ? 1 : 0;
+    const bAvoid = avoidSet.has(b) ? 1 : 0;
+    if (aAvoid !== bAvoid) return aAvoid - bAvoid;
     const sa = equipmentFocusAffinity(a, livello, dayFocus);
     const sb = equipmentFocusAffinity(b, livello, dayFocus);
     if (sb !== sa) return sb - sa;
     return a.localeCompare(b);
   });
 
-  // Prendi i 2 di supporto più coerenti
+  // Prendi i 2 di supporto più coerenti (e preferibilmente "freschi" nella settimana)
   const support: string[] = [];
   for (const a of supportCandidates) {
     if (support.length >= 2) break;
@@ -921,6 +928,7 @@ export function generaEserciziGiorno(
   focus?: string,
   progressionCtx?: ProgressionContext,
   availableEquipment: string[] = [],
+  avoidAsSupport: string[] = [],
 ): Exercise[] {
   const ctx = progressionCtx || { weekNumber: 1, recentExerciseIds: [], lastWeekEquipment: [], totalCompleted: 0, activeStreak: 0, weeksSinceLastWorkout: 0 };
   const effectiveLevel = getEffectiveLevel(livello, ctx);
@@ -936,7 +944,9 @@ export function generaEserciziGiorno(
 
   // Selezione deterministica dei 3 attrezzi: 1 primario (dominante) + 2 di supporto
   // coerenti con focus + gruppi muscolari + attrezzi selezionati dall'utente.
-  const { primary, support } = selectThreeEquipment(attrezzo, effectiveLevel, availableEquipment, dayFocus);
+  // `avoidAsSupport` (attrezzi già usati negli altri giorni della settimana) è
+  // usato come tie-breaker: se possibile, NON ripetiamo gli stessi 3 attrezzi tra giorni.
+  const { primary, support } = selectThreeEquipment(attrezzo, effectiveLevel, availableEquipment, dayFocus, avoidAsSupport);
   const allowedEquipment = new Set([primary, ...support].map(normalizeEquipmentName));
 
   // Il workout viene costruito direttamente sul pool dei 3 attrezzi del giorno,
@@ -1128,6 +1138,9 @@ export function generaSettimanaIntelligente(
   const focusPerDay: Record<string, DayFocus> = {};
   let runningStorico = Object.values(previousStorico).flat();
   const usedEquipment: string[] = [];
+  // Tracciamo TUTTI gli attrezzi (primario + supporti) già usati nei giorni precedenti
+  // della settimana, così ogni giorno preferisce supporti diversi → varietà reale tra giorni.
+  const usedSupportsThisWeek: string[] = [];
 
   dateKeys.forEach((dateKey, i) => {
     // Use fixed weekday-based focus: Mon→Upper, Wed→Lower, Fri→Total
@@ -1136,13 +1149,27 @@ export function generaSettimanaIntelligente(
 
     ctx.recentExerciseIds = runningStorico;
 
-    const dayExercises = generaEserciziGiorno(attrezzo, livello, [], dayFocus, ctx, attrezziUtente);
+    const dayExercises = generaEserciziGiorno(
+      attrezzo,
+      livello,
+      [],
+      dayFocus,
+      ctx,
+      attrezziUtente,
+      usedSupportsThisWeek,
+    );
 
     piano[dateKey] = { attrezzo, round: 0 };
     esercizi[dateKey] = dayExercises;
     focusPerDay[dateKey] = dayFocus;
 
     usedEquipment.push(attrezzo);
+    // Aggiungi al "evita come supporto" tutti gli attrezzi distinti effettivamente
+    // usati nel workout di oggi (sia primario sia supporti).
+    const todaysAttrezzi = Array.from(new Set(dayExercises.map(e => normalizeEquipmentName(e.attrezzo))));
+    for (const a of todaysAttrezzi) {
+      if (!usedSupportsThisWeek.includes(a)) usedSupportsThisWeek.push(a);
+    }
     runningStorico = [...runningStorico, ...dayExercises.map(e => e.id)];
   });
 
