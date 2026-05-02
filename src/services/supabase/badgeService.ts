@@ -1,22 +1,25 @@
 import { supabase } from "@/integrations/supabase/client";
 
-export async function syncBadges(userId: string, unlockedBadgeIds: string[]) {
-  // Get already stored badges
-  const { data: existing } = await supabase
-    .from("user_badges")
-    .select("badge_id")
-    .eq("user_id", userId);
-
-  const existingIds = new Set(existing?.map(b => b.badge_id) || []);
-  const newBadges = unlockedBadgeIds.filter(id => !existingIds.has(id));
-
-  if (newBadges.length > 0) {
-    await supabase.from("user_badges").insert(
-      newBadges.map(badge_id => ({ user_id: userId, badge_id }))
-    );
+export async function syncBadges(
+  userId: string,
+  unlockedBadgeIds: string[],
+  stats?: { totalWorkouts: number; currentStreak: number; longestStreak: number }
+) {
+  // Badges are now granted server-side via edge function which validates eligibility.
+  // Direct INSERT from clients is blocked by RLS.
+  try {
+    const { data, error } = await supabase.functions.invoke("grant-badges", {
+      body: {
+        stats: stats ?? {},
+        requestedBadgeIds: unlockedBadgeIds,
+      },
+    });
+    if (error) throw error;
+    return (data?.granted as string[]) ?? [];
+  } catch (e) {
+    console.error("syncBadges error:", e);
+    return [];
   }
-
-  return newBadges;
 }
 
 export async function fetchUserBadges(userId: string) {

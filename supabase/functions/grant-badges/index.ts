@@ -12,30 +12,19 @@ const corsHeaders = {
 function evaluateEligibleBadges(stats: {
   totalWorkouts?: number;
   currentStreak?: number;
-  totalXP?: number;
-  level?: number;
-  challengesCompleted?: number;
+  longestStreak?: number;
 }): string[] {
   const eligible: string[] = [];
   const w = stats.totalWorkouts ?? 0;
-  const s = stats.currentStreak ?? 0;
-  const xp = stats.totalXP ?? 0;
-  const lvl = stats.level ?? 1;
-  const ch = stats.challengesCompleted ?? 0;
+  const cs = stats.currentStreak ?? 0;
+  const ls = stats.longestStreak ?? 0;
 
   if (w >= 1) eligible.push("first_workout");
-  if (w >= 10) eligible.push("workouts_10");
-  if (w >= 50) eligible.push("workouts_50");
-  if (w >= 100) eligible.push("workouts_100");
-  if (s >= 3) eligible.push("streak_3");
-  if (s >= 7) eligible.push("streak_7");
-  if (s >= 30) eligible.push("streak_30");
-  if (xp >= 500) eligible.push("xp_500");
-  if (xp >= 2000) eligible.push("xp_2000");
-  if (lvl >= 5) eligible.push("level_5");
-  if (lvl >= 10) eligible.push("level_10");
-  if (ch >= 1) eligible.push("first_challenge");
-  if (ch >= 5) eligible.push("challenges_5");
+  if (w >= 5) eligible.push("five_workouts");
+  if (w >= 10) eligible.push("ten_workouts");
+  if (w >= 30) eligible.push("thirty_workouts");
+  if (cs >= 7 || ls >= 7) eligible.push("seven_streak");
+  if (cs >= 30 || ls >= 30) eligible.push("thirty_streak");
 
   return eligible;
 }
