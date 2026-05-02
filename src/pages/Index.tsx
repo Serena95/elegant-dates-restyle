@@ -134,7 +134,7 @@ const Index = () => {
   const prevBadgeCountRef = useRef(0);
   
 
-  const { unlockedBadges, checkNewBadges } = useBadges(cloud.storicoCal);
+  const { unlockedBadges, checkNewBadges, stats: badgeStats } = useBadges(cloud.storicoCal);
   const notifications = useNotifications(FIXED_TRAINING_DAYS, cloud.storicoCal);
   const activeProgState = useActiveProgram();
   prevBadgeCountRef.current = unlockedBadges.length;
@@ -577,7 +577,7 @@ const Index = () => {
           updateLeaderboard(user.id, result.xpGained).catch(console.error);
         }).catch(console.error);
         const badgeIds = unlockedBadges.map(b => b.id);
-        syncBadges(user.id, badgeIds).catch(console.error);
+        syncBadges(user.id, badgeIds, badgeStats).catch(console.error);
       }
     }
   }, [giornoSelezionato, roundCorrenti, cloud.livello, cloud.piano, cloud.savePiano, cloud.saveStoricoCal, checkNewBadges, eserciziCorrenti, user, unlockedBadges]);

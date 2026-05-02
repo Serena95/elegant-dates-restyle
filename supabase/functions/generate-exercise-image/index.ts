@@ -16,8 +16,14 @@ serve(async (req) => {
     }
     const sbAuth = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_ANON_KEY")!);
     const { data: claims, error: authErr } = await sbAuth.auth.getClaims(authHeader.replace("Bearer ", ""));
-    if (authErr || !claims?.claims) {
+    if (authErr || !claims?.claims?.sub) {
       return new Response(JSON.stringify({ error: "Unauthorized" }), { status: 401, headers: { ...corsHeaders, "Content-Type": "application/json" } });
+    }
+
+    const adminAuth = createClient(Deno.env.get("SUPABASE_URL")!, Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!, { auth: { persistSession: false } });
+    const { data: isPremium } = await adminAuth.rpc("is_premium_or_admin", { _user_id: claims.claims.sub });
+    if (!isPremium) {
+      return new Response(JSON.stringify({ error: "premium_required", message: "Funzionalità riservata agli utenti Premium." }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
     const { exerciseId, exerciseName, category, muscles, equipment } = await req.json();
