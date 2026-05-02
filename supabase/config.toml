@@ -20,3 +20,6 @@ verify_jwt = false
 
 [functions.customer-portal]
 verify_jwt = false
+
+[functions.grant-badges]
+verify_jwt = false
