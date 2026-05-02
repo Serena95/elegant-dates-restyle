@@ -290,22 +290,29 @@ function selectThreeEquipment(
   livello: string,
   availableEquipment: string[],
   dayFocus: DayFocus,
+  avoidAsSupport: string[] = [],
 ): { primary: string; support: string[] } {
   const normPrimary = normalizeEquipmentName(primaryAttrezzo);
   const userPool = Array.from(new Set(availableEquipment.map(normalizeEquipmentName)));
+  const avoidSet = new Set(avoidAsSupport.map(normalizeEquipmentName));
 
   // Candidati di supporto: tutti gli attrezzi utente diversi dal primario
   const supportCandidates = userPool.filter(a => a !== normPrimary);
 
-  // Ordinamento DETERMINISTICO per affinità con il focus, poi per nome (stabile, no random)
+  // Ordinamento DETERMINISTICO: 1) preferisci attrezzi NON ancora usati come supporto
+  // negli altri giorni della settimana (varietà tra giorni); 2) per affinità col focus;
+  // 3) per nome (stabile).
   supportCandidates.sort((a, b) => {
+    const aAvoid = avoidSet.has(a) ? 1 : 0;
+    const bAvoid = avoidSet.has(b) ? 1 : 0;
+    if (aAvoid !== bAvoid) return aAvoid - bAvoid;
     const sa = equipmentFocusAffinity(a, livello, dayFocus);
     const sb = equipmentFocusAffinity(b, livello, dayFocus);
     if (sb !== sa) return sb - sa;
     return a.localeCompare(b);
   });
 
-  // Prendi i 2 di supporto più coerenti
+  // Prendi i 2 di supporto più coerenti (e preferibilmente "freschi" nella settimana)
   const support: string[] = [];
   for (const a of supportCandidates) {
     if (support.length >= 2) break;
