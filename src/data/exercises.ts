@@ -1138,6 +1138,9 @@ export function generaSettimanaIntelligente(
   const focusPerDay: Record<string, DayFocus> = {};
   let runningStorico = Object.values(previousStorico).flat();
   const usedEquipment: string[] = [];
+  // Tracciamo TUTTI gli attrezzi (primario + supporti) già usati nei giorni precedenti
+  // della settimana, così ogni giorno preferisce supporti diversi → varietà reale tra giorni.
+  const usedSupportsThisWeek: string[] = [];
 
   dateKeys.forEach((dateKey, i) => {
     // Use fixed weekday-based focus: Mon→Upper, Wed→Lower, Fri→Total
@@ -1146,13 +1149,27 @@ export function generaSettimanaIntelligente(
 
     ctx.recentExerciseIds = runningStorico;
 
-    const dayExercises = generaEserciziGiorno(attrezzo, livello, [], dayFocus, ctx, attrezziUtente);
+    const dayExercises = generaEserciziGiorno(
+      attrezzo,
+      livello,
+      [],
+      dayFocus,
+      ctx,
+      attrezziUtente,
+      usedSupportsThisWeek,
+    );
 
     piano[dateKey] = { attrezzo, round: 0 };
     esercizi[dateKey] = dayExercises;
     focusPerDay[dateKey] = dayFocus;
 
     usedEquipment.push(attrezzo);
+    // Aggiungi al "evita come supporto" tutti gli attrezzi distinti effettivamente
+    // usati nel workout di oggi (sia primario sia supporti).
+    const todaysAttrezzi = Array.from(new Set(dayExercises.map(e => normalizeEquipmentName(e.attrezzo))));
+    for (const a of todaysAttrezzi) {
+      if (!usedSupportsThisWeek.includes(a)) usedSupportsThisWeek.push(a);
+    }
     runningStorico = [...runningStorico, ...dayExercises.map(e => e.id)];
   });
 
