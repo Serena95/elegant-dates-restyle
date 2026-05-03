@@ -29,9 +29,37 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "premium_required", message: "Funzionalità riservata agli utenti Premium." }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { type, context } = await req.json();
+    const { type, context: rawContext } = await req.json();
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
+
+    // Sanitize all string fields to prevent prompt injection / token exhaustion
+    const cap = (v: unknown, max = 120): string =>
+      typeof v === "string" ? v.replace(/[\r\n]+/g, " ").slice(0, max) : "";
+    const capArr = (v: unknown, max = 20, itemMax = 60): string[] =>
+      Array.isArray(v) ? v.slice(0, max).map((x) => cap(x, itemMax)).filter(Boolean) : [];
+    const context = {
+      level: cap(rawContext?.level, 20),
+      equipment: capArr(rawContext?.equipment),
+      preferredFocus: cap(rawContext?.preferredFocus, 40),
+      cyclePhase: cap(rawContext?.cyclePhase, 30),
+      lunarPhase: cap(rawContext?.lunarPhase, 30),
+      lunarEnergy: cap(rawContext?.lunarEnergy, 20),
+      pregnancyMode: !!rawContext?.pregnancyMode,
+      pregnancyWeek: typeof rawContext?.pregnancyWeek === "number" ? Math.max(0, Math.min(45, rawContext.pregnancyWeek)) : undefined,
+      streak: typeof rawContext?.streak === "number" ? Math.max(0, Math.min(9999, rawContext.streak)) : 0,
+      lastFocus: cap(rawContext?.lastFocus, 40),
+      mostTrainedThisWeek: cap(rawContext?.mostTrainedThisWeek, 80),
+      totalWorkouts: typeof rawContext?.totalWorkouts === "number" ? Math.max(0, Math.min(99999, rawContext.totalWorkouts)) : 0,
+      lastWorkoutType: cap(rawContext?.lastWorkoutType, 40),
+      recentIntensity: cap(rawContext?.recentIntensity, 20),
+      todayEquipment: cap(rawContext?.todayEquipment, 40),
+      todayFocus: cap(rawContext?.todayFocus, 40),
+      isRestDay: !!rawContext?.isRestDay,
+      isAlreadyCompleted: !!rawContext?.isAlreadyCompleted,
+      nutritionPlan: cap(rawContext?.nutritionPlan, 60),
+      nutritionGoal: cap(rawContext?.nutritionGoal, 40),
+    };
 
     let systemPrompt = "";
     let userPrompt = "";

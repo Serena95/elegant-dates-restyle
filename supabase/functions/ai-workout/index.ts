@@ -26,7 +26,30 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "premium_required", message: "Funzionalità riservata agli utenti Premium." }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { exerciseLibrary, attrezzo, livello, focus, storici, targetCount } = await req.json();
+    const body = await req.json();
+    const cap = (v: unknown, max = 60): string =>
+      typeof v === "string" ? v.replace(/[\r\n]+/g, " ").slice(0, max) : "";
+    const ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+    const attrezzo = cap(body.attrezzo, 40);
+    const livello = cap(body.livello, 20);
+    const focus = cap(body.focus, 40);
+    const storici = Array.isArray(body.storici)
+      ? body.storici.slice(-20).filter((s: unknown) => typeof s === "string" && ID_RE.test(s))
+      : [];
+    const targetCount = typeof body.targetCount === "number" ? Math.max(3, Math.min(12, body.targetCount)) : 7;
+    const exerciseLibrary = Array.isArray(body.exerciseLibrary)
+      ? body.exerciseLibrary
+          .slice(0, 300)
+          .filter((e: any) => e && typeof e.id === "string" && ID_RE.test(e.id))
+          .map((e: any) => ({
+            id: e.id,
+            nome: cap(e.nome, 80),
+            categoria: cap(e.categoria, 40),
+            livello: cap(e.livello, 20),
+            muscoli: Array.isArray(e.muscoli) ? e.muscoli.slice(0, 8).map((m: unknown) => cap(m, 30)) : [],
+          }))
+      : [];
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
