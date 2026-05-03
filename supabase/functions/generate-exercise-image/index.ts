@@ -27,9 +27,25 @@ serve(async (req) => {
     }
 
     const { exerciseId, exerciseName, category, muscles, equipment } = await req.json();
-    
-    if (!exerciseId || !exerciseName) {
-      return new Response(JSON.stringify({ error: "Missing exerciseId or exerciseName" }), {
+
+    // Strict validation to prevent path traversal and prompt injection
+    const ID_RE = /^[a-zA-Z0-9_-]{1,64}$/;
+    const clean = (s: unknown, max = 200) =>
+      typeof s === "string" ? s.replace(/[\r\n]+/g, " ").slice(0, max) : "";
+
+    if (!exerciseId || typeof exerciseId !== "string" || !ID_RE.test(exerciseId)) {
+      return new Response(JSON.stringify({ error: "Invalid exerciseId" }), {
+        status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
+      });
+    }
+    const safeName = clean(exerciseName, 120);
+    const safeCategory = clean(category, 40);
+    const safeEquipment = clean(equipment, 60);
+    const safeMuscles = Array.isArray(muscles)
+      ? muscles.slice(0, 10).map((m) => clean(m, 40)).filter(Boolean)
+      : [];
+    if (!safeName) {
+      return new Response(JSON.stringify({ error: "Invalid exerciseName" }), {
         status: 400, headers: { ...corsHeaders, "Content-Type": "application/json" },
       });
     }
