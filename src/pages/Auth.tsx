@@ -1,7 +1,6 @@
 import { useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { lovable } from "@/integrations/lovable";
-import { DarkModeToggle } from "@/components/DarkModeToggle";
 import { Mail, Lock, User, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
@@ -64,8 +63,6 @@ const Auth = () => {
 
   return (
     <div className="min-h-[100svh] min-h-[100dvh] w-full bg-background flex flex-col items-center justify-center px-4 py-5 overflow-x-hidden">
-      <DarkModeToggle />
-
       <div className="w-full max-w-md mx-auto bg-card rounded-3xl shadow-xl border border-border p-8 space-y-6">
         <div className="text-center">
           <h1 className="text-3xl font-black bg-gradient-to-r from-primary to-pilates-deep bg-clip-text text-transparent">
