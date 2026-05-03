@@ -26,7 +26,13 @@ if ("serviceWorker" in navigator && (isInIframe || isPreviewHost)) {
     registrations.forEach((registration) => registration.unregister());
   });
 } else {
-  registerSW({ immediate: true, onNeedRefresh() {}, onOfflineReady() {} });
+  // Register SW but do NOT auto-reload the app while user is using it.
+  // Updates will be applied on the next manual reload/app restart.
+  registerSW({
+    immediate: true,
+    onNeedRefresh() {},
+    onOfflineReady() {},
+  });
 }
 
 const installWindow = window as InstallWindow;
