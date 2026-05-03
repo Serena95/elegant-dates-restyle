@@ -688,6 +688,10 @@ export type Database = {
         }
         Returns: boolean
       }
+      increment_leaderboard: {
+        Args: { p_xp_gained: number }
+        Returns: undefined
+      }
       is_premium_or_admin: { Args: { _user_id: string }; Returns: boolean }
       toggle_post_like: { Args: { p_post_id: string }; Returns: boolean }
     }
