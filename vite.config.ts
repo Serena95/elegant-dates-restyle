@@ -16,7 +16,7 @@ export default defineConfig(({ mode }) => ({
     react(),
     mode === "development" && componentTagger(),
     VitePWA({
-      registerType: "autoUpdate",
+      registerType: "prompt",
       devOptions: {
         enabled: false,
       },
@@ -39,11 +39,11 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        clientsClaim: true,
+        clientsClaim: false,
         globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp}"],
         navigateFallbackDenylist: [/^\/~oauth/],
         importScripts: ["/sw-push.js"],
-        skipWaiting: true,
+        skipWaiting: false,
         runtimeCaching: [
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
