@@ -8,32 +8,10 @@ function getWeekStart(): string {
   return monday.toISOString().split("T")[0];
 }
 
-export async function updateLeaderboard(userId: string, xpGained: number) {
-  const weekStart = getWeekStart();
-
-  const { data: existing } = await supabase
-    .from("leaderboard")
-    .select("*")
-    .eq("user_id", userId)
-    .eq("week_start", weekStart)
-    .single();
-
-  if (existing) {
-    await supabase
-      .from("leaderboard")
-      .update({
-        xp_week: existing.xp_week + xpGained,
-        workouts_week: existing.workouts_week + 1,
-      })
-      .eq("id", existing.id);
-  } else {
-    await supabase.from("leaderboard").insert({
-      user_id: userId,
-      week_start: weekStart,
-      xp_week: xpGained,
-      workouts_week: 1,
-    });
-  }
+export async function updateLeaderboard(_userId: string, xpGained: number) {
+  // Server-side increment via SECURITY DEFINER RPC. The client cannot set
+  // arbitrary XP/rank values anymore (validated server-side, capped at 1000).
+  await supabase.rpc("increment_leaderboard", { p_xp_gained: xpGained });
 }
 
 export interface LeaderboardEntry {
