@@ -26,7 +26,19 @@ serve(async (req) => {
       return new Response(JSON.stringify({ error: "premium_required", message: "Funzionalità riservata agli utenti Premium." }), { status: 403, headers: { ...corsHeaders, "Content-Type": "application/json" } });
     }
 
-    const { obiettivo, preferenze, restrizioni, attivita, calorie, pasti_giorno, durata, tipo_dieta, pasto_saltato } = await req.json();
+    const body = await req.json();
+    const cap = (v: unknown, max = 300): string =>
+      typeof v === "string" ? v.replace(/[\r\n]+/g, " ").slice(0, max) : "";
+    const obiettivo = cap(body.obiettivo, 100);
+    const preferenze = cap(body.preferenze, 500);
+    const restrizioni = cap(body.restrizioni, 500);
+    const attivita = cap(body.attivita, 40);
+    const calorie = typeof body.calorie === "number" ? Math.max(800, Math.min(6000, body.calorie)) : null;
+    const pasti_giorno = typeof body.pasti_giorno === "number" ? Math.max(2, Math.min(8, body.pasti_giorno)) : 5;
+    const durata = cap(body.durata, 30);
+    const tipo_dieta = cap(body.tipo_dieta, 40);
+    const pasto_saltato = cap(body.pasto_saltato, 30);
+
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     if (!LOVABLE_API_KEY) throw new Error("LOVABLE_API_KEY is not configured");
 
