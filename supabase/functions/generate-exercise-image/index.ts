@@ -84,10 +84,10 @@ serve(async (req) => {
       braccia: "arm and shoulder muscles highlighted",
     };
 
-    const bodyFocus = categoryMap[category] || "full body exercise";
-    const muscleList = muscles?.join(", ") || "";
+    const bodyFocus = categoryMap[safeCategory] || "full body exercise";
+    const muscleList = safeMuscles.join(", ");
 
-    const prompt = `Create a clean, minimal fitness illustration of a person performing the Pilates/fitness exercise "${exerciseName}" with ${equipment || "body weight"}. The illustration should be a simple, elegant line drawing style with soft colors on a clean white background. Show the correct form and posture. ${bodyFocus}. Target muscles: ${muscleList}. Style: modern fitness app illustration, anatomical accuracy, clean lines, pastel accent colors highlighting active muscles.`;
+    const prompt = `Create a clean, minimal fitness illustration of a person performing the Pilates/fitness exercise "${safeName}" with ${safeEquipment || "body weight"}. The illustration should be a simple, elegant line drawing style with soft colors on a clean white background. Show the correct form and posture. ${bodyFocus}. Target muscles: ${muscleList}. Style: modern fitness app illustration, anatomical accuracy, clean lines, pastel accent colors highlighting active muscles.`;
 
     const response = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
