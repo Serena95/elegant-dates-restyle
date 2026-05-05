@@ -27,30 +27,18 @@ export function getLevelInfo(xp: number) {
   return { current, next, progressToNext, xp };
 }
 
-export async function addWorkoutXP(userId: string, streak: number): Promise<{ xpGained: number; newXp: number; newLevel: number; leveledUp: boolean }> {
-  const xpGained = XP_PER_WORKOUT + (streak * XP_STREAK_BONUS);
-
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("xp, level")
-    .eq("user_id", userId)
-    .single();
-
-  const oldXp = profile?.xp || 0;
-  const oldLevel = profile?.level || 1;
-  const newXp = oldXp + xpGained;
-  const levelInfo = getLevelInfo(newXp);
-  const newLevel = levelInfo.current.level;
-
-  await supabase
-    .from("profiles")
-    .update({ xp: newXp, level: newLevel })
-    .eq("user_id", userId);
-
+export async function addWorkoutXP(_userId: string, streak: number): Promise<{ xpGained: number; newXp: number; newLevel: number; leveledUp: boolean }> {
+  // XP is computed and persisted server-side via SECURITY DEFINER RPC.
+  // The client cannot set arbitrary xp/level values anymore.
+  const { data, error } = await supabase.rpc("add_workout_xp", { p_streak: streak });
+  if (error || !data || (Array.isArray(data) && data.length === 0)) {
+    return { xpGained: 0, newXp: 0, newLevel: 1, leveledUp: false };
+  }
+  const row: any = Array.isArray(data) ? data[0] : data;
   return {
-    xpGained,
-    newXp,
-    newLevel,
-    leveledUp: newLevel > oldLevel,
+    xpGained: row.xp_gained ?? 0,
+    newXp: row.new_xp ?? 0,
+    newLevel: row.new_level ?? 1,
+    leveledUp: !!row.leveled_up,
   };
 }
