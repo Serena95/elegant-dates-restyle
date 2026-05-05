@@ -182,6 +182,32 @@ const MANDATORY_TOKENS: Record<DayFocus, string[]> = {
   total_body: ["core"],
 };
 
+/**
+ * Tokens that MUST NOT appear in the workout for each focus.
+ * Exercises matching any of these tokens (and not matching an allowed token)
+ * are filtered out of the pool before selection.
+ *
+ * - Upper Body: vietati glutei/quadricipiti/femorali/interno coscia
+ * - Lower Body: vietati schiena/spalle/braccia/petto
+ * - Total Body: nessun divieto
+ */
+const FORBIDDEN_TOKENS: Record<DayFocus, string[]> = {
+  upper_body: ["glutei", "quadricipiti", "femorali", "interno coscia"],
+  lower_body: ["schiena", "spalle", "braccia", "petto"],
+  total_body: [],
+};
+
+/**
+ * Tokens considered "allowed" for the focus — used to keep an exercise that
+ * touches a forbidden group only as a secondary muscle (e.g. core+glutei in
+ * Upper would be excluded; pure core stays).
+ */
+const ALLOWED_TOKENS: Record<DayFocus, string[]> = {
+  upper_body: ["schiena", "spalle", "braccia", "petto", "core"],
+  lower_body: ["glutei", "quadricipiti", "femorali", "interno coscia", "core"],
+  total_body: ["schiena", "spalle", "braccia", "petto", "glutei", "quadricipiti", "femorali", "interno coscia", "core"],
+};
+
 const FOCUS_PREFERRED_CATEGORIES: Record<DayFocus, string[]> = {
   upper_body: ["schiena", "braccia", "stabilità", "core"],
   lower_body: ["gambe", "glutei", "core", "stabilità"],
