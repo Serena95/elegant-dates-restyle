@@ -1,0 +1,1 @@
+CREATE POLICY "Only admins can read app_config" ON public.app_config FOR SELECT TO authenticated USING (public.has_role(auth.uid(), 'admin'::app_role));
