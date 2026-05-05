@@ -290,11 +290,24 @@ export const Dashboard = React.forwardRef<HTMLDivElement, DashboardProps>(functi
           <div className="flex items-center justify-between">
             <div>
               <p className="text-xs font-bold uppercase text-primary tracking-wide">Allenamento di Oggi</p>
-              <p className="text-lg font-black text-foreground mt-1">
-                {ATTREZZO_ICONS[todayWorkout.attrezzo] || "🏋️"} {todayWorkout.attrezzo}
-              </p>
+              {(() => {
+                const todayEx = (exercisesMap?.[todayWorkout.key] || []) as any[];
+                const distinct = Array.from(new Set([
+                  todayWorkout.attrezzo,
+                  ...todayEx.map(e => e?.attrezzo).filter(Boolean),
+                ])).slice(0, 3);
+                return (
+                  <div className="flex flex-wrap gap-1.5 mt-1">
+                    {distinct.map(a => (
+                      <span key={a} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-primary/15 text-primary text-xs font-bold">
+                        {ATTREZZO_ICONS[a] || "🏋️"} {a}
+                      </span>
+                    ))}
+                  </div>
+                );
+              })()}
               {focusMap?.[todayWorkout.key] && (
-                <p className="text-xs text-muted-foreground mt-0.5 flex items-center gap-1">
+                <p className="text-xs text-muted-foreground mt-1.5 flex items-center gap-1">
                   <Target size={12} className="text-primary" />
                   Focus: <span className="font-semibold text-foreground">{focusMap[todayWorkout.key].icon} {focusMap[todayWorkout.key].label}</span>
                 </p>
