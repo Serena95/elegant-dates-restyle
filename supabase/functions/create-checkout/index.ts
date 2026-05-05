@@ -35,6 +35,15 @@ serve(async (req) => {
       customerId = customers.data[0].id;
     }
 
+    const ALLOWED_ORIGINS = [
+      "https://elegant-dates-restyle.lovable.app",
+      "https://id-preview--65739c50-950f-4a12-9aa8-e5855fcd79cd.lovable.app",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ];
+    const rawOrigin = req.headers.get("origin") || "";
+    const safeOrigin = ALLOWED_ORIGINS.includes(rawOrigin) ? rawOrigin : ALLOWED_ORIGINS[0];
+
     const session = await stripe.checkout.sessions.create({
       customer: customerId,
       customer_email: customerId ? undefined : user.email,
@@ -45,8 +54,8 @@ serve(async (req) => {
         },
       ],
       mode: "subscription",
-      success_url: `${req.headers.get("origin")}/`,
-      cancel_url: `${req.headers.get("origin")}/`,
+      success_url: `${safeOrigin}/`,
+      cancel_url: `${safeOrigin}/`,
     });
 
     return new Response(JSON.stringify({ url: session.url }), {

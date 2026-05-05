@@ -680,6 +680,15 @@ export type Database = {
       }
     }
     Functions: {
+      add_workout_xp: {
+        Args: { p_streak: number }
+        Returns: {
+          leveled_up: boolean
+          new_level: number
+          new_xp: number
+          xp_gained: number
+        }[]
+      }
       delete_user_account: { Args: never; Returns: undefined }
       has_role: {
         Args: {

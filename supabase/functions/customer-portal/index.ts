@@ -38,10 +38,17 @@ serve(async (req) => {
       throw new Error("No Stripe customer found for this user");
     }
 
-    const origin = req.headers.get("origin") || "http://localhost:3000";
+    const ALLOWED_ORIGINS = [
+      "https://elegant-dates-restyle.lovable.app",
+      "https://id-preview--65739c50-950f-4a12-9aa8-e5855fcd79cd.lovable.app",
+      "http://localhost:3000",
+      "http://localhost:5173",
+    ];
+    const rawOrigin = req.headers.get("origin") || "";
+    const safeOrigin = ALLOWED_ORIGINS.includes(rawOrigin) ? rawOrigin : ALLOWED_ORIGINS[0];
     const portalSession = await stripe.billingPortal.sessions.create({
       customer: customers.data[0].id,
-      return_url: `${origin}/`,
+      return_url: `${safeOrigin}/`,
     });
 
     return new Response(JSON.stringify({ url: portalSession.url }), {
