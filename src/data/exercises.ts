@@ -975,12 +975,35 @@ export function generaEserciziGiorno(
   const { primary, support } = selectThreeEquipment(attrezzo, effectiveLevel, availableEquipment, dayFocus, avoidAsSupport);
   const allowedEquipment = new Set([primary, ...support].map(normalizeEquipmentName));
 
-  // Il workout viene costruito direttamente sul pool dei 3 attrezzi del giorno,
-  // così ogni giorno (anche il venerdì) può realmente mostrare 3 attrezzi distinti.
-  const disponibili = EXERCISE_LIBRARY.filter(e =>
-    allowedEquipment.has(normalizeEquipmentName(e.attrezzo)) &&
-    livelloAccessibile(e.livello, effectiveLevel)
-  );
+  // Esclude esercizi il cui gruppo principale è vietato per il focus del giorno
+  // (es. nessun gluteo/quad/femorali/interno coscia in Upper; nessuna schiena/spalle/braccia/petto in Lower).
+  // Un esercizio passa solo se NON matcha alcun token vietato, oppure matcha
+  // anche un token consentito come muscolo principale (categoria).
+  const forbidden = FORBIDDEN_TOKENS[dayFocus];
+  const allowed = ALLOWED_TOKENS[dayFocus];
+  const disponibili = EXERCISE_LIBRARY.filter(e => {
+    if (!allowedEquipment.has(normalizeEquipmentName(e.attrezzo))) return false;
+    if (!livelloAccessibile(e.livello, effectiveLevel)) return false;
+    if (forbidden.length > 0) {
+      const hitsForbidden = forbidden.some(t => exerciseMatchesToken(e, t));
+      if (hitsForbidden) {
+        // mantieni solo se la categoria principale è un token consentito
+        const primaryAllowed = allowed.some(t => {
+          const syn = MUSCLE_TOKEN_SYNONYMS[t] || [t];
+          return syn.includes(e.categoria);
+        });
+        if (!primaryAllowed) return false;
+        // Se la categoria primaria è "consentita" ma matcha anche forbidden,
+        // accetta solo se NON è la categoria primaria del forbidden token.
+        const forbiddenIsPrimary = forbidden.some(t => {
+          const syn = MUSCLE_TOKEN_SYNONYMS[t] || [t];
+          return syn.includes(e.categoria);
+        });
+        if (forbiddenIsPrimary) return false;
+      }
+    }
+    return true;
+  });
   if (disponibili.length === 0) return [];
 
   const allRecent = new Set([...storici, ...ctx.recentExerciseIds]);
