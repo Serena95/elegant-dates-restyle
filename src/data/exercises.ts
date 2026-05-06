@@ -109,6 +109,9 @@ const MUSCLE_TOKEN_SYNONYMS: Record<string, string[]> = {
 
 function exerciseMatchesToken(e: Exercise, token: string): boolean {
   const syn = MUSCLE_TOKEN_SYNONYMS[token] || [token];
+  // Core: deve essere esercizio PRINCIPALE per addome (categoria === "core").
+  // Non basta avere "core" tra i muscoli secondari (stabilizzatore).
+  if (token === "core") return e.categoria === "core";
   if (syn.includes(e.categoria)) return true;
   return e.muscoli.some(m => syn.includes(m.toLowerCase()));
 }
