@@ -102,7 +102,9 @@ const MUSCLE_TOKEN_SYNONYMS: Record<string, string[]> = {
   quadricipiti: ["quadricipiti", "gambe"],
   femorali: ["femorali", "ischiocrurali", "posteriori coscia"],
   "interno coscia": ["interno coscia", "adduttori"],
-  core: ["core", "addominali", "addominali bassi", "obliqui", "trasverso", "stabilità"],
+  // Core REALE: solo esercizi diretti su addome/obliqui/trasverso/punto vita.
+  // Stabilità NON è considerata core: il core deve essere il muscolo principale, non solo stabilizzatore.
+  core: ["core", "addominali", "addominali bassi", "addominali alti", "obliqui", "trasverso", "punto vita", "fianchi"],
 };
 
 function exerciseMatchesToken(e: Exercise, token: string): boolean {
