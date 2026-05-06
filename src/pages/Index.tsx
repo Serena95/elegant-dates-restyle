@@ -109,7 +109,11 @@ function exerciseViolatesFocus(ex: Exercise, focus: DayFocus): boolean {
 
 function dayHasFocusViolation(exercises: Exercise[] | undefined, focus: DayFocus): boolean {
   if (!exercises || exercises.length === 0) return false;
-  return exercises.some((e) => exerciseViolatesFocus(e, focus));
+  if (exercises.some((e) => exerciseViolatesFocus(e, focus))) return true;
+  // Require at least 2 REAL core exercises (categoria === "core") in every workout
+  const realCore = exercises.filter((e) => (e.categoria || "").toLowerCase() === "core").length;
+  if (realCore < 2) return true;
+  return false;
 }
 
 const Index = () => {
