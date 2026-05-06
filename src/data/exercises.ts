@@ -926,18 +926,18 @@ function getTargetCount(weekNumber: number, baseLivello: string, focus?: DayFocu
   let maxForType: number;
 
   if (baseLivello === "AVANZATO") {
-    base = isTotal ? 8 : 7;          // Total: 8, Upper/Lower: 7
-    step = 1;                         // +1/settimana (rapido ma controllato)
-    maxForType = isTotal ? 10 : 9;
+    base = isTotal ? 9 : 9;          // Upper/Lower: 9 (3 core + 2 schiena/glutei + altri); Total: 9
+    step = 1;
+    maxForType = 10;
   } else if (baseLivello === "MEDIO") {
-    base = isTotal ? 7 : 6;          // Total: 7, Upper/Lower: 6
-    step = 0.5;                       // ~+1 ogni 2 settimane
-    maxForType = isTotal ? 9 : 8;
+    base = isTotal ? 8 : 8;          // 8 esercizi per coprire i minimi (3 core, 2 schiena/glutei...)
+    step = 0.5;
+    maxForType = isTotal ? 10 : 9;
   } else {
     // BASSO / Base
-    base = isTotal ? 6 : 5;          // Total: 6, Upper/Lower: 5
-    step = 1 / 3;                     // ~+1 ogni 3 settimane
-    maxForType = isTotal ? 8 : 7;
+    base = isTotal ? 7 : 8;          // Upper/Lower: 8 minimi richiesti; Total: 7
+    step = 1 / 3;
+    maxForType = isTotal ? 9 : 9;
   }
 
   const progressed = Math.floor(base + step * (w - 1));
