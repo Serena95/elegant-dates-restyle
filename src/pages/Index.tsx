@@ -110,9 +110,15 @@ function exerciseViolatesFocus(ex: Exercise, focus: DayFocus): boolean {
 function dayHasFocusViolation(exercises: Exercise[] | undefined, focus: DayFocus): boolean {
   if (!exercises || exercises.length === 0) return false;
   if (exercises.some((e) => exerciseViolatesFocus(e, focus))) return true;
-  // Require at least 2 REAL core exercises (categoria === "core") in every workout
   const realCore = exercises.filter((e) => (e.categoria || "").toLowerCase() === "core").length;
-  if (realCore < 2) return true;
+  const internoCoscia = exercises.filter((e) =>
+    (e.muscoli || []).some((m) => ["interno coscia", "adduttori"].includes(m.toLowerCase()))
+  ).length;
+  // Upper/Lower: ≥3 core REALI; Total: ≥2 core REALI
+  const minCore = focus === "total_body" ? 2 : 3;
+  if (realCore < minCore) return true;
+  // Lower/Total: ≥2 esercizi specifici per interno coscia
+  if ((focus === "lower_body" || focus === "total_body") && internoCoscia < 2) return true;
   return false;
 }
 
@@ -321,28 +327,28 @@ const Index = () => {
         getPreviousWeekEquipmentFromPlan(currentWeekDates, cloud.piano)
       );
 
-      // ONE-SHOT MIGRATION: applica multi-attrezzo + ordinamento per fasi
-      // SOLO ai giorni futuri (da domani in avanti). Mai oggi, mai passati,
-      // mai giorni completati. Avviene una sola volta per utente.
-      const MIGRATION_FLAG = "workout_phases_multiequip_v4_realcore";
+      // ONE-SHOT MIGRATION: applica le nuove regole core/interno coscia
+      // a OGGI e ai giorni futuri. Non tocca mai giorni passati né completati.
+      const MIGRATION_FLAG = "workout_phases_multiequip_v5_core_inner";
       const alreadyMigrated = localStorage.getItem(MIGRATION_FLAG) === "1";
-      const forceRegenerateFuture = !alreadyMigrated;
+      const forceRegenerate = !alreadyMigrated;
 
       const todayKey = getLocalDateKey(new Date(), cloud.timeSettings.fuso_orario);
 
       currentWeekDates.forEach((dateKey) => {
-        // BLOCCO ASSOLUTO: mai toccare giorni passati o il giorno odierno.
-        // Le modifiche valgono solo da domani in avanti.
-        if (dateKey <= todayKey) return;
+        // Blocco: mai toccare giorni passati.
+        if (dateKey < todayKey) return;
 
         const histEntry = cloud.storicoCal[dateKey];
         if (histEntry?.completato) return; // never touch completed days
         const dayPlan = updatedPiano[dateKey];
         if (!dayPlan?.attrezzo) return;
+        // Se è oggi e ha già round fatti, non toccare per non perdere il progresso
+        if (dateKey === todayKey && (dayPlan.round || 0) > 0) return;
         const weekday = getWeekdayFromDateKey(dateKey);
         const focus = getFocusForWeekday(weekday);
         const dayEx = currentEsercizi[dateKey];
-        const needsRepair = forceRegenerateFuture || dayHasFocusViolation(dayEx, focus);
+        const needsRepair = forceRegenerate || dayHasFocusViolation(dayEx, focus);
         if (!needsRepair) return;
 
         // Regenerate exercises for THIS day only, keeping the same equipment.
@@ -363,7 +369,7 @@ const Index = () => {
         }
       });
 
-      if (forceRegenerateFuture) {
+      if (forceRegenerate) {
         localStorage.setItem(MIGRATION_FLAG, "1");
       }
 
