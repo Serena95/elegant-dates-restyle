@@ -121,8 +121,9 @@ function exerciseMatchesToken(e: Exercise, token: string): boolean {
  * MANDATORY tokens are listed first; the engine will enforce they appear in the workout.
  */
 const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
-  // Upper Body (Lunedì): schiena x2, core x2, spalle, braccia, petto + extra
+  // Upper Body (Lunedì): schiena x2, core x3 (REALE), spalle, braccia, petto + extra
   upper_body: [
+    ["core"],
     ["schiena"],
     ["core"],
     ["schiena"],
@@ -133,30 +134,31 @@ const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
     ["spalle", "braccia", "petto"],
     ["schiena", "spalle", "braccia", "petto"],
   ],
-  // Lower Body (Mercoledì): glutei x2, core x2, quadricipiti, femorali, interno coscia
+  // Lower Body (Mercoledì): glutei x2, core x3 (REALE), interno coscia x2, quadricipiti, femorali
   lower_body: [
     ["interno coscia"],
     ["core"],
     ["glutei"],
+    ["interno coscia"],
     ["core"],
     ["glutei"],
+    ["core"],
     ["quadricipiti"],
     ["femorali"],
-    ["interno coscia", "glutei", "quadricipiti", "femorali"],
     ["glutei", "quadricipiti", "femorali"],
   ],
-  // Total Body (Venerdì): allenamento completo 8-10 esercizi
+  // Total Body (Venerdì): core x2, interno coscia x2, full coverage
   total_body: [
     ["core"],
     ["schiena"],
+    ["interno coscia"],
     ["glutei"],
     ["core"],
+    ["interno coscia"],
     ["spalle", "petto"],
     ["quadricipiti", "femorali"],
     ["braccia"],
     ["schiena", "spalle", "petto", "braccia"],
-    ["glutei", "quadricipiti", "femorali", "interno coscia"],
-    ["core"],
   ],
 };
 
@@ -165,11 +167,14 @@ const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
  * Enforced after balanced selection — if below minimum, we swap in matching exercises.
  */
 const MIN_PER_TOKEN: Record<DayFocus, Record<string, number>> = {
-  upper_body: { schiena: 2, core: 2, spalle: 1, braccia: 1, petto: 1 },
-  lower_body: { glutei: 2, core: 2, quadricipiti: 1, femorali: 1, "interno coscia": 1 },
-  // Total Body: parte superiore ≥3 (schiena+spalle+petto), parte inferiore ≥2 (glutei+quadricipiti), core ≥2
+  // Upper Body: ≥3 core REALI + schiena/spalle/braccia/petto
+  upper_body: { schiena: 2, core: 3, spalle: 1, braccia: 1, petto: 1 },
+  // Lower Body: ≥3 core REALI + ≥2 interno coscia + glutei/quad/femorali
+  lower_body: { glutei: 2, core: 3, quadricipiti: 1, femorali: 1, "interno coscia": 2 },
+  // Total Body: ≥2 core REALI + ≥2 interno coscia + copertura completa
   total_body: {
     core: 2,
+    "interno coscia": 2,
     schiena: 1,
     spalle: 1,
     petto: 1,
