@@ -369,7 +369,7 @@ const Index = () => {
         }
       });
 
-      if (forceRegenerateFuture) {
+      if (forceRegenerate) {
         localStorage.setItem(MIGRATION_FLAG, "1");
       }
 
