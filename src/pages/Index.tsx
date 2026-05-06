@@ -110,9 +110,15 @@ function exerciseViolatesFocus(ex: Exercise, focus: DayFocus): boolean {
 function dayHasFocusViolation(exercises: Exercise[] | undefined, focus: DayFocus): boolean {
   if (!exercises || exercises.length === 0) return false;
   if (exercises.some((e) => exerciseViolatesFocus(e, focus))) return true;
-  // Require at least 2 REAL core exercises (categoria === "core") in every workout
   const realCore = exercises.filter((e) => (e.categoria || "").toLowerCase() === "core").length;
-  if (realCore < 2) return true;
+  const internoCoscia = exercises.filter((e) =>
+    (e.muscoli || []).some((m) => ["interno coscia", "adduttori"].includes(m.toLowerCase()))
+  ).length;
+  // Upper/Lower: ≥3 core REALI; Total: ≥2 core REALI
+  const minCore = focus === "total_body" ? 2 : 3;
+  if (realCore < minCore) return true;
+  // Lower/Total: ≥2 esercizi specifici per interno coscia
+  if ((focus === "lower_body" || focus === "total_body") && internoCoscia < 2) return true;
   return false;
 }
 
