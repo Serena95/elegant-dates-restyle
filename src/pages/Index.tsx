@@ -324,7 +324,7 @@ const Index = () => {
       // ONE-SHOT MIGRATION: applica multi-attrezzo + ordinamento per fasi
       // SOLO ai giorni futuri (da domani in avanti). Mai oggi, mai passati,
       // mai giorni completati. Avviene una sola volta per utente.
-      const MIGRATION_FLAG = "workout_phases_multiequip_v3";
+      const MIGRATION_FLAG = "workout_phases_multiequip_v4_realcore";
       const alreadyMigrated = localStorage.getItem(MIGRATION_FLAG) === "1";
       const forceRegenerateFuture = !alreadyMigrated;
 
