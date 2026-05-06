@@ -109,7 +109,11 @@ function exerciseViolatesFocus(ex: Exercise, focus: DayFocus): boolean {
 
 function dayHasFocusViolation(exercises: Exercise[] | undefined, focus: DayFocus): boolean {
   if (!exercises || exercises.length === 0) return false;
-  return exercises.some((e) => exerciseViolatesFocus(e, focus));
+  if (exercises.some((e) => exerciseViolatesFocus(e, focus))) return true;
+  // Require at least 2 REAL core exercises (categoria === "core") in every workout
+  const realCore = exercises.filter((e) => (e.categoria || "").toLowerCase() === "core").length;
+  if (realCore < 2) return true;
+  return false;
 }
 
 const Index = () => {
@@ -320,7 +324,7 @@ const Index = () => {
       // ONE-SHOT MIGRATION: applica multi-attrezzo + ordinamento per fasi
       // SOLO ai giorni futuri (da domani in avanti). Mai oggi, mai passati,
       // mai giorni completati. Avviene una sola volta per utente.
-      const MIGRATION_FLAG = "workout_phases_multiequip_v3";
+      const MIGRATION_FLAG = "workout_phases_multiequip_v4_realcore";
       const alreadyMigrated = localStorage.getItem(MIGRATION_FLAG) === "1";
       const forceRegenerateFuture = !alreadyMigrated;
 
