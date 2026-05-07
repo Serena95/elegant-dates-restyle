@@ -7,7 +7,7 @@ import { ExerciseImage } from "./ExerciseImage";
 import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, X, Volume2, VolumeX, Sparkles, ArrowRight, Flame, TrendingUp } from "lucide-react";
 import type { DayFocus } from "@/data/exercises";
 import { getCoreActivationCue } from "@/data/coreActivation";
-import { getFinisherExercises, getFinisherDuration, FinisherExercise } from "@/data/finisher";
+import { getFinisherForWorkout, getFinisherDuration, FinisherExercise, FinisherVariant } from "@/data/finisher";
 import { getProgressionConfig, getProgressionLabel } from "@/services/progressionService";
 
 // ============================================================
