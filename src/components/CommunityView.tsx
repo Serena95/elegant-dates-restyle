@@ -138,6 +138,7 @@ export function CommunityView({ onBack, onViewProfile, onViewLeaderboard, onView
             placeholder="Condividi il tuo allenamento o un pensiero..."
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
+            maxLength={1000}
             className="min-h-[60px] resize-none"
           />
           <Button size="sm" onClick={submitPost} disabled={posting || !newPost.trim()} className="w-full">
