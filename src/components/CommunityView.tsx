@@ -56,6 +56,10 @@ export function CommunityView({ onBack, onViewProfile, onViewLeaderboard, onView
 
   const submitPost = async () => {
     if (!user || !newPost.trim()) return;
+    if (newPost.length > 1000) {
+      toast.error("Il post non può superare 1000 caratteri");
+      return;
+    }
     setPosting(true);
     const { error } = await createPost(user.id, newPost);
     if (error) toast.error("Errore nella pubblicazione");
@@ -84,6 +88,10 @@ export function CommunityView({ onBack, onViewProfile, onViewLeaderboard, onView
 
   const submitComment = async (postId: string) => {
     if (!user || !newComment.trim()) return;
+    if (newComment.length > 500) {
+      toast.error("Il commento non può superare 500 caratteri");
+      return;
+    }
     await addComment(postId, user.id, newComment);
     const post = posts.find(p => p.id === postId);
     if (post && post.user_id !== user.id) {
@@ -130,6 +138,7 @@ export function CommunityView({ onBack, onViewProfile, onViewLeaderboard, onView
             placeholder="Condividi il tuo allenamento o un pensiero..."
             value={newPost}
             onChange={(e) => setNewPost(e.target.value)}
+            maxLength={1000}
             className="min-h-[60px] resize-none"
           />
           <Button size="sm" onClick={submitPost} disabled={posting || !newPost.trim()} className="w-full">
@@ -235,6 +244,7 @@ export function CommunityView({ onBack, onViewProfile, onViewLeaderboard, onView
                                 value={newComment}
                                 onChange={e => setNewComment(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && submitComment(post.id)}
+                                maxLength={500}
                               />
                               <Button size="sm" variant="ghost" onClick={() => submitComment(post.id)}>
                                 <Send className="w-3 h-3" />
