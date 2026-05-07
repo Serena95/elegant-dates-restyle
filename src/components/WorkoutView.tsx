@@ -289,8 +289,8 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                   done ? "opacity-40 bg-muted border-border" : "bg-card border-border hover:border-red-500/30 hover:shadow-md"
                 }`}
               >
-                <div className="flex justify-between items-center">
-                  <div className="flex-1">
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
                       {done && <Check size={16} className="text-red-500" />}
                       <strong className="text-base text-foreground">{ex.emoji} {ex.nome}</strong>
@@ -298,6 +298,16 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                     <p className="text-xs text-muted-foreground mt-1">{ex.desc}</p>
                     <p className="text-xs text-red-500 font-semibold mt-1">{ex.coreNote}</p>
                   </div>
+                  {ex.image && (
+                    <img
+                      src={ex.image}
+                      alt={ex.nome}
+                      loading="lazy"
+                      width={64}
+                      height={64}
+                      className="w-16 h-16 rounded-lg object-cover border border-border shrink-0"
+                    />
+                  )}
                   <button
                     onClick={e => { e.stopPropagation(); timer.start(ex.durata, ex.nome); }}
                     className="bg-red-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0"
@@ -305,6 +315,42 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                     <Timer size={12} /> {ex.durata}s
                   </button>
                 </div>
+
+                {(ex.setup || ex.steps || ex.errors || ex.breathing) && (
+                  <div
+                    className="mt-3 pt-3 border-t border-border space-y-2 text-xs"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {ex.setup && (
+                      <div>
+                        <p className="font-semibold text-foreground mb-0.5">📍 Posizione di partenza</p>
+                        <p className="text-muted-foreground">{ex.setup}</p>
+                      </div>
+                    )}
+                    {ex.steps && ex.steps.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-foreground mb-0.5">▶️ Esecuzione</p>
+                        <ol className="list-decimal list-inside space-y-0.5 text-muted-foreground">
+                          {ex.steps.map((s, i) => <li key={i}>{s}</li>)}
+                        </ol>
+                      </div>
+                    )}
+                    {ex.errors && ex.errors.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-foreground mb-0.5">⚠️ Errori da evitare</p>
+                        <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+                          {ex.errors.map((s, i) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {ex.breathing && (
+                      <div>
+                        <p className="font-semibold text-foreground mb-0.5">💨 Respirazione</p>
+                        <p className="text-muted-foreground">{ex.breathing}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}
