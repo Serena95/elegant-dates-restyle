@@ -88,6 +88,10 @@ export function CommunityView({ onBack, onViewProfile, onViewLeaderboard, onView
 
   const submitComment = async (postId: string) => {
     if (!user || !newComment.trim()) return;
+    if (newComment.length > 500) {
+      toast.error("Il commento non può superare 500 caratteri");
+      return;
+    }
     await addComment(postId, user.id, newComment);
     const post = posts.find(p => p.id === postId);
     if (post && post.user_id !== user.id) {
