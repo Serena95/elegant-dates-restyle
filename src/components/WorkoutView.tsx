@@ -248,7 +248,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
           <button onClick={() => setShowQuitConfirm(true)} className="flex items-center gap-1 text-primary font-bold text-sm">
             <ChevronLeft size={18} /> Indietro
           </button>
-          <h2 className="text-xl font-bold text-foreground">🔥 Finisher</h2>
+          <h2 className="text-xl font-bold text-foreground">
+            🔥 Brucia Grassi {finisherVariant === "combat" ? "• Combat" : "• Metabolico"}
+          </h2>
           <button
             onClick={() => { setFinisherComplete(true); setShowStretching(true); }}
             className="text-xs font-bold text-muted-foreground hover:text-foreground transition"
@@ -263,7 +265,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
             {finisherExercises.length} esercizi • {getFinisherDuration(finisherExercises)} min • Nessuna pausa!
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Alta intensità per massimizzare il consumo calorico. Core sempre attivo!
+            {finisherVariant === "combat"
+              ? "Stile combat controllato: ogni movimento parte dal core, fluidità e potenza."
+              : "Circuito metabolico ad alta intensità: massimizza il consumo calorico. Core sempre attivo!"}
           </p>
         </div>
 
