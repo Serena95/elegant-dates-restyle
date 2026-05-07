@@ -8,6 +8,15 @@
 //  - mai due combat in giorni consecutivi (di fatto i workout sono lun-mer-ven)
 //  - frequenza combat 1-2 volte a settimana
 
+import jabCrossImg from "@/assets/combat/jab-cross.jpg";
+import hookImg from "@/assets/combat/hook.jpg";
+import frontKickImg from "@/assets/combat/front-kick.jpg";
+import kneeStrikeImg from "@/assets/combat/knee-strike.jpg";
+import sprawlImg from "@/assets/combat/sprawl.jpg";
+import sideKickImg from "@/assets/combat/side-kick.jpg";
+import comboImg from "@/assets/combat/combo.jpg";
+import slipPunchImg from "@/assets/combat/slip-punch.jpg";
+
 export type FinisherVariant = "metabolic" | "combat";
 
 export interface FinisherExercise {
@@ -16,6 +25,11 @@ export interface FinisherExercise {
   desc: string;
   durata: number; // seconds
   coreNote: string;
+  image?: string;
+  setup?: string;
+  steps?: string[];
+  errors?: string[];
+  breathing?: string;
 }
 
 const METABOLIC_POOL: FinisherExercise[] = [
