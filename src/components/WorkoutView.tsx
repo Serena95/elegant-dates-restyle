@@ -104,8 +104,10 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isCompleted = roundCorrenti >= maxRound;
 
-  // Generate finisher exercises once per session
-  const finisherExercises = useMemo(() => getFinisherExercises(), []);
+  // Generate the SINGLE fat-burn block once per session (metabolic OR combat — never both)
+  const finisherData = useMemo(() => getFinisherForWorkout(dayFocus, giorno), [dayFocus, giorno]);
+  const finisherExercises = finisherData.exercises;
+  const finisherVariant: FinisherVariant = finisherData.variant;
 
   // Report state changes for persistence
   useEffect(() => {
