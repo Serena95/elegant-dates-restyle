@@ -244,6 +244,7 @@ export function CommunityView({ onBack, onViewProfile, onViewLeaderboard, onView
                                 value={newComment}
                                 onChange={e => setNewComment(e.target.value)}
                                 onKeyDown={e => e.key === "Enter" && submitComment(post.id)}
+                                maxLength={500}
                               />
                               <Button size="sm" variant="ghost" onClick={() => submitComment(post.id)}>
                                 <Send className="w-3 h-3" />
