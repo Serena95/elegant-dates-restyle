@@ -56,6 +56,10 @@ export function CommunityView({ onBack, onViewProfile, onViewLeaderboard, onView
 
   const submitPost = async () => {
     if (!user || !newPost.trim()) return;
+    if (newPost.length > 1000) {
+      toast.error("Il post non può superare 1000 caratteri");
+      return;
+    }
     setPosting(true);
     const { error } = await createPost(user.id, newPost);
     if (error) toast.error("Errore nella pubblicazione");
