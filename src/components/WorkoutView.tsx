@@ -7,7 +7,7 @@ import { ExerciseImage } from "./ExerciseImage";
 import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, X, Volume2, VolumeX, Sparkles, ArrowRight, Flame, TrendingUp } from "lucide-react";
 import type { DayFocus } from "@/data/exercises";
 import { getCoreActivationCue } from "@/data/coreActivation";
-import { getFinisherExercises, getFinisherDuration, FinisherExercise } from "@/data/finisher";
+import { getFinisherForWorkout, getFinisherDuration, FinisherExercise, FinisherVariant } from "@/data/finisher";
 import { getProgressionConfig, getProgressionLabel } from "@/services/progressionService";
 
 // ============================================================
@@ -104,8 +104,10 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
   const isCompleted = roundCorrenti >= maxRound;
 
-  // Generate finisher exercises once per session
-  const finisherExercises = useMemo(() => getFinisherExercises(), []);
+  // Generate the SINGLE fat-burn block once per session (metabolic OR combat — never both)
+  const finisherData = useMemo(() => getFinisherForWorkout(dayFocus, giorno), [dayFocus, giorno]);
+  const finisherExercises = finisherData.exercises;
+  const finisherVariant: FinisherVariant = finisherData.variant;
 
   // Report state changes for persistence
   useEffect(() => {
@@ -246,7 +248,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
           <button onClick={() => setShowQuitConfirm(true)} className="flex items-center gap-1 text-primary font-bold text-sm">
             <ChevronLeft size={18} /> Indietro
           </button>
-          <h2 className="text-xl font-bold text-foreground">🔥 Finisher</h2>
+          <h2 className="text-xl font-bold text-foreground">
+            🔥 Brucia Grassi {finisherVariant === "combat" ? "• Combat" : "• Metabolico"}
+          </h2>
           <button
             onClick={() => { setFinisherComplete(true); setShowStretching(true); }}
             className="text-xs font-bold text-muted-foreground hover:text-foreground transition"
@@ -261,7 +265,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
             {finisherExercises.length} esercizi • {getFinisherDuration(finisherExercises)} min • Nessuna pausa!
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Alta intensità per massimizzare il consumo calorico. Core sempre attivo!
+            {finisherVariant === "combat"
+              ? "Stile combat controllato: ogni movimento parte dal core, fluidità e potenza."
+              : "Circuito metabolico ad alta intensità: massimizza il consumo calorico. Core sempre attivo!"}
           </p>
         </div>
 
@@ -575,15 +581,28 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-lg text-xs font-bold">
-                    {config.tempoEsercizio}s
-                  </span>
-                  <button
-                    onClick={e => { e.stopPropagation(); timer.start(config.tempoEsercizio, es.nome); if (voiceActive) voice.announceExercise(es.nome); }}
-                    className="flex items-center gap-1 bg-pilates-green text-white px-2 py-1 rounded-lg text-xs font-bold hover:opacity-80"
-                  >
-                    <Timer size={12} /> AVVIA
-                  </button>
+                  {(() => {
+                    // Volume maggiorato per gli esercizi della parte centrale
+                    // (core/addome/fianchi/punto vita): +40% durata per renderli
+                    // più intensi e stimolanti rispetto agli altri.
+                    const isCore = (es.categoria || "").toLowerCase() === "core";
+                    const dur = isCore
+                      ? Math.round(config.tempoEsercizio * 1.4)
+                      : config.tempoEsercizio;
+                    return (
+                      <>
+                        <span className={`px-3 py-1 rounded-lg text-xs font-bold ${isCore ? "bg-red-500/15 text-red-600 dark:text-red-400" : "bg-secondary text-secondary-foreground"}`}>
+                          {dur}s{isCore ? " 🔥" : ""}
+                        </span>
+                        <button
+                          onClick={e => { e.stopPropagation(); timer.start(dur, es.nome); if (voiceActive) voice.announceExercise(es.nome); }}
+                          className="flex items-center gap-1 bg-pilates-green text-white px-2 py-1 rounded-lg text-xs font-bold hover:opacity-80"
+                        >
+                          <Timer size={12} /> AVVIA
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
@@ -641,7 +660,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
       {/* Finisher + Stretching note */}
       <div className="bg-gradient-to-r from-red-500/10 to-amber-500/10 border border-red-500/20 p-3 rounded-xl text-center space-y-1">
         <p className="text-sm font-bold text-red-500 flex items-center justify-center gap-1">
-          <Flame size={14} /> Dopo i round: Finisher Brucia Grassi
+          <Flame size={14} /> Dopo i round: Brucia Grassi {finisherVariant === "combat" ? "Combat" : "Metabolico"}
         </p>
         <p className="text-xs text-muted-foreground">
           ✨ Poi stretching finale per completare la sessione
