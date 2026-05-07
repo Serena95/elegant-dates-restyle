@@ -581,15 +581,28 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                   </div>
                 </div>
                 <div className="flex flex-col items-end gap-1">
-                  <span className="bg-secondary text-secondary-foreground px-3 py-1 rounded-lg text-xs font-bold">
-                    {config.tempoEsercizio}s
-                  </span>
-                  <button
-                    onClick={e => { e.stopPropagation(); timer.start(config.tempoEsercizio, es.nome); if (voiceActive) voice.announceExercise(es.nome); }}
-                    className="flex items-center gap-1 bg-pilates-green text-white px-2 py-1 rounded-lg text-xs font-bold hover:opacity-80"
-                  >
-                    <Timer size={12} /> AVVIA
-                  </button>
+                  {(() => {
+                    // Volume maggiorato per gli esercizi della parte centrale
+                    // (core/addome/fianchi/punto vita): +40% durata per renderli
+                    // più intensi e stimolanti rispetto agli altri.
+                    const isCore = (es.categoria || "").toLowerCase() === "core";
+                    const dur = isCore
+                      ? Math.round(config.tempoEsercizio * 1.4)
+                      : config.tempoEsercizio;
+                    return (
+                      <>
+                        <span className={`px-3 py-1 rounded-lg text-xs font-bold ${isCore ? "bg-red-500/15 text-red-600 dark:text-red-400" : "bg-secondary text-secondary-foreground"}`}>
+                          {dur}s{isCore ? " 🔥" : ""}
+                        </span>
+                        <button
+                          onClick={e => { e.stopPropagation(); timer.start(dur, es.nome); if (voiceActive) voice.announceExercise(es.nome); }}
+                          className="flex items-center gap-1 bg-pilates-green text-white px-2 py-1 rounded-lg text-xs font-bold hover:opacity-80"
+                        >
+                          <Timer size={12} /> AVVIA
+                        </button>
+                      </>
+                    );
+                  })()}
                 </div>
               </div>
 
