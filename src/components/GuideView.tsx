@@ -142,6 +142,8 @@ const sections: { title: string; emoji: string; color: string; faqs: FaqItem[] }
       { q: "Posso eliminare il mio account?", a: "Sì, nelle Impostazioni trovi l'opzione per eliminare definitivamente il tuo account e tutti i dati associati." },
     ]
   },
+  { emoji: "📚", title: "Libreria Esercizi Completa", desc: "Tutti gli esercizi organizzati per attrezzo + sezioni dedicate a Brucia Grassi Metabolico, Brucia Grassi Combat (con illustrazioni e schede tecniche complete) e Stretching." },
+  { emoji: "🔥", title: "Brucia Grassi Smart", desc: "Un solo blocco finale per workout (~2,5 min). La variante Combat o Metabolic è scelta in automatico per attivare core, fianchi e punto vita senza saturare." },
 ];
 
 const infoCards = [
