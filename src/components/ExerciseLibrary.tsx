@@ -183,6 +183,84 @@ export function ExerciseLibrary({ onBack }: ExerciseLibraryProps) {
         );
       })}
 
+      {/* Sezioni extra: brucia grassi (metabolic + combat) e stretching */}
+      {EXTRA_SECTIONS.map(sec => {
+        const q = search.toLowerCase();
+        const items = sec.items.filter(it =>
+          !q ||
+          it.nome.toLowerCase().includes(q) ||
+          sec.title.toLowerCase().includes(q) ||
+          (it.coreNote || "").toLowerCase().includes(q)
+        );
+        if (items.length === 0) return null;
+        return (
+          <div key={sec.key}>
+            <div className="bg-primary text-primary-foreground p-3 rounded-xl font-bold uppercase text-center text-sm flex items-center justify-center gap-2">
+              <span>{sec.icon}</span> {sec.title}
+            </div>
+            <p className="text-[11px] text-muted-foreground mt-2 px-2 italic">{sec.intro}</p>
+            <div className="mt-2 px-2">
+              {items.map(it => (
+                <div
+                  key={it.id}
+                  onClick={() => setOpenItem(openItem === it.id ? null : it.id)}
+                  className="py-2 border-b border-border/50 cursor-pointer"
+                >
+                  <div className="flex justify-between items-center text-sm">
+                    <span className="font-medium text-primary">{it.emoji} {it.nome}</span>
+                    <span className={`text-[10px] px-2 py-0.5 rounded-full font-bold ${LIVELLO_COLORS[it.livello]}`}>
+                      {it.durata}s · {it.livello.toUpperCase()}
+                    </span>
+                  </div>
+                  {openItem === it.id && (
+                    <div className="mt-2 p-3 bg-accent/50 rounded-lg border-l-4 border-primary text-sm text-foreground space-y-2">
+                      {it.image && (
+                        <img src={it.image} alt={it.nome} className="w-full rounded-lg object-cover max-h-56" />
+                      )}
+                      <p>{it.desc}</p>
+                      {it.setup && (
+                        <div>
+                          <p className="text-xs font-bold text-primary uppercase">Posizione di partenza</p>
+                          <p className="text-xs text-muted-foreground">{it.setup}</p>
+                        </div>
+                      )}
+                      {it.steps && it.steps.length > 0 && (
+                        <div>
+                          <p className="text-xs font-bold text-primary uppercase">Esecuzione</p>
+                          <ol className="list-decimal pl-4 text-xs text-muted-foreground space-y-0.5">
+                            {it.steps.map((s, i) => <li key={i}>{s}</li>)}
+                          </ol>
+                        </div>
+                      )}
+                      {it.errors && it.errors.length > 0 && (
+                        <div>
+                          <p className="text-xs font-bold text-destructive uppercase">Errori da evitare</p>
+                          <ul className="list-disc pl-4 text-xs text-muted-foreground space-y-0.5">
+                            {it.errors.map((e, i) => <li key={i}>{e}</li>)}
+                          </ul>
+                        </div>
+                      )}
+                      {it.breathing && (
+                        <div>
+                          <p className="text-xs font-bold text-primary uppercase">Respirazione</p>
+                          <p className="text-xs text-muted-foreground">{it.breathing}</p>
+                        </div>
+                      )}
+                      {it.coreNote && (
+                        <div className="bg-primary/10 rounded p-2">
+                          <p className="text-xs font-bold text-primary uppercase">Focus core</p>
+                          <p className="text-xs text-foreground">{it.coreNote}</p>
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      })}
+
       <button onClick={onBack} className="w-full py-3 rounded-2xl border-2 border-primary text-primary font-bold bg-card">
         ⬅ TORNA ALLA DASHBOARD
       </button>
