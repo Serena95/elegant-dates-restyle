@@ -99,6 +99,16 @@ const sections: { title: string; emoji: string; color: string; faqs: FaqItem[] }
     title: "LIBRERIA ESERCIZI", emoji: "📚", color: "text-sky-500",
     faqs: [
       { q: "Posso vedere come si fa un esercizio?", a: "Sì, nella Libreria (Altro → Libreria Esercizi) clicca sul nome di qualsiasi esercizio per la spiegazione dettagliata. Gli esercizi sono organizzati per attrezzo." },
+      { q: "Trovo anche brucia grassi e stretching nella Libreria?", a: "Sì! In fondo alla Libreria sono presenti tre sezioni dedicate: 🔥 Brucia Grassi - Metabolico (circuito ad alta intensità), 🥊 Brucia Grassi - Combat (movimenti stile combattimento con focus core) e 🧘 Stretching (allungamento finale)." },
+      { q: "Cosa contengono le schede combat?", a: "Ogni esercizio combat ha illustrazione, posizione di partenza, esecuzione passo per passo, errori da evitare, respirazione e focus core. Sono pensati per movimenti controllati che attivano addome, fianchi e punto vita." },
+    ]
+  },
+  {
+    title: "BRUCIA GRASSI & STRETCHING", emoji: "🔥", color: "text-orange-500",
+    faqs: [
+      { q: "Come funziona il blocco brucia grassi?", a: "Ogni workout ha UN SOLO blocco brucia grassi finale (5 esercizi, ~2,5 min). La variante è scelta automaticamente in base al focus del giorno: Total Body privilegia Combat, Lower alterna metabolic/combat, Upper resta prevalentemente metabolic." },
+      { q: "Cos'è la variante Combat?", a: "Sequenza di movimenti stile combattimento controllati (jab, cross, hook, calci, ginocchiate, sprawl, slip) che attivano fortemente core, fianchi e punto vita. Frequenza massima 1-2 volte a settimana." },
+      { q: "Come funziona lo stretching?", a: "Dopo aver completato tutti i round e il blocco brucia grassi, parte automaticamente una sessione di stretching: 5 esercizi da 30 secondi mirati ai muscoli del focus del giorno (Upper, Lower o Total)." },
     ]
   },
   {
@@ -149,6 +159,8 @@ const infoCards = [
   { emoji: "📶", title: "Offline & Stabilità", desc: "L'app funziona anche senza internet. I workout rimangono fissi per tutta la settimana e i dati si sincronizzano automaticamente quando torni online." },
   { emoji: "🔔", title: "Notifiche & Promemoria", desc: "Attiva le notifiche push nelle Impostazioni per ricevere promemoria giornalieri per l'allenamento all'orario che preferisci." },
   { emoji: "🌙", title: "Dark Mode", desc: "Attiva la modalità scura dalle Impostazioni. La preferenza viene salvata e applicata automaticamente ad ogni apertura." },
+  { emoji: "📚", title: "Libreria Completa", desc: "Tutti gli esercizi per attrezzo + sezioni Brucia Grassi Metabolico, Brucia Grassi Combat (con illustrazioni e schede tecniche) e Stretching." },
+  { emoji: "🔥", title: "Brucia Grassi Smart", desc: "Un solo blocco finale per workout (~2,5 min). Variante Combat o Metabolic scelta in automatico per attivare core, fianchi e punto vita." },
 ];
 
 export function GuideView({ onBack }: GuideViewProps) {
