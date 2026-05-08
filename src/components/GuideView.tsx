@@ -159,6 +159,8 @@ const infoCards = [
   { emoji: "📶", title: "Offline & Stabilità", desc: "L'app funziona anche senza internet. I workout rimangono fissi per tutta la settimana e i dati si sincronizzano automaticamente quando torni online." },
   { emoji: "🔔", title: "Notifiche & Promemoria", desc: "Attiva le notifiche push nelle Impostazioni per ricevere promemoria giornalieri per l'allenamento all'orario che preferisci." },
   { emoji: "🌙", title: "Dark Mode", desc: "Attiva la modalità scura dalle Impostazioni. La preferenza viene salvata e applicata automaticamente ad ogni apertura." },
+  { emoji: "📚", title: "Libreria Completa", desc: "Tutti gli esercizi per attrezzo + sezioni Brucia Grassi Metabolico, Brucia Grassi Combat (con illustrazioni e schede tecniche) e Stretching." },
+  { emoji: "🔥", title: "Brucia Grassi Smart", desc: "Un solo blocco finale per workout (~2,5 min). Variante Combat o Metabolic scelta in automatico per attivare core, fianchi e punto vita." },
 ];
 
 export function GuideView({ onBack }: GuideViewProps) {
