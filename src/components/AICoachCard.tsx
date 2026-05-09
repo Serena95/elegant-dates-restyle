@@ -37,10 +37,20 @@ export function AICoachCard({ context, streak, progress, onStartSuggested }: AIC
         totalWorkouts: progress.totalWorkouts,
         recentIntensity: progress.recentIntensity,
       }, forceRefresh);
+      const toText = (v: unknown): string => {
+        if (typeof v === "string") return v;
+        if (v && typeof v === "object") {
+          const o = v as Record<string, unknown>;
+          if (typeof o.testo === "string") return o.testo;
+          if (typeof o.text === "string") return o.text;
+          if (typeof o.message === "string") return o.message;
+        }
+        return v == null ? "" : String(v);
+      };
       setSuggestion(result.suggestion);
-      setMotivation(result.motivation);
+      setMotivation(toText(result.motivation));
       if (result.recovery) setRecovery(result.recovery);
-      if (result.nutritionTip) setNutritionTip(result.nutritionTip);
+      if (result.nutritionTip) setNutritionTip(toText(result.nutritionTip));
     } catch {
       setError(true);
     } finally {
