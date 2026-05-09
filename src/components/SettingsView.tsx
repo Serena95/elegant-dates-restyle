@@ -235,8 +235,11 @@ export function SettingsView({ onNavigate, onModificaAttrezzi, voiceEnabled = tr
           <Bell size={18} className="text-muted-foreground" />
           <span className="flex-1 text-sm font-medium text-foreground">Promemoria Allenamento</span>
           <button
+            type="button"
             onClick={() => onToggleNotifiche?.(!notificheAbilitate)}
             className={`w-12 h-7 rounded-full transition-colors relative ${notificheAbilitate ? "bg-primary" : "bg-muted"}`}
+            aria-pressed={notificheAbilitate}
+            aria-label="Attiva o disattiva promemoria allenamento"
           >
             <span className={`block w-5 h-5 rounded-full bg-card shadow-sm absolute top-1 transition-transform ${notificheAbilitate ? "translate-x-6" : "translate-x-1"}`} />
           </button>
