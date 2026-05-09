@@ -144,7 +144,7 @@ Genera il piano completo in JSON.`;
     });
   } catch (e) {
     console.error("generate-meal-plan error:", e);
-    return new Response(JSON.stringify({ error: e instanceof Error ? e.message : "Errore nella generazione del piano" }), {
+    return new Response(JSON.stringify({ error: "Si è verificato un errore interno. Riprova più tardi." }), {
       status: 500, headers: { ...corsHeaders, "Content-Type": "application/json" },
     });
   }

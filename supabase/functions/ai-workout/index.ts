@@ -166,7 +166,7 @@ Seleziona gli esercizi migliori per questo allenamento.`;
     });
   } catch (e) {
     console.error("ai-workout error:", e);
-    return new Response(JSON.stringify({ error: "server_error", message: e instanceof Error ? e.message : "Errore sconosciuto" }), {
+    return new Response(JSON.stringify({ error: "server_error", message: "Si è verificato un errore interno. Riprova più tardi." }), {
       status: 500,
       headers: { ...corsHeaders, "Content-Type": "application/json" },
     });

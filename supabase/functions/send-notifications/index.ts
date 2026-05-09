@@ -178,6 +178,26 @@ async function sendPushNotification(
 ): Promise<boolean> {
   try {
     const endpointUrl = new URL(subscription.endpoint);
+
+    // Validate protocol
+    if (endpointUrl.protocol !== "https:") {
+      console.warn("Push endpoint must use HTTPS:", subscription.endpoint);
+      return false;
+    }
+
+    // Validate host against known push service providers (SSRF protection)
+    const allowedHosts = [
+      "fcm.googleapis.com",
+      "updates.push.services.mozilla.com",
+      "web.push.apple.com",
+      "webpush.edge.microsoft.com",
+      "webpush.wx.qq.com",
+    ];
+    if (!allowedHosts.includes(endpointUrl.host)) {
+      console.warn("Untrusted push endpoint host, skipping:", endpointUrl.host);
+      return false;
+    }
+
     const audience = `${endpointUrl.protocol}//${endpointUrl.host}`;
 
     const jwt = await createVapidJwt(
