@@ -181,26 +181,58 @@ export function useNotifications(
     [user, settings]
   );
 
-  // Toggle notifications
+  // Toggle notifications - optimistic UI + graceful fallback
   const toggleNotifications = useCallback(
     async (enabled: boolean) => {
+      // Optimistic UI update so the switch always responds
+      setSettings((s) => ({ ...s, notifiche_abilitate: enabled }));
+
       if (enabled) {
-        const perm = await requestPermission();
-        if (perm !== "granted") {
-          toast.error("Permesso notifiche negato. Abilitalo dalle impostazioni del browser.");
+        // Check browser support
+        if (typeof Notification === "undefined") {
+          toast.error("Questo browser non supporta le notifiche.");
+          setSettings((s) => ({ ...s, notifiche_abilitate: false }));
           return;
         }
-        const ok = await subscribeToPush();
-        if (!ok) return;
+
+        // Request OS permission (must run in user gesture)
+        let perm: NotificationPermission = Notification.permission;
+        if (perm === "default") {
+          try {
+            perm = await Notification.requestPermission();
+            setPermission(perm);
+          } catch (e) {
+            console.error("requestPermission failed:", e);
+          }
+        }
+
+        if (perm !== "granted") {
+          toast.error(
+            perm === "denied"
+              ? "Permesso negato. Attiva le notifiche dalle impostazioni del browser/sistema."
+              : "Permesso notifiche non concesso."
+          );
+          setSettings((s) => ({ ...s, notifiche_abilitate: false }));
+          return;
+        }
+
+        // Persist setting first so the toggle stays on even if push subscription is slow/unavailable
         await updateSettings({ notifiche_abilitate: true });
-        toast.success("Notifiche attivate ✓");
+
+        // Try subscribing to push in background (non-blocking for the toggle)
+        const ok = await subscribeToPush();
+        if (ok) {
+          toast.success("Notifiche attivate ✓");
+        } else {
+          toast.message("Notifiche locali attive. Push non disponibile su questo dispositivo.");
+        }
       } else {
-        await unsubscribeFromPush();
         await updateSettings({ notifiche_abilitate: false });
+        unsubscribeFromPush().catch((e) => console.error("unsubscribe error:", e));
         toast.success("Notifiche disattivate");
       }
     },
-    [requestPermission, updateSettings, subscribeToPush, unsubscribeFromPush]
+    [updateSettings, subscribeToPush, unsubscribeFromPush]
   );
 
   // Auto-subscribe if notifications are already enabled
