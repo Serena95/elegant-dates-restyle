@@ -1,6 +1,7 @@
 import { useState, useEffect, useCallback, useRef } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/contexts/AuthContext";
+import { toast } from "sonner";
 
 export interface NotificationSettings {
   notifiche_abilitate: boolean;
@@ -55,20 +56,18 @@ export function useNotifications(
       });
   }, [user]);
 
-  // Get VAPID public key
+  // Get VAPID public key (requires authenticated user)
   const getVapidKey = useCallback(async (): Promise<string | null> => {
     if (vapidKeyRef.current) return vapidKeyRef.current;
     try {
-      const projectId = import.meta.env.VITE_SUPABASE_PROJECT_ID;
-      const res = await fetch(
-        `https://${projectId}.supabase.co/functions/v1/generate-vapid`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      const data = await res.json();
-      if (data.publicKey) {
+      const { data, error } = await supabase.functions.invoke("generate-vapid", {
+        body: {},
+      });
+      if (error) {
+        console.error("generate-vapid error:", error);
+        return null;
+      }
+      if (data?.publicKey) {
         vapidKeyRef.current = data.publicKey;
         return data.publicKey;
       }
@@ -79,18 +78,25 @@ export function useNotifications(
   }, []);
 
   // Subscribe to push notifications
-  const subscribeToPush = useCallback(async () => {
-    if (!user || !("serviceWorker" in navigator) || !("PushManager" in window)) return;
+  const subscribeToPush = useCallback(async (): Promise<boolean> => {
+    if (!user) return false;
+    if (!("serviceWorker" in navigator) || !("PushManager" in window)) {
+      toast.error("Le notifiche push non sono supportate da questo browser.");
+      return false;
+    }
 
     try {
       const vapidKey = await getVapidKey();
-      if (!vapidKey) return;
+      if (!vapidKey) {
+        toast.error("Impossibile recuperare la chiave di notifica. Riprova.");
+        return false;
+      }
 
       const registration = await navigator.serviceWorker.ready;
-      
-      // Check if already subscribed
+
+      // Check if already subscribed; if VAPID key changed, resubscribe
       let subscription = await registration.pushManager.getSubscription();
-      
+
       if (!subscription) {
         const applicationServerKey = urlBase64ToUint8Array(vapidKey);
         subscription = await registration.pushManager.subscribe({
@@ -100,10 +106,12 @@ export function useNotifications(
       }
 
       const subJson = subscription.toJSON();
-      if (!subJson.endpoint || !subJson.keys?.p256dh || !subJson.keys?.auth) return;
+      if (!subJson.endpoint || !subJson.keys?.p256dh || !subJson.keys?.auth) {
+        toast.error("Iscrizione notifiche non valida.");
+        return false;
+      }
 
-      // Save subscription to DB
-      await supabase.from("push_subscriptions").upsert(
+      const { error } = await supabase.from("push_subscriptions").upsert(
         {
           user_id: user.id,
           endpoint: subJson.endpoint,
@@ -112,8 +120,18 @@ export function useNotifications(
         } as any,
         { onConflict: "user_id,endpoint" }
       );
-    } catch (e) {
+      if (error) {
+        console.error("Save subscription failed:", error);
+        toast.error("Errore nel salvataggio delle notifiche.");
+        return false;
+      }
+      return true;
+    } catch (e: any) {
       console.error("Push subscription failed:", e);
+      toast.error(e?.message?.includes("denied")
+        ? "Permesso notifiche negato dal browser."
+        : "Iscrizione notifiche fallita.");
+      return false;
     }
   }, [user, getVapidKey]);
 
@@ -168,12 +186,19 @@ export function useNotifications(
     async (enabled: boolean) => {
       if (enabled) {
         const perm = await requestPermission();
-        if (perm !== "granted") return;
-        await subscribeToPush();
+        if (perm !== "granted") {
+          toast.error("Permesso notifiche negato. Abilitalo dalle impostazioni del browser.");
+          return;
+        }
+        const ok = await subscribeToPush();
+        if (!ok) return;
+        await updateSettings({ notifiche_abilitate: true });
+        toast.success("Notifiche attivate ✓");
       } else {
         await unsubscribeFromPush();
+        await updateSettings({ notifiche_abilitate: false });
+        toast.success("Notifiche disattivate");
       }
-      await updateSettings({ notifiche_abilitate: enabled });
     },
     [requestPermission, updateSettings, subscribeToPush, unsubscribeFromPush]
   );
