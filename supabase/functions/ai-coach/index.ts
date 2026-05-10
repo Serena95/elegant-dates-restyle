@@ -215,7 +215,7 @@ Fornisci un consiglio nutrizionale personalizzato e coerente con il piano. Rispo
     console.error("ai-coach error:", e);
     // Return 200 with fallback so frontend doesn't blank-screen on runtime errors
     return new Response(JSON.stringify({
-      error: e instanceof Error ? e.message : "Unknown error",
+      error: "Si è verificato un errore interno. Riprova più tardi.",
       fallback: true,
       result: null,
     }), {
