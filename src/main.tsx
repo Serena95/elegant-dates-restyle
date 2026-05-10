@@ -26,13 +26,23 @@ if ("serviceWorker" in navigator && (isInIframe || isPreviewHost)) {
     registrations.forEach((registration) => registration.unregister());
   });
 } else {
-  // Register SW but do NOT auto-reload the app while user is using it.
-  // Updates will be applied on the next manual reload/app restart.
-  registerSW({
+  // Auto-update: activate new SW as soon as it's ready and reload once it takes control.
+  const updateSW = registerSW({
     immediate: true,
-    onNeedRefresh() {},
+    onNeedRefresh() {
+      updateSW(true);
+    },
     onOfflineReady() {},
   });
+
+  if ("serviceWorker" in navigator) {
+    let refreshing = false;
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (refreshing) return;
+      refreshing = true;
+      window.location.reload();
+    });
+  }
 }
 
 const installWindow = window as InstallWindow;
