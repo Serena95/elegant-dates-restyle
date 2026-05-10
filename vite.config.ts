@@ -39,12 +39,21 @@ export default defineConfig(({ mode }) => ({
       },
       workbox: {
         cleanupOutdatedCaches: true,
-        clientsClaim: false,
-        globPatterns: ["**/*.{js,css,html,ico,png,svg,jpg,jpeg,gif,webp}"],
+        clientsClaim: true,
+        skipWaiting: true,
+        globPatterns: ["**/*.{js,css,ico,png,svg,jpg,jpeg,gif,webp}"],
         navigateFallbackDenylist: [/^\/~oauth/],
         importScripts: ["/sw-push.js"],
-        skipWaiting: false,
         runtimeCaching: [
+          {
+            urlPattern: ({ request }) => request.mode === "navigate",
+            handler: "NetworkFirst",
+            options: {
+              cacheName: "html-cache",
+              networkTimeoutSeconds: 3,
+              expiration: { maxEntries: 20, maxAgeSeconds: 60 * 60 * 24 },
+            },
+          },
           {
             urlPattern: /^https:\/\/fonts\.googleapis\.com\/.*/i,
             handler: "CacheFirst",
