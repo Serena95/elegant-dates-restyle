@@ -102,16 +102,27 @@ const MUSCLE_TOKEN_SYNONYMS: Record<string, string[]> = {
   quadricipiti: ["quadricipiti", "gambe"],
   femorali: ["femorali", "ischiocrurali", "posteriori coscia"],
   "interno coscia": ["interno coscia", "adduttori"],
-  // Core REALE: solo esercizi diretti su addome/obliqui/trasverso/punto vita.
-  // Stabilità NON è considerata core: il core deve essere il muscolo principale, non solo stabilizzatore.
-  core: ["core", "addominali", "addominali bassi", "addominali alti", "obliqui", "trasverso", "punto vita", "fianchi"],
+  // Core ESTESO: include addome, obliqui, fianchi, trasverso, punto vita
+  // sia come categoria principale sia come muscolo primario coinvolto.
+  // Questo amplia la varietà pescando anche da esercizi taggati mobilità/stabilità
+  // ma il cui muscolo PRIMARIO è addominale/obliquo/fianchi.
+  core: ["core", "addominali", "addominali bassi", "addominali alti", "obliqui", "trasverso", "punto vita", "fianchi", "core profondo"],
 };
+
+const CORE_PRIMARY_MUSCLES = new Set([
+  "addominali", "addominali bassi", "addominali alti", "obliqui",
+  "trasverso", "punto vita", "fianchi", "core profondo", "core",
+]);
 
 function exerciseMatchesToken(e: Exercise, token: string): boolean {
   const syn = MUSCLE_TOKEN_SYNONYMS[token] || [token];
-  // Core: deve essere esercizio PRINCIPALE per addome (categoria === "core").
-  // Non basta avere "core" tra i muscoli secondari (stabilizzatore).
-  if (token === "core") return e.categoria === "core";
+  // Core: categoria "core" OPPURE primo muscolo (PRIMARIO) appartiene al gruppo core.
+  // Esclude esercizi dove il core è solo stabilizzatore secondario.
+  if (token === "core") {
+    if (e.categoria === "core") return true;
+    const primary = (e.muscoli[0] || "").toLowerCase();
+    return CORE_PRIMARY_MUSCLES.has(primary);
+  }
   if (syn.includes(e.categoria)) return true;
   return e.muscoli.some(m => syn.includes(m.toLowerCase()));
 }
@@ -994,6 +1005,8 @@ export function generaEserciziGiorno(
   const disponibili = EXERCISE_LIBRARY.filter(e => {
     if (!allowedEquipment.has(normalizeEquipmentName(e.attrezzo))) return false;
     if (!livelloAccessibile(e.livello, effectiveLevel)) return false;
+    // Cardio NON va negli esercizi iniziali del workout: viene gestito dopo (finisher).
+    if (e.categoria === "cardio") return false;
     if (forbidden.length > 0) {
       const hitsForbidden = forbidden.some(t => exerciseMatchesToken(e, t));
       if (hitsForbidden) {
