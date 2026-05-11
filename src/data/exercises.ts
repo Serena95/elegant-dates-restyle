@@ -1005,6 +1005,8 @@ export function generaEserciziGiorno(
   const disponibili = EXERCISE_LIBRARY.filter(e => {
     if (!allowedEquipment.has(normalizeEquipmentName(e.attrezzo))) return false;
     if (!livelloAccessibile(e.livello, effectiveLevel)) return false;
+    // Cardio NON va negli esercizi iniziali del workout: viene gestito dopo (finisher).
+    if (e.categoria === "cardio") return false;
     if (forbidden.length > 0) {
       const hitsForbidden = forbidden.some(t => exerciseMatchesToken(e, t));
       if (hitsForbidden) {
