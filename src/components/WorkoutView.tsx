@@ -8,6 +8,7 @@ import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, X, Volume2
 import type { DayFocus } from "@/data/exercises";
 import { getCoreActivationCue } from "@/data/coreActivation";
 import { getFinisherForWorkout, getFinisherDuration, FinisherExercise, FinisherVariant } from "@/data/finisher";
+import { getAbsStrongForWorkout, AbsStrongExercise } from "@/data/absStrong";
 import { getProgressionConfig, getProgressionLabel } from "@/services/progressionService";
 
 // ============================================================
