@@ -8,6 +8,7 @@ import { ChevronLeft, Timer, Check, RefreshCw, Dumbbell, Pause, Play, X, Volume2
 import type { DayFocus } from "@/data/exercises";
 import { getCoreActivationCue } from "@/data/coreActivation";
 import { getFinisherForWorkout, getFinisherDuration, FinisherExercise, FinisherVariant } from "@/data/finisher";
+import { getAbsStrongForWorkout, AbsStrongExercise } from "@/data/absStrong";
 import { getProgressionConfig, getProgressionLabel } from "@/services/progressionService";
 
 // ============================================================
@@ -61,6 +62,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const [showStretching, setShowStretching] = useState(initialShowStretching);
   const [stretchingComplete, setStretchingComplete] = useState(false);
   const [completedStretches, setCompletedStretches] = useState<Set<number>>(new Set());
+  const [showAbsStrong, setShowAbsStrong] = useState(false);
+  const [absStrongComplete, setAbsStrongComplete] = useState(false);
+  const [completedAbs, setCompletedAbs] = useState<Set<number>>(new Set());
   const [showFinisher, setShowFinisher] = useState(false);
   const [finisherComplete, setFinisherComplete] = useState(false);
   const [completedFinishers, setCompletedFinishers] = useState<Set<number>>(new Set());
@@ -73,6 +77,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const finisherData = useMemo(() => getFinisherForWorkout(dayFocus, giorno), [dayFocus, giorno]);
   const finisherExercises = finisherData.exercises;
   const finisherVariant: FinisherVariant = finisherData.variant;
+
+  // Strong abs block: 5 exercises a reps, eseguito PRIMA del finisher per attivare a fondo addome/punto vita
+  const absStrongExercises = useMemo<AbsStrongExercise[]>(() => getAbsStrongForWorkout(giorno), [giorno]);
 
   // Report state changes for persistence
   useEffect(() => {
@@ -158,9 +165,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
       timer.start(config.pausa, `PAUSA ROUND ${roundCorrenti + 1}`);
       setTimeout(() => scrollToExercise(0), 300);
     } else {
-      // All rounds completed → show finisher first
+      // All rounds completed → show ABS STRONG first, then finisher
       if (voiceActive) voice.announceAllComplete();
-      setShowFinisher(true);
+      setShowAbsStrong(true);
     }
   };
 
@@ -182,6 +189,15 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     });
   };
 
+  const toggleAbs = (idx: number) => {
+    setCompletedAbs(prev => {
+      const next = new Set(prev);
+      if (next.has(idx)) next.delete(idx);
+      else next.add(idx);
+      return next;
+    });
+  };
+
   const cambiaRiscaldamento = () => {
     setTipoRiscaldamento(prev => (prev + 1) % 3);
   };
@@ -189,7 +205,135 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const risc = RISCALDAMENTO_MODES[tipoRiscaldamento];
 
   // ============================================================
-  // FINISHER SCREEN (after all rounds, before stretching)
+  // ABS STRONG SCREEN (after all rounds, before finisher)
+  // ============================================================
+  if (showAbsStrong && !absStrongComplete) {
+    const goToFinisher = () => { setAbsStrongComplete(true); setShowFinisher(true); };
+    return (
+      <div className="space-y-4">
+        <TimerOverlay timer={timer} />
+
+        {showQuitConfirm && (
+          <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4" onClick={() => setShowQuitConfirm(false)}>
+            <div className="bg-card rounded-2xl border border-border shadow-2xl p-6 max-w-sm w-full space-y-4" onClick={e => e.stopPropagation()}>
+              <h3 className="text-lg font-bold text-foreground">Terminare l'allenamento?</h3>
+              <p className="text-sm text-muted-foreground">Il workout è già stato registrato. Vuoi uscire?</p>
+              <div className="flex gap-3">
+                <button onClick={() => setShowQuitConfirm(false)} className="flex-1 py-3 rounded-xl bg-muted text-foreground font-bold">Continua</button>
+                <button onClick={onBack} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Esci</button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <div className="flex items-center justify-between">
+          <button onClick={() => setShowQuitConfirm(true)} className="flex items-center gap-1 text-primary font-bold text-sm">
+            <ChevronLeft size={18} /> Indietro
+          </button>
+          <h2 className="text-xl font-bold text-foreground">💪 Addominali Strong</h2>
+          <button
+            onClick={goToFinisher}
+            className="text-xs font-bold text-muted-foreground hover:text-foreground transition"
+          >
+            Salta →
+          </button>
+        </div>
+
+        <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/20 rounded-xl p-3">
+          <p className="text-sm text-foreground font-semibold flex items-center gap-2">
+            <Dumbbell size={16} className="text-primary" />
+            {absStrongExercises.length} esercizi a ripetizioni • Addome, obliqui, fianchi
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            Blocco di forza profonda sul punto vita: esegui ogni esercizio con controllo, qualità sopra la velocità.
+          </p>
+        </div>
+
+        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
+          <div
+            className="h-full transition-all duration-500 bg-primary"
+            style={{ width: `${(completedAbs.size / absStrongExercises.length) * 100}%` }}
+          />
+        </div>
+
+        <div className="space-y-3">
+          {absStrongExercises.map((ex, idx) => {
+            const done = completedAbs.has(idx);
+            return (
+              <div
+                key={ex.nome + idx}
+                onClick={() => toggleAbs(idx)}
+                className={`rounded-xl border p-4 transition-all cursor-pointer ${
+                  done ? "opacity-40 bg-muted border-border" : "bg-card border-border hover:border-primary/30 hover:shadow-md"
+                }`}
+              >
+                <div className="flex justify-between items-start gap-3">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      {done && <Check size={16} className="text-primary" />}
+                      <strong className="text-base text-foreground">{ex.emoji} {ex.nome}</strong>
+                      <span className="text-[10px] uppercase tracking-wide bg-muted text-muted-foreground px-2 py-0.5 rounded-full">{ex.zona}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground mt-1">{ex.desc}</p>
+                    <p className="text-xs text-primary font-semibold mt-1">{ex.coreNote}</p>
+                  </div>
+                  <div className="bg-primary text-primary-foreground px-3 py-2 rounded-lg text-xs font-bold shrink-0 whitespace-nowrap">
+                    {ex.reps}
+                  </div>
+                </div>
+
+                {(ex.setup || ex.steps || ex.errors || ex.breathing) && (
+                  <div
+                    className="mt-3 pt-3 border-t border-border space-y-2 text-xs"
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {ex.setup && (
+                      <div>
+                        <p className="font-semibold text-foreground mb-0.5">📍 Posizione di partenza</p>
+                        <p className="text-muted-foreground">{ex.setup}</p>
+                      </div>
+                    )}
+                    {ex.steps && ex.steps.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-foreground mb-0.5">▶️ Esecuzione</p>
+                        <ol className="list-decimal list-inside space-y-0.5 text-muted-foreground">
+                          {ex.steps.map((s, i) => <li key={i}>{s}</li>)}
+                        </ol>
+                      </div>
+                    )}
+                    {ex.errors && ex.errors.length > 0 && (
+                      <div>
+                        <p className="font-semibold text-foreground mb-0.5">⚠️ Errori da evitare</p>
+                        <ul className="list-disc list-inside space-y-0.5 text-muted-foreground">
+                          {ex.errors.map((s, i) => <li key={i}>{s}</li>)}
+                        </ul>
+                      </div>
+                    )}
+                    {ex.breathing && (
+                      <div>
+                        <p className="font-semibold text-foreground mb-0.5">💨 Respirazione</p>
+                        <p className="text-muted-foreground">{ex.breathing}</p>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            );
+          })}
+        </div>
+
+        <button
+          onClick={goToFinisher}
+          className="w-full py-4 rounded-2xl bg-gradient-to-r from-primary to-purple-500 text-primary-foreground font-bold shadow-lg flex items-center justify-center gap-2"
+        >
+          💪 Addominali Completati → Brucia Grassi
+        </button>
+      </div>
+    );
+  }
+
+  // ============================================================
+  // FINISHER SCREEN (after abs strong, before stretching)
   // ============================================================
   if (showFinisher && !finisherComplete) {
     return (
@@ -671,7 +815,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
       {/* Finisher + Stretching note */}
       <div className="bg-gradient-to-r from-red-500/10 to-amber-500/10 border border-red-500/20 p-3 rounded-xl text-center space-y-1">
         <p className="text-sm font-bold text-red-500 flex items-center justify-center gap-1">
-          <Flame size={14} /> Dopo i round: Brucia Grassi {finisherVariant === "combat" ? "Combat" : "Metabolico"}
+          <Flame size={14} /> Dopo i round: 💪 Addominali Strong → 🔥 Brucia Grassi {finisherVariant === "combat" ? "Combat" : "Metabolico"}
         </p>
         <p className="text-xs text-muted-foreground">
           ✨ Poi stretching finale per completare la sessione
