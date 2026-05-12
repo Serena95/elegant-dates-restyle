@@ -78,6 +78,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const finisherExercises = finisherData.exercises;
   const finisherVariant: FinisherVariant = finisherData.variant;
 
+  // Strong abs block: 5 exercises a reps, eseguito PRIMA del finisher per attivare a fondo addome/punto vita
+  const absStrongExercises = useMemo<AbsStrongExercise[]>(() => getAbsStrongForWorkout(giorno), [giorno]);
+
   // Report state changes for persistence
   useEffect(() => {
     onStateChange?.({ currentExerciseIdx, completati: Array.from(completati), showStretching });
