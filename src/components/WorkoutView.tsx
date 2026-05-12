@@ -62,6 +62,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const [showStretching, setShowStretching] = useState(initialShowStretching);
   const [stretchingComplete, setStretchingComplete] = useState(false);
   const [completedStretches, setCompletedStretches] = useState<Set<number>>(new Set());
+  const [showAbsStrong, setShowAbsStrong] = useState(false);
+  const [absStrongComplete, setAbsStrongComplete] = useState(false);
+  const [completedAbs, setCompletedAbs] = useState<Set<number>>(new Set());
   const [showFinisher, setShowFinisher] = useState(false);
   const [finisherComplete, setFinisherComplete] = useState(false);
   const [completedFinishers, setCompletedFinishers] = useState<Set<number>>(new Set());
