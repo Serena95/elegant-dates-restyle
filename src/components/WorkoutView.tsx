@@ -165,9 +165,9 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
       timer.start(config.pausa, `PAUSA ROUND ${roundCorrenti + 1}`);
       setTimeout(() => scrollToExercise(0), 300);
     } else {
-      // All rounds completed → show finisher first
+      // All rounds completed → show ABS STRONG first, then finisher
       if (voiceActive) voice.announceAllComplete();
-      setShowFinisher(true);
+      setShowAbsStrong(true);
     }
   };
 
