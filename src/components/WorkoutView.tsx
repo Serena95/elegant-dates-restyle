@@ -815,7 +815,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
       {/* Finisher + Stretching note */}
       <div className="bg-gradient-to-r from-red-500/10 to-amber-500/10 border border-red-500/20 p-3 rounded-xl text-center space-y-1">
         <p className="text-sm font-bold text-red-500 flex items-center justify-center gap-1">
-          <Flame size={14} /> Dopo i round: Brucia Grassi {finisherVariant === "combat" ? "Combat" : "Metabolico"}
+          <Flame size={14} /> Dopo i round: 💪 Addominali Strong → 🔥 Brucia Grassi {finisherVariant === "combat" ? "Combat" : "Metabolico"}
         </p>
         <p className="text-xs text-muted-foreground">
           ✨ Poi stretching finale per completare la sessione
