@@ -79,7 +79,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const finisherVariant: FinisherVariant = finisherData.variant;
 
   // Strong abs block: 5 exercises a reps, eseguito PRIMA del finisher per attivare a fondo addome/punto vita
-  const absStrongExercises = useMemo<AbsStrongExercise[]>(() => getAbsStrongForWorkout(giorno), [giorno]);
+  const absStrongExercises = useMemo<AbsStrongExercise[]>(() => getAbsStrongForWorkout(giorno, livello), [giorno, livello]);
 
   // Report state changes for persistence
   useEffect(() => {
@@ -242,10 +242,10 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/20 rounded-xl p-3">
           <p className="text-sm text-foreground font-semibold flex items-center gap-2">
             <Dumbbell size={16} className="text-primary" />
-            {absStrongExercises.length} esercizi a ripetizioni • Addome, obliqui, fianchi
+            1 esercizio a ripetizioni • Attivazione profonda addome
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Blocco di forza profonda sul punto vita: esegui ogni esercizio con controllo, qualità sopra la velocità.
+            Topo Crunch: micro-impulsi controllati per accendere in profondità il punto vita.
           </p>
         </div>
 
