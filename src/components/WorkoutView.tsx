@@ -405,6 +405,24 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                   done ? "opacity-40 bg-muted border-border" : "bg-card border-border hover:border-red-500/30 hover:shadow-md"
                 }`}
               >
+                {ex.image ? (
+                  <div className="w-full mb-3 overflow-hidden rounded-xl aspect-[16/10] bg-muted/30">
+                    <img
+                      src={ex.image}
+                      alt={ex.nome}
+                      loading="lazy"
+                      className="w-full h-full object-contain"
+                    />
+                  </div>
+                ) : (
+                  <ExerciseImage
+                    exerciseId={`finisher-${ex.nome.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`}
+                    exerciseName={ex.nome}
+                    category="cardio"
+                    muscles={["full body", "core"]}
+                    className="w-full mb-3"
+                  />
+                )}
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2">
@@ -414,16 +432,6 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
                     <p className="text-xs text-muted-foreground mt-1">{ex.desc}</p>
                     <p className="text-xs text-red-500 font-semibold mt-1">{ex.coreNote}</p>
                   </div>
-                  {ex.image && (
-                    <img
-                      src={ex.image}
-                      alt={ex.nome}
-                      loading="lazy"
-                      width={64}
-                      height={64}
-                      className="w-16 h-16 rounded-lg object-cover border border-border shrink-0"
-                    />
-                  )}
                   <button
                     onClick={e => { e.stopPropagation(); timer.start(ex.durata, ex.nome); }}
                     className="bg-red-500 text-white px-3 py-2 rounded-lg text-xs font-bold flex items-center gap-1 shrink-0"
