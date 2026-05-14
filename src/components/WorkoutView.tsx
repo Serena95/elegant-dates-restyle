@@ -242,10 +242,10 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         <div className="bg-gradient-to-r from-primary/10 to-purple-500/10 border border-primary/20 rounded-xl p-3">
           <p className="text-sm text-foreground font-semibold flex items-center gap-2">
             <Dumbbell size={16} className="text-primary" />
-            1 esercizio a ripetizioni • Attivazione profonda addome
+            {absStrongExercises.length} esercizi a ripetizioni • Addome, obliqui, fianchi
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            Topo Crunch: micro-impulsi controllati per accendere in profondità il punto vita.
+            Stesso numero di ripetizioni per ogni esercizio in base al tuo livello.
           </p>
         </div>
 
