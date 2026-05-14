@@ -261,12 +261,19 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
             const done = completedAbs.has(idx);
             return (
               <div
-                key={ex.nome + idx}
+                key={ex.id + idx}
                 onClick={() => toggleAbs(idx)}
                 className={`rounded-xl border p-4 transition-all cursor-pointer ${
                   done ? "opacity-40 bg-muted border-border" : "bg-card border-border hover:border-primary/30 hover:shadow-md"
                 }`}
               >
+                <ExerciseImage
+                  exerciseId={ex.id}
+                  exerciseName={ex.nome}
+                  category="core"
+                  muscles={ex.muscoli}
+                  className="w-full mb-3"
+                />
                 <div className="flex justify-between items-start gap-3">
                   <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 flex-wrap">
