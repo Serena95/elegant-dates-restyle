@@ -1,9 +1,13 @@
 import { Exercise } from "./exercise-types";
 
 /**
- * Kettlebell exercises — copre Upper / Lower / Total Body
- * con tutti i token muscolari richiesti (schiena, spalle, braccia, petto,
- * glutei, quadricipiti, femorali, interno coscia, core).
+ * Kettlebell exercises — copre Upper / Lower / Total Body.
+ *
+ * IMPORTANTE: tutti gli esercizi qui sono tarati per essere eseguibili con
+ * un kettlebell da 10 kg (peso unico di riferimento per l'utente).
+ * Non aggiungere movimenti che richiedano carichi maggiori
+ * (es. snatch pesanti, clean & jerk avanzati, front squat con 2 KB,
+ * Turkish Get-Up completo, ecc.).
  */
 export const KETTLEBELL_EXERCISES: Exercise[] = [
   // CORE / TOTAL
