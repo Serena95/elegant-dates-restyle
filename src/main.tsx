@@ -26,42 +26,15 @@ if ("serviceWorker" in navigator && (isInIframe || isPreviewHost)) {
     registrations.forEach((registration) => registration.unregister());
   });
 } else {
-  // Auto-update: activate new SW as soon as it's ready and reload once it takes control.
-  const updateSW = registerSW({
+  // Register SW for offline support, but NEVER auto-reload the page.
+  // The new version will be picked up naturally on the next manual reload / app reopen.
+  registerSW({
     immediate: true,
     onNeedRefresh() {
-      updateSW(true);
+      // Intentionally no-op: do not force refresh while the user is using the app.
     },
     onOfflineReady() {},
   });
-
-  if ("serviceWorker" in navigator) {
-    let refreshing = false;
-    let pendingReload = false;
-    const isWorkoutInProgress = () => {
-      try {
-        return localStorage.getItem("workout_in_progress") === "1";
-      } catch {
-        return false;
-      }
-    };
-    const doReload = () => {
-      if (refreshing) return;
-      refreshing = true;
-      window.location.reload();
-    };
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
-      // Never auto-reload mid-workout: would lose abs/finisher/stretching sub-state.
-      if (isWorkoutInProgress()) {
-        pendingReload = true;
-        return;
-      }
-      doReload();
-    });
-    window.addEventListener("workout-finished", () => {
-      if (pendingReload) doReload();
-    });
-  }
 }
 
 const installWindow = window as InstallWindow;
