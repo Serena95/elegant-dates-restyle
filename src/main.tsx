@@ -37,10 +37,29 @@ if ("serviceWorker" in navigator && (isInIframe || isPreviewHost)) {
 
   if ("serviceWorker" in navigator) {
     let refreshing = false;
-    navigator.serviceWorker.addEventListener("controllerchange", () => {
+    let pendingReload = false;
+    const isWorkoutInProgress = () => {
+      try {
+        return localStorage.getItem("workout_in_progress") === "1";
+      } catch {
+        return false;
+      }
+    };
+    const doReload = () => {
       if (refreshing) return;
       refreshing = true;
       window.location.reload();
+    };
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      // Never auto-reload mid-workout: would lose abs/finisher/stretching sub-state.
+      if (isWorkoutInProgress()) {
+        pendingReload = true;
+        return;
+      }
+      doReload();
+    });
+    window.addEventListener("workout-finished", () => {
+      if (pendingReload) doReload();
     });
   }
 }

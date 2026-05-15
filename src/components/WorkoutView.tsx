@@ -53,6 +53,25 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const maxRound = config.round;
   const timer = useTimer();
   const voice = useVoiceTrainer({ enabled: voiceEnabled });
+  // Restore sub-phase state (abs strong / finisher / stretching) from localStorage
+  // so a service-worker reload mid-workout doesn't strand the user on the main rounds.
+  const SUBPHASE_KEY = "workout_subphase_state";
+  const subphaseInit = (() => {
+    try {
+      const raw = localStorage.getItem(SUBPHASE_KEY);
+      if (!raw) return null;
+      const s = JSON.parse(raw);
+      if (!s || typeof s !== "object") return null;
+      if (s.giorno && s.giorno !== giorno) return null;
+      if (s.ts && Date.now() - s.ts > 2 * 60 * 60 * 1000) return null;
+      return s as {
+        showAbsStrong?: boolean; absStrongComplete?: boolean; completedAbs?: number[];
+        showFinisher?: boolean; finisherComplete?: boolean; completedFinishers?: number[];
+        completedStretches?: number[];
+      };
+    } catch { return null; }
+  })();
+
   const [completati, setCompletati] = useState<Set<number>>(new Set(initialCompletati));
   const [tipoRiscaldamento, setTipoRiscaldamento] = useState(0);
   const [currentExerciseIdx, setCurrentExerciseIdx] = useState(initialExerciseIdx);
@@ -61,13 +80,13 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const [voiceActive, setVoiceActive] = useState(voiceEnabled);
   const [showStretching, setShowStretching] = useState(initialShowStretching);
   const [stretchingComplete, setStretchingComplete] = useState(false);
-  const [completedStretches, setCompletedStretches] = useState<Set<number>>(new Set());
-  const [showAbsStrong, setShowAbsStrong] = useState(false);
-  const [absStrongComplete, setAbsStrongComplete] = useState(false);
-  const [completedAbs, setCompletedAbs] = useState<Set<number>>(new Set());
-  const [showFinisher, setShowFinisher] = useState(false);
-  const [finisherComplete, setFinisherComplete] = useState(false);
-  const [completedFinishers, setCompletedFinishers] = useState<Set<number>>(new Set());
+  const [completedStretches, setCompletedStretches] = useState<Set<number>>(new Set(subphaseInit?.completedStretches || []));
+  const [showAbsStrong, setShowAbsStrong] = useState(!!subphaseInit?.showAbsStrong && !subphaseInit?.absStrongComplete);
+  const [absStrongComplete, setAbsStrongComplete] = useState(!!subphaseInit?.absStrongComplete);
+  const [completedAbs, setCompletedAbs] = useState<Set<number>>(new Set(subphaseInit?.completedAbs || []));
+  const [showFinisher, setShowFinisher] = useState(!!subphaseInit?.showFinisher && !subphaseInit?.finisherComplete);
+  const [finisherComplete, setFinisherComplete] = useState(!!subphaseInit?.finisherComplete);
+  const [completedFinishers, setCompletedFinishers] = useState<Set<number>>(new Set(subphaseInit?.completedFinishers || []));
   const lastTimerRef = useRef<string | null>(null);
   const firedCuesRef = useRef<Set<string>>(new Set());
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -85,6 +104,31 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   useEffect(() => {
     onStateChange?.({ currentExerciseIdx, completati: Array.from(completati), showStretching });
   }, [currentExerciseIdx, completati, onStateChange, showStretching]);
+
+  // Persist sub-phase (abs strong / finisher / stretching) so an unexpected reload resumes correctly.
+  useEffect(() => {
+    try {
+      localStorage.setItem(SUBPHASE_KEY, JSON.stringify({
+        giorno,
+        showAbsStrong, absStrongComplete, completedAbs: Array.from(completedAbs),
+        showFinisher, finisherComplete, completedFinishers: Array.from(completedFinishers),
+        completedStretches: Array.from(completedStretches),
+        ts: Date.now(),
+      }));
+    } catch {}
+  }, [giorno, showAbsStrong, absStrongComplete, completedAbs, showFinisher, finisherComplete, completedFinishers, completedStretches]);
+
+  // Mark workout in progress so the SW auto-update reload is deferred until the workout ends.
+  useEffect(() => {
+    try { localStorage.setItem("workout_in_progress", "1"); } catch {}
+    return () => {
+      try {
+        localStorage.removeItem("workout_in_progress");
+        localStorage.removeItem(SUBPHASE_KEY);
+        window.dispatchEvent(new Event("workout-finished"));
+      } catch {}
+    };
+  }, []);
 
   // Voice cues synced with timer - with deduplication
   useEffect(() => {
