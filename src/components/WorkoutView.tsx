@@ -105,6 +105,31 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     onStateChange?.({ currentExerciseIdx, completati: Array.from(completati), showStretching });
   }, [currentExerciseIdx, completati, onStateChange, showStretching]);
 
+  // Persist sub-phase (abs strong / finisher / stretching) so an unexpected reload resumes correctly.
+  useEffect(() => {
+    try {
+      localStorage.setItem(SUBPHASE_KEY, JSON.stringify({
+        giorno,
+        showAbsStrong, absStrongComplete, completedAbs: Array.from(completedAbs),
+        showFinisher, finisherComplete, completedFinishers: Array.from(completedFinishers),
+        completedStretches: Array.from(completedStretches),
+        ts: Date.now(),
+      }));
+    } catch {}
+  }, [giorno, showAbsStrong, absStrongComplete, completedAbs, showFinisher, finisherComplete, completedFinishers, completedStretches]);
+
+  // Mark workout in progress so the SW auto-update reload is deferred until the workout ends.
+  useEffect(() => {
+    try { localStorage.setItem("workout_in_progress", "1"); } catch {}
+    return () => {
+      try {
+        localStorage.removeItem("workout_in_progress");
+        localStorage.removeItem(SUBPHASE_KEY);
+        window.dispatchEvent(new Event("workout-finished"));
+      } catch {}
+    };
+  }, []);
+
   // Voice cues synced with timer - with deduplication
   useEffect(() => {
     if (!voiceActive || !timer.isActive) return;
