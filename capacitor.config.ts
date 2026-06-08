@@ -8,6 +8,14 @@ const config: CapacitorConfig = {
     url: 'https://65739c50-950f-4a12-9aa8-e5855fcd79cd.lovableproject.com?forceHideBadge=true',
     cleartext: true,
   },
+  ios: {
+    // Allow rotation on iOS
+    orientation: 'all',
+  },
+  android: {
+    // Allow rotation on Android
+    orientation: 'unspecified',
+  },
 };
 
 export default config;
