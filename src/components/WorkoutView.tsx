@@ -106,6 +106,23 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     onStateChange?.({ currentExerciseIdx, completati: Array.from(completati), showStretching });
   }, [currentExerciseIdx, completati, onStateChange, showStretching]);
 
+  useEffect(() => {
+    if (!isCompleted) return;
+    if (showAbsStrong || showFinisher || showStretching || stretchingComplete) return;
+
+    if (!absStrongComplete) {
+      setShowAbsStrong(true);
+      return;
+    }
+
+    if (!finisherComplete) {
+      setShowFinisher(true);
+      return;
+    }
+
+    setShowStretching(true);
+  }, [isCompleted, showAbsStrong, showFinisher, showStretching, stretchingComplete, absStrongComplete, finisherComplete]);
+
   // Persist sub-phase (abs strong / finisher / stretching) so an unexpected reload resumes correctly.
   useEffect(() => {
     try {
