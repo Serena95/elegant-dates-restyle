@@ -90,6 +90,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   const lastTimerRef = useRef<string | null>(null);
   const firedCuesRef = useRef<Set<string>>(new Set());
   const exerciseRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const shouldClearSubphaseOnUnmountRef = useRef(false);
   const isCompleted = roundCorrenti >= maxRound;
 
   // Generate the SINGLE fat-burn block once per session (metabolic OR combat — never both)
@@ -104,6 +105,23 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
   useEffect(() => {
     onStateChange?.({ currentExerciseIdx, completati: Array.from(completati), showStretching });
   }, [currentExerciseIdx, completati, onStateChange, showStretching]);
+
+  useEffect(() => {
+    if (!isCompleted) return;
+    if (showAbsStrong || showFinisher || showStretching || stretchingComplete) return;
+
+    if (!absStrongComplete) {
+      setShowAbsStrong(true);
+      return;
+    }
+
+    if (!finisherComplete) {
+      setShowFinisher(true);
+      return;
+    }
+
+    setShowStretching(true);
+  }, [isCompleted, showAbsStrong, showFinisher, showStretching, stretchingComplete, absStrongComplete, finisherComplete]);
 
   // Persist sub-phase (abs strong / finisher / stretching) so an unexpected reload resumes correctly.
   useEffect(() => {
@@ -124,11 +142,30 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
     return () => {
       try {
         localStorage.removeItem("workout_in_progress");
-        localStorage.removeItem(SUBPHASE_KEY);
+        if (shouldClearSubphaseOnUnmountRef.current) {
+          localStorage.removeItem(SUBPHASE_KEY);
+        }
         window.dispatchEvent(new Event("workout-finished"));
       } catch {}
     };
   }, []);
+
+  const clearSubphaseAndExit = useCallback(() => {
+    shouldClearSubphaseOnUnmountRef.current = true;
+    try {
+      localStorage.removeItem(SUBPHASE_KEY);
+    } catch {}
+    onBack();
+  }, [onBack]);
+
+  const completeWorkoutAndClearSubphase = useCallback(() => {
+    shouldClearSubphaseOnUnmountRef.current = true;
+    try {
+      localStorage.removeItem(SUBPHASE_KEY);
+    } catch {}
+    setStretchingComplete(true);
+    onStretchingComplete?.();
+  }, [onStretchingComplete]);
 
   // Voice cues synced with timer - with deduplication
   useEffect(() => {
@@ -264,7 +301,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
               <p className="text-sm text-muted-foreground">Il workout è già stato registrato. Vuoi uscire?</p>
               <div className="flex gap-3">
                 <button onClick={() => setShowQuitConfirm(false)} className="flex-1 py-3 rounded-xl bg-muted text-foreground font-bold">Continua</button>
-                <button onClick={onBack} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Esci</button>
+                 <button onClick={clearSubphaseAndExit} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Esci</button>
               </div>
             </div>
           </div>
@@ -398,7 +435,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
               <p className="text-sm text-muted-foreground">Il workout è già stato registrato. Vuoi uscire?</p>
               <div className="flex gap-3">
                 <button onClick={() => setShowQuitConfirm(false)} className="flex-1 py-3 rounded-xl bg-muted text-foreground font-bold">Continua</button>
-                <button onClick={onBack} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Esci</button>
+                <button onClick={clearSubphaseAndExit} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Esci</button>
               </div>
             </div>
           </div>
@@ -550,7 +587,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
               <p className="text-sm text-muted-foreground">Il workout è già stato registrato. Vuoi uscire?</p>
               <div className="flex gap-3">
                 <button onClick={() => setShowQuitConfirm(false)} className="flex-1 py-3 rounded-xl bg-muted text-foreground font-bold">Continua</button>
-                <button onClick={() => { setStretchingComplete(true); onStretchingComplete?.(); }} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Esci</button>
+                <button onClick={completeWorkoutAndClearSubphase} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Esci</button>
               </div>
             </div>
           </div>
@@ -562,7 +599,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
           </button>
           <h2 className="text-xl font-bold text-foreground">🌊 Stretching {focusLabel}</h2>
           <button
-            onClick={() => { setStretchingComplete(true); onStretchingComplete?.(); }}
+            onClick={completeWorkoutAndClearSubphase}
             className="text-xs font-bold text-muted-foreground hover:text-foreground transition"
           >
             Salta →
@@ -612,7 +649,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
         </div>
 
         <button
-          onClick={() => { setStretchingComplete(true); onStretchingComplete?.(); }}
+          onClick={completeWorkoutAndClearSubphase}
           className="w-full py-4 rounded-2xl bg-pilates-green text-white font-bold shadow-lg flex items-center justify-center gap-2"
         >
           ✅ Stretching Completato
@@ -657,7 +694,7 @@ export function WorkoutView({ giorno, tema, esercizi, livello, roundCorrenti, on
             <p className="text-sm text-muted-foreground">Il progresso di questo round non verrà salvato.</p>
             <div className="flex gap-3">
               <button onClick={() => setShowQuitConfirm(false)} className="flex-1 py-3 rounded-xl bg-muted text-foreground font-bold">Continua</button>
-              <button onClick={onBack} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Termina</button>
+               <button onClick={clearSubphaseAndExit} className="flex-1 py-3 rounded-xl bg-destructive text-destructive-foreground font-bold">Termina</button>
             </div>
           </div>
         </div>
