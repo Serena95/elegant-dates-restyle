@@ -3,9 +3,26 @@ import { registerSW } from "virtual:pwa-register";
 import App from "./App.tsx";
 import "./index.css";
 
+type ScreenOrientationWithUnlock = ScreenOrientation & {
+  unlock?: () => void;
+};
+
 type InstallWindow = Window & {
   __deferredInstallPrompt?: Event;
   __installPromptInitialized?: boolean;
+};
+
+const unlockScreenOrientation = async () => {
+  const orientation = screen.orientation as ScreenOrientationWithUnlock | undefined;
+
+  if (!orientation) return;
+
+  try {
+    orientation.unlock?.();
+    await orientation.lock?.("any");
+  } catch {
+    // Some browsers/PWAs do not allow programmatic orientation changes.
+  }
 };
 
 const isInIframe = (() => {
@@ -60,5 +77,15 @@ try {
 } catch {
   document.documentElement.classList.remove("dark");
 }
+
+void unlockScreenOrientation();
+window.addEventListener("pageshow", () => {
+  void unlockScreenOrientation();
+});
+document.addEventListener("visibilitychange", () => {
+  if (!document.hidden) {
+    void unlockScreenOrientation();
+  }
+});
 
 createRoot(document.getElementById("root")!).render(<App />);
