@@ -114,7 +114,7 @@ const CORE_PRIMARY_MUSCLES = new Set([
   "trasverso", "punto vita", "fianchi", "core profondo", "core",
 ]);
 
-function exerciseMatchesToken(e: Exercise, token: string): boolean {
+export function exerciseMatchesToken(e: Exercise, token: string): boolean {
   const syn = MUSCLE_TOKEN_SYNONYMS[token] || [token];
   // Core: categoria "core" OPPURE primo muscolo (PRIMARIO) appartiene al gruppo core.
   // Esclude esercizi dove il core è solo stabilizzatore secondario.
