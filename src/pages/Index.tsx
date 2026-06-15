@@ -352,12 +352,27 @@ const Index = () => {
         if (histEntry?.completato) return; // never touch completed days
         const dayPlan = updatedPiano[dateKey];
         if (!dayPlan?.attrezzo) return;
-        // Se è oggi e ha già round fatti, non toccare per non perdere il progresso
-        if (dateKey === todayKey && (dayPlan.round || 0) > 0) return;
+        // OGGI: non rigenerare mai forzatamente. Tocca SOLO se c'è una vera
+        // violazione di focus E nessun round è ancora stato fatto E nessuna
+        // sessione di workout è in corso (per non perdere progresso).
+        if (dateKey === todayKey) {
+          if ((dayPlan.round || 0) > 0) return;
+          try {
+            if (localStorage.getItem("workout_in_progress") === "1") return;
+            const savedSession = localStorage.getItem("workout_session_state");
+            if (savedSession) {
+              const s = JSON.parse(savedSession);
+              if (s?.giornoSelezionato === todayKey) return;
+            }
+          } catch {}
+        }
         const weekday = getWeekdayFromDateKey(dateKey);
         const focus = getFocusForWeekday(weekday);
         const dayEx = currentEsercizi[dateKey];
-        const needsRepair = forceRegenerate || dayHasFocusViolation(dayEx, focus);
+        // Per oggi: solo riparazione su violazione reale. Per giorni futuri: anche forceRegenerate.
+        const needsRepair = dateKey === todayKey
+          ? dayHasFocusViolation(dayEx, focus)
+          : (forceRegenerate || dayHasFocusViolation(dayEx, focus));
         if (!needsRepair) return;
 
         // Regenerate exercises for THIS day only, keeping the same equipment.
