@@ -39,7 +39,7 @@ import { TRAINING_PROGRAMS, TrainingProgram } from "@/data/programs";
 import { useCloudData } from "@/hooks/useCloudData";
 import { useAuth } from "@/contexts/AuthContext";
 import { useBadges, Badge } from "@/hooks/useBadges";
-import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey, getWeekdayFromDateKey, parseDateKey } from "@/data/exercises";
+import { Exercise, generaEserciziGiorno, selezionaAttrezziSettimana, CONFIG_LIVELLI, ATTREZZO_ICONS, detectFocus, FocusInfo, generaSettimanaIntelligente, DayFocus, FIXED_TRAINING_DAYS, getFocusForWeekday, computeProgressionContext, isPianoCurrentWeek, getWeekDates, getLocalDateKey, getWeekdayFromDateKey, parseDateKey, exerciseMatchesToken, MIN_PER_TOKEN } from "@/data/exercises";
 import { generateAIWorkout } from "@/services/aiWorkout";
 import { useLocalStorage } from "@/hooks/useLocalStorage";
 import { CycleEntry, PregnancySettings } from "@/hooks/useCloudData";
@@ -119,6 +119,15 @@ function dayHasFocusViolation(exercises: Exercise[] | undefined, focus: DayFocus
   if (realCore < minCore) return true;
   // Lower/Total: ≥2 esercizi specifici per interno coscia
   if ((focus === "lower_body" || focus === "total_body") && internoCoscia < 2) return true;
+  // Verifica i minimi REALI per ogni gruppo muscolare del focus
+  // (es. Upper: schiena≥2, spalle≥1, braccia≥1, petto≥1 — non solo core)
+  const minPerToken = MIN_PER_TOKEN[focus] || {};
+  for (const token of Object.keys(minPerToken)) {
+    const required = minPerToken[token] || 0;
+    if (required <= 0) continue;
+    const present = exercises.filter((e) => exerciseMatchesToken(e, token)).length;
+    if (present < required) return true;
+  }
   return false;
 }
 
@@ -329,7 +338,7 @@ const Index = () => {
 
       // ONE-SHOT MIGRATION: applica le nuove regole core/interno coscia
       // a OGGI e ai giorni futuri. Non tocca mai giorni passati né completati.
-      const MIGRATION_FLAG = "workout_phases_multiequip_v6_core_expanded_no_cardio";
+      const MIGRATION_FLAG = "workout_phases_multiequip_v7_min_per_token";
       const alreadyMigrated = localStorage.getItem(MIGRATION_FLAG) === "1";
       const forceRegenerate = !alreadyMigrated;
 

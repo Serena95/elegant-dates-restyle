@@ -114,7 +114,7 @@ const CORE_PRIMARY_MUSCLES = new Set([
   "trasverso", "punto vita", "fianchi", "core profondo", "core",
 ]);
 
-function exerciseMatchesToken(e: Exercise, token: string): boolean {
+export function exerciseMatchesToken(e: Exercise, token: string): boolean {
   const syn = MUSCLE_TOKEN_SYNONYMS[token] || [token];
   // Core: categoria "core" OPPURE primo muscolo (PRIMARIO) appartiene al gruppo core.
   // Esclude esercizi dove il core è solo stabilizzatore secondario.
@@ -177,7 +177,7 @@ const FOCUS_SLOTS: Record<DayFocus, string[][]> = {
  * Minimum required occurrences per token for each focus.
  * Enforced after balanced selection — if below minimum, we swap in matching exercises.
  */
-const MIN_PER_TOKEN: Record<DayFocus, Record<string, number>> = {
+export const MIN_PER_TOKEN: Record<DayFocus, Record<string, number>> = {
   // Upper Body: ≥3 core REALI + schiena/spalle/braccia/petto
   upper_body: { schiena: 2, core: 3, spalle: 1, braccia: 1, petto: 1 },
   // Lower Body: ≥3 core REALI + ≥2 interno coscia + glutei/quad/femorali
