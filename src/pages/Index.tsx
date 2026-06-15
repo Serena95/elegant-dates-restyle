@@ -338,7 +338,7 @@ const Index = () => {
 
       // ONE-SHOT MIGRATION: applica le nuove regole core/interno coscia
       // a OGGI e ai giorni futuri. Non tocca mai giorni passati né completati.
-      const MIGRATION_FLAG = "workout_phases_multiequip_v6_core_expanded_no_cardio";
+      const MIGRATION_FLAG = "workout_phases_multiequip_v7_min_per_token";
       const alreadyMigrated = localStorage.getItem(MIGRATION_FLAG) === "1";
       const forceRegenerate = !alreadyMigrated;
 
