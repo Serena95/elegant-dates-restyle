@@ -119,6 +119,15 @@ function dayHasFocusViolation(exercises: Exercise[] | undefined, focus: DayFocus
   if (realCore < minCore) return true;
   // Lower/Total: ≥2 esercizi specifici per interno coscia
   if ((focus === "lower_body" || focus === "total_body") && internoCoscia < 2) return true;
+  // Verifica i minimi REALI per ogni gruppo muscolare del focus
+  // (es. Upper: schiena≥2, spalle≥1, braccia≥1, petto≥1 — non solo core)
+  const minPerToken = MIN_PER_TOKEN[focus] || {};
+  for (const token of Object.keys(minPerToken)) {
+    const required = minPerToken[token] || 0;
+    if (required <= 0) continue;
+    const present = exercises.filter((e) => exerciseMatchesToken(e, token)).length;
+    if (present < required) return true;
+  }
   return false;
 }
 
