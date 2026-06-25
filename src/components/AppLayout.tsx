@@ -28,6 +28,7 @@ export type AppView =
   | "calendar"
   | "food"
   | "library"
+  | "guided-workouts"
   | "programs"
   | "profile"
   | "settings"
