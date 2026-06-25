@@ -813,6 +813,8 @@ const Index = () => {
         );
       case "library":
         return <ExerciseLibrary onBack={() => navigate("more")} />;
+      case "guided-workouts":
+        return <GuidedWorkoutsView onBack={() => navigate("more")} />;
       case "more":
         return <MoreView onNavigate={(v) => navigate(v as any)} />;
       case "programs":
