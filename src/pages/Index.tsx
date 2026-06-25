@@ -8,6 +8,7 @@ import { CalendarView } from "@/components/CalendarView";
 import { ProgressView } from "@/components/ProgressView";
 import { FoodDiary } from "@/components/FoodDiary";
 import { ExerciseLibrary } from "@/components/ExerciseLibrary";
+import { GuidedWorkoutsView } from "@/components/GuidedWorkoutsView";
 import { GuideView } from "@/components/GuideView";
 import { ProfileView } from "@/components/ProfileView";
 import { SettingsView } from "@/components/SettingsView";
@@ -812,6 +813,8 @@ const Index = () => {
         );
       case "library":
         return <ExerciseLibrary onBack={() => navigate("more")} />;
+      case "guided-workouts":
+        return <GuidedWorkoutsView onBack={() => navigate("more")} />;
       case "more":
         return <MoreView onNavigate={(v) => navigate(v as any)} />;
       case "programs":

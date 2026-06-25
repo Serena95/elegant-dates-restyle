@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles, Crown, Trophy, Users, Utensils, Apple } from "lucide-react";
+import { BookOpen, Settings, Download, Droplets, Baby, ChevronRight, Sparkles, Crown, Trophy, Users, Utensils, Apple, Play } from "lucide-react";
 import { motion } from "framer-motion";
 
 interface MoreViewProps {
@@ -46,6 +46,16 @@ const FEATURES = [
     iconBg: "bg-sky-500/15",
     iconColor: "text-sky-500",
     borderColor: "border-sky-500/20",
+  },
+  {
+    icon: Play,
+    label: "Workout Guidati YouTube",
+    desc: "Video selezionati a mano da trainer certificati",
+    view: "guided-workouts",
+    gradient: "from-red-500/20 to-rose-400/10",
+    iconBg: "bg-red-500/15",
+    iconColor: "text-red-500",
+    borderColor: "border-red-500/20",
   },
   {
     icon: Trophy,
