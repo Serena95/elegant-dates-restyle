@@ -48,6 +48,16 @@ const FEATURES = [
     borderColor: "border-sky-500/20",
   },
   {
+    icon: Play,
+    label: "Workout Guidati YouTube",
+    desc: "Video selezionati a mano da trainer certificati",
+    view: "guided-workouts",
+    gradient: "from-red-500/20 to-rose-400/10",
+    iconBg: "bg-red-500/15",
+    iconColor: "text-red-500",
+    borderColor: "border-red-500/20",
+  },
+  {
     icon: Trophy,
     label: "Challenge Fitness",
     desc: "Sfide da 7, 14 e 30 giorni per metterti alla prova",
