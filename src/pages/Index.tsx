@@ -8,6 +8,7 @@ import { CalendarView } from "@/components/CalendarView";
 import { ProgressView } from "@/components/ProgressView";
 import { FoodDiary } from "@/components/FoodDiary";
 import { ExerciseLibrary } from "@/components/ExerciseLibrary";
+import { GuidedWorkoutsView } from "@/components/GuidedWorkoutsView";
 import { GuideView } from "@/components/GuideView";
 import { ProfileView } from "@/components/ProfileView";
 import { SettingsView } from "@/components/SettingsView";
